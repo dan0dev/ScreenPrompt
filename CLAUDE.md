@@ -39,3 +39,16 @@
 - Merge saved config with defaults to handle missing keys gracefully
 - Include standalone `if __name__ == "__main__"` test block for isolated testing
 - Opacity slider range: 0.5–1.0 (below 0.5 is too transparent to read)
+
+### Config Schema Standard (2026-02-01)
+- Position keys: `x`, `y` (not `position_x`, `window_x`)
+- Size keys: `width`, `height`
+- Appearance: `opacity` (default 0.85), `font_family`, `font_size`, `font_color`, `bg_color`
+- State: `text`, `first_run_shown`
+- All modules MUST use identical key names to avoid data corruption
+- Extract ConfigManager to standalone `config_manager.py` module for reuse
+- Always merge saved config with defaults: `{**DEFAULT_CONFIG, **saved_config}`
+
+### Tkinter on Windows (2026-02-01)
+- Cursor names differ from X11: use `size_nw_se` not `se_resize`
+- Valid Windows cursors: `arrow`, `hand2`, `size_nw_se`, `size_ns`, `size_we`, `watch`
