@@ -57,20 +57,20 @@ A transparent overlay window for Windows that is **invisible to screen capture s
 | `Ctrl+Shift+L` | Toggle lock (click-through) |
 | `Ctrl+Shift+E` | Quick edit mode |
 | `Escape` | Emergency unlock |
-| `Ctrl+Shift++` | Increase font size |
-| `Ctrl+Shift+-` | Decrease font size |
-| `Ctrl+Shift+0` | Reset font size |
+| `Ctrl+Shift+PageUp` | Increase font size |
+| `Ctrl+Shift+PageDown` | Decrease font size |
+| `Ctrl+Shift+Home` | Reset font size |
 | `Ctrl+Shift+O` | Cycle opacity |
-| `Ctrl+Shift+,` | Open settings |
+| `Ctrl+Shift+S` | Open settings |
 | `Ctrl+Shift+Q` | Quit application |
 
-### Position Presets (Numpad-style)
+### Position Presets (Numpad)
 
 | Shortcut | Position |
 |----------|----------|
-| `Ctrl+Shift+7/8/9` | Top-left / Top-center / Top-right |
-| `Ctrl+Shift+4/5/6` | Center-left / Center / Center-right |
-| `Ctrl+Shift+1/2/3` | Bottom-left / Bottom-center / Bottom-right |
+| `Ctrl+Alt+Numpad 7/8/9` | Top-left / Top-center / Top-right |
+| `Ctrl+Alt+Numpad 4/5/6` | Center-left / Center / Center-right |
+| `Ctrl+Alt+Numpad 1/2/3` | Bottom-left / Bottom-center / Bottom-right |
 | `Ctrl+Shift+Arrows` | Nudge window 20px |
 
 ### Text Shortcuts

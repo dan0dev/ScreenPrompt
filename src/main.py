@@ -489,24 +489,24 @@ class ScreenPromptWindow:
         safe_add_hotkey("ctrl+shift+e", self._hotkey_quick_edit, "quick edit")
         safe_add_hotkey("escape", self._hotkey_emergency_unlock, "emergency unlock")
 
-        # Phase 2: Font size
-        safe_add_hotkey("ctrl+shift+plus", self._hotkey_increase_font, "increase font")
-        safe_add_hotkey("ctrl+shift+minus", self._hotkey_decrease_font, "decrease font")
-        safe_add_hotkey("ctrl+shift+0", self._hotkey_reset_font, "reset font")
+        # Phase 2: Font size (Hungarian keyboard friendly - use Page keys)
+        safe_add_hotkey("ctrl+shift+page up", self._hotkey_increase_font, "increase font")
+        safe_add_hotkey("ctrl+shift+page down", self._hotkey_decrease_font, "decrease font")
+        safe_add_hotkey("ctrl+shift+home", self._hotkey_reset_font, "reset font")
 
         # Phase 2: Opacity
         safe_add_hotkey("ctrl+shift+o", self._hotkey_cycle_opacity, "cycle opacity")
 
-        # Phase 2: Position presets (numpad style)
-        safe_add_hotkey("ctrl+shift+1", lambda: self._hotkey_position_preset(0, 2), "bottom-left")
-        safe_add_hotkey("ctrl+shift+2", lambda: self._hotkey_position_preset(1, 2), "bottom-center")
-        safe_add_hotkey("ctrl+shift+3", lambda: self._hotkey_position_preset(2, 2), "bottom-right")
-        safe_add_hotkey("ctrl+shift+4", lambda: self._hotkey_position_preset(0, 1), "center-left")
-        safe_add_hotkey("ctrl+shift+5", lambda: self._hotkey_position_preset(1, 1), "center")
-        safe_add_hotkey("ctrl+shift+6", lambda: self._hotkey_position_preset(2, 1), "center-right")
-        safe_add_hotkey("ctrl+shift+7", lambda: self._hotkey_position_preset(0, 0), "top-left")
-        safe_add_hotkey("ctrl+shift+8", lambda: self._hotkey_position_preset(1, 0), "top-center")
-        safe_add_hotkey("ctrl+shift+9", lambda: self._hotkey_position_preset(2, 0), "top-right")
+        # Phase 2: Position presets (use numpad - works on all keyboard layouts)
+        safe_add_hotkey("ctrl+alt+num 1", lambda: self._hotkey_position_preset(0, 2), "bottom-left")
+        safe_add_hotkey("ctrl+alt+num 2", lambda: self._hotkey_position_preset(1, 2), "bottom-center")
+        safe_add_hotkey("ctrl+alt+num 3", lambda: self._hotkey_position_preset(2, 2), "bottom-right")
+        safe_add_hotkey("ctrl+alt+num 4", lambda: self._hotkey_position_preset(0, 1), "center-left")
+        safe_add_hotkey("ctrl+alt+num 5", lambda: self._hotkey_position_preset(1, 1), "center")
+        safe_add_hotkey("ctrl+alt+num 6", lambda: self._hotkey_position_preset(2, 1), "center-right")
+        safe_add_hotkey("ctrl+alt+num 7", lambda: self._hotkey_position_preset(0, 0), "top-left")
+        safe_add_hotkey("ctrl+alt+num 8", lambda: self._hotkey_position_preset(1, 0), "top-center")
+        safe_add_hotkey("ctrl+alt+num 9", lambda: self._hotkey_position_preset(2, 0), "top-right")
 
         # Phase 2: Nudge window
         nd = self.NUDGE_DISTANCE
@@ -516,7 +516,7 @@ class ScreenPromptWindow:
         safe_add_hotkey("ctrl+shift+right", lambda: self._hotkey_nudge(nd, 0), "nudge right")
 
         # Application shortcuts
-        safe_add_hotkey("ctrl+shift+comma", self._hotkey_toggle_settings, "toggle settings")
+        safe_add_hotkey("ctrl+shift+s", self._hotkey_toggle_settings, "toggle settings")
         safe_add_hotkey("ctrl+shift+r", self._hotkey_reset_geometry, "reset geometry")
         safe_add_hotkey("ctrl+shift+q", self._hotkey_quit, "quit")
 
