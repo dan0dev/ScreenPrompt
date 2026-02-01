@@ -27,17 +27,52 @@
 """
 Settings panel for ScreenPrompt overlay.
 Embedded as Frame inside main window to avoid browser black box issue.
-Provides opacity slider with real-time preview.
-Font/color pickers stubbed for Phase 2.
+Provides opacity slider, font selection, and color pickers with real-time preview.
 """
 
 import ctypes
 import sys
 import tkinter as tk
 from tkinter import ttk
+from tkinter import font as tkfont
 from typing import Callable, Optional
 
 from config_manager import load_config, save_config
+
+# Color palettes for swatches
+TEXT_COLORS = [
+    "#FFFFFF",  # white
+    "#E0E0E0",  # light gray
+    "#FFFF00",  # yellow
+    "#00FF00",  # green
+    "#00FFFF",  # cyan
+    "#87CEEB",  # sky blue
+    "#FFA500",  # orange
+    "#FF69B4",  # pink
+]
+
+BG_COLORS = [
+    "#1E1E1E",  # near black
+    "#2D2D2D",  # dark gray
+    "#1A1A2E",  # dark blue
+    "#1E3A2E",  # dark green
+    "#2E1A1A",  # dark red
+    "#2E1A2E",  # dark purple
+    "#2D2D1A",  # dark olive
+    "#1A2D2D",  # dark teal
+]
+
+# Priority fonts (shown first in dropdown)
+PRIORITY_FONTS = [
+    "Consolas",
+    "Segoe UI",
+    "Arial",
+    "Courier New",
+    "Calibri",
+    "Tahoma",
+    "Verdana",
+    "Times New Roman",
+]
 
 # WinAPI constants
 WDA_EXCLUDEFROMCAPTURE = 0x11
@@ -136,6 +171,9 @@ class SettingsPanel(tk.Frame):
         self,
         parent: tk.Widget,
         on_opacity_change: Optional[Callable[[float], None]] = None,
+        on_font_change: Optional[Callable[[str, int], None]] = None,
+        on_text_color_change: Optional[Callable[[str], None]] = None,
+        on_bg_color_change: Optional[Callable[[str], None]] = None,
         on_save: Optional[Callable[[], None]] = None,
         on_cancel: Optional[Callable[[], None]] = None,
     ):
@@ -145,21 +183,49 @@ class SettingsPanel(tk.Frame):
         Args:
             parent: Parent widget to embed in
             on_opacity_change: Callback for real-time opacity preview
+            on_font_change: Callback for font family/size changes (family, size)
+            on_text_color_change: Callback for text color changes (hex)
+            on_bg_color_change: Callback for background color changes (hex)
             on_save: Callback when settings are saved
             on_cancel: Callback when settings are cancelled
         """
         super().__init__(parent, bg="#2a2a2a")
 
         self.on_opacity_change = on_opacity_change
+        self.on_font_change = on_font_change
+        self.on_text_color_change = on_text_color_change
+        self.on_bg_color_change = on_bg_color_change
         self.on_save_callback = on_save
         self.on_cancel_callback = on_cancel
         self.config = load_config()
+
+        # Original values for cancel restore
         self.original_opacity = self.config.get("opacity", 0.85)
+        self.original_font_family = self.config.get("font_family", "Consolas")
+        self.original_font_size = self.config.get("font_size", 11)
+        self.original_text_color = self.config.get("font_color", "#FFFFFF")
+        self.original_bg_color = self.config.get("bg_color", "#2d2d2d")
+
+        # Tkinter variables
         self.opacity_var: Optional[tk.DoubleVar] = None
+        self.font_family_var: Optional[tk.StringVar] = None
+        self.font_size_var: Optional[tk.StringVar] = None
+        self.text_color_var: Optional[tk.StringVar] = None
+        self.bg_color_var: Optional[tk.StringVar] = None
+
         self.saved = False
         self._visible = False
 
         self._build_ui()
+
+    def _get_prioritized_fonts(self) -> list[str]:
+        """Get font list with common fonts first, then all system fonts."""
+        available = set(tkfont.families())
+        prioritized = [f for f in PRIORITY_FONTS if f in available]
+        remaining = sorted([f for f in available if f not in prioritized])
+        if prioritized and remaining:
+            return prioritized + ["─" * 20] + remaining
+        return prioritized + remaining
 
     def _build_ui(self) -> None:
         """Build the settings panel UI."""
@@ -191,21 +257,6 @@ class SettingsPanel(tk.Frame):
         close_btn.bind("<Button-1>", lambda e: self._on_cancel())
         close_btn.bind("<Enter>", lambda e: close_btn.configure(fg="#ffffff"))
         close_btn.bind("<Leave>", lambda e: close_btn.configure(fg="#888888"))
-
-        # Browser limitation warning
-        warning_frame = tk.Frame(main_frame, bg="#3a3a1a", padx=8, pady=5)
-        warning_frame.pack(fill=tk.X, pady=(0, 10))
-
-        warning_label = tk.Label(
-            warning_frame,
-            text="⚠ Note: Native apps (Zoom, OBS) hide this panel.\n"
-                 "Browser apps (Meet) may show a black box.",
-            font=("Segoe UI", 8),
-            bg="#3a3a1a",
-            fg="#cccc88",
-            justify=tk.LEFT
-        )
-        warning_label.pack(anchor=tk.W)
 
         # Opacity section
         opacity_frame = tk.Frame(main_frame, bg="#333333", padx=10, pady=8)
@@ -250,7 +301,7 @@ class SettingsPanel(tk.Frame):
         )
         self.opacity_label.pack(side=tk.RIGHT, padx=(10, 0))
 
-        # Font section (stub)
+        # Font section
         font_frame = tk.Frame(main_frame, bg="#333333", padx=10, pady=8)
         font_frame.pack(fill=tk.X, pady=(0, 8))
 
@@ -263,16 +314,72 @@ class SettingsPanel(tk.Frame):
         )
         font_header.pack(anchor=tk.W)
 
-        font_stub = tk.Label(
-            font_frame,
-            text="Font picker coming in Phase 2",
-            font=("Segoe UI", 8),
-            bg="#333333",
-            fg="#888888"
-        )
-        font_stub.pack(anchor=tk.W, pady=(3, 0))
+        # Font family row
+        family_row = tk.Frame(font_frame, bg="#333333")
+        family_row.pack(fill=tk.X, pady=(5, 3))
 
-        # Colors section (stub)
+        family_label = tk.Label(
+            family_row,
+            text="Family:",
+            font=("Segoe UI", 9),
+            bg="#333333",
+            fg="#cccccc",
+            width=8,
+            anchor=tk.W
+        )
+        family_label.pack(side=tk.LEFT)
+
+        self.font_family_var = tk.StringVar(value=self.config.get("font_family", "Consolas"))
+        font_families = self._get_prioritized_fonts()
+
+        self.font_combo = ttk.Combobox(
+            family_row,
+            textvariable=self.font_family_var,
+            values=font_families,
+            state="readonly",
+            width=20
+        )
+        self.font_combo.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.font_combo.bind("<<ComboboxSelected>>", self._on_font_family_change)
+
+        # Font size row
+        size_row = tk.Frame(font_frame, bg="#333333")
+        size_row.pack(fill=tk.X, pady=(0, 0))
+
+        size_label = tk.Label(
+            size_row,
+            text="Size:",
+            font=("Segoe UI", 9),
+            bg="#333333",
+            fg="#cccccc",
+            width=8,
+            anchor=tk.W
+        )
+        size_label.pack(side=tk.LEFT)
+
+        self.font_size_var = tk.StringVar(value=str(self.config.get("font_size", 11)))
+
+        self.font_spinbox = ttk.Spinbox(
+            size_row,
+            from_=8,
+            to=48,
+            textvariable=self.font_size_var,
+            width=5
+        )
+        self.font_spinbox.pack(side=tk.LEFT)
+        self.font_spinbox.bind("<FocusOut>", self._on_font_size_change)
+        self.font_spinbox.bind("<Return>", self._on_font_size_change)
+
+        pt_label = tk.Label(
+            size_row,
+            text="pt",
+            font=("Segoe UI", 9),
+            bg="#333333",
+            fg="#cccccc"
+        )
+        pt_label.pack(side=tk.LEFT, padx=(3, 0))
+
+        # Colors section
         color_frame = tk.Frame(main_frame, bg="#333333", padx=10, pady=8)
         color_frame.pack(fill=tk.X, pady=(0, 8))
 
@@ -285,14 +392,97 @@ class SettingsPanel(tk.Frame):
         )
         color_header.pack(anchor=tk.W)
 
-        color_stub = tk.Label(
-            color_frame,
-            text="Color picker coming in Phase 2",
-            font=("Segoe UI", 8),
+        # Text color row
+        text_color_row = tk.Frame(color_frame, bg="#333333")
+        text_color_row.pack(fill=tk.X, pady=(5, 3))
+
+        text_color_label = tk.Label(
+            text_color_row,
+            text="Text:",
+            font=("Segoe UI", 9),
             bg="#333333",
-            fg="#888888"
+            fg="#cccccc",
+            width=8,
+            anchor=tk.W
         )
-        color_stub.pack(anchor=tk.W, pady=(3, 0))
+        text_color_label.pack(side=tk.LEFT)
+
+        self.text_color_var = tk.StringVar(value=self.config.get("font_color", "#FFFFFF"))
+
+        # Current text color swatch
+        self.text_color_swatch = tk.Label(
+            text_color_row,
+            text="",
+            bg=self.text_color_var.get(),
+            width=3,
+            height=1,
+            relief=tk.SUNKEN
+        )
+        self.text_color_swatch.pack(side=tk.LEFT, padx=(0, 5))
+
+        # Text color palette
+        text_palette = tk.Frame(text_color_row, bg="#333333")
+        text_palette.pack(side=tk.LEFT)
+
+        for i, color in enumerate(TEXT_COLORS):
+            swatch = tk.Label(
+                text_palette,
+                text="",
+                bg=color,
+                width=2,
+                height=1,
+                relief=tk.RAISED
+            )
+            swatch.grid(row=0, column=i, padx=1)
+            swatch.bind("<Button-1>", lambda e, c=color: self._on_text_color_select(c))
+            swatch.bind("<Enter>", lambda e, s=swatch: s.configure(relief=tk.GROOVE))
+            swatch.bind("<Leave>", lambda e, s=swatch: s.configure(relief=tk.RAISED))
+
+        # Background color row
+        bg_color_row = tk.Frame(color_frame, bg="#333333")
+        bg_color_row.pack(fill=tk.X, pady=(3, 0))
+
+        bg_color_label = tk.Label(
+            bg_color_row,
+            text="Background:",
+            font=("Segoe UI", 9),
+            bg="#333333",
+            fg="#cccccc",
+            width=8,
+            anchor=tk.W
+        )
+        bg_color_label.pack(side=tk.LEFT)
+
+        self.bg_color_var = tk.StringVar(value=self.config.get("bg_color", "#2d2d2d"))
+
+        # Current background color swatch
+        self.bg_color_swatch = tk.Label(
+            bg_color_row,
+            text="",
+            bg=self.bg_color_var.get(),
+            width=3,
+            height=1,
+            relief=tk.SUNKEN
+        )
+        self.bg_color_swatch.pack(side=tk.LEFT, padx=(0, 5))
+
+        # Background color palette
+        bg_palette = tk.Frame(bg_color_row, bg="#333333")
+        bg_palette.pack(side=tk.LEFT)
+
+        for i, color in enumerate(BG_COLORS):
+            swatch = tk.Label(
+                bg_palette,
+                text="",
+                bg=color,
+                width=2,
+                height=1,
+                relief=tk.RAISED
+            )
+            swatch.grid(row=0, column=i, padx=1)
+            swatch.bind("<Button-1>", lambda e, c=color: self._on_bg_color_select(c))
+            swatch.bind("<Enter>", lambda e, s=swatch: s.configure(relief=tk.GROOVE))
+            swatch.bind("<Leave>", lambda e, s=swatch: s.configure(relief=tk.RAISED))
 
         # Button row
         button_frame = tk.Frame(main_frame, bg="#2a2a2a")
@@ -328,12 +518,35 @@ class SettingsPanel(tk.Frame):
 
     def show(self) -> None:
         """Show the settings panel."""
-        # Refresh config and original opacity when showing
+        # Refresh config and all original values when showing
         self.config = load_config()
+
+        # Store original values for cancel restore
         self.original_opacity = self.config.get("opacity", 0.85)
+        self.original_font_family = self.config.get("font_family", "Consolas")
+        self.original_font_size = self.config.get("font_size", 11)
+        self.original_text_color = self.config.get("font_color", "#FFFFFF")
+        self.original_bg_color = self.config.get("bg_color", "#2d2d2d")
+
+        # Update UI to match config
         if self.opacity_var:
             self.opacity_var.set(self.original_opacity)
             self.opacity_label.config(text=f"{self.original_opacity:.0%}")
+
+        if self.font_family_var:
+            self.font_family_var.set(self.original_font_family)
+
+        if self.font_size_var:
+            self.font_size_var.set(str(self.original_font_size))
+
+        if self.text_color_var:
+            self.text_color_var.set(self.original_text_color)
+            self.text_color_swatch.configure(bg=self.original_text_color)
+
+        if self.bg_color_var:
+            self.bg_color_var.set(self.original_bg_color)
+            self.bg_color_swatch.configure(bg=self.original_bg_color)
+
         self.saved = False
         self._visible = True
         self.pack(fill=tk.BOTH, expand=True)
@@ -363,10 +576,69 @@ class SettingsPanel(tk.Frame):
         if self.on_opacity_change:
             self.on_opacity_change(opacity)
 
+    def _on_font_family_change(self, event=None) -> None:
+        """Handle font family selection change."""
+        family = self.font_family_var.get()
+        # Skip separator line
+        if family.startswith("─"):
+            return
+        if self.on_font_change:
+            try:
+                size = int(self.font_size_var.get())
+            except ValueError:
+                size = 11
+            self.on_font_change(family, size)
+
+    def _on_font_size_change(self, event=None) -> None:
+        """Handle font size change."""
+        try:
+            size = int(self.font_size_var.get())
+            # Clamp to valid range
+            size = max(8, min(48, size))
+            self.font_size_var.set(str(size))
+        except ValueError:
+            size = 11
+            self.font_size_var.set("11")
+
+        if self.on_font_change:
+            family = self.font_family_var.get()
+            self.on_font_change(family, size)
+
+    def _on_text_color_select(self, color: str) -> None:
+        """Handle text color swatch click."""
+        self.text_color_var.set(color)
+        self.text_color_swatch.configure(bg=color)
+        if self.on_text_color_change:
+            self.on_text_color_change(color)
+
+    def _on_bg_color_select(self, color: str) -> None:
+        """Handle background color swatch click."""
+        self.bg_color_var.set(color)
+        self.bg_color_swatch.configure(bg=color)
+        if self.on_bg_color_change:
+            self.on_bg_color_change(color)
+
     def _on_save(self) -> None:
         """Save settings and hide panel."""
         if self.opacity_var:
             self.config["opacity"] = round(self.opacity_var.get(), 2)
+
+        if self.font_family_var:
+            family = self.font_family_var.get()
+            if not family.startswith("─"):  # Skip separator
+                self.config["font_family"] = family
+
+        if self.font_size_var:
+            try:
+                self.config["font_size"] = int(self.font_size_var.get())
+            except ValueError:
+                pass
+
+        if self.text_color_var:
+            self.config["font_color"] = self.text_color_var.get()
+
+        if self.bg_color_var:
+            self.config["bg_color"] = self.bg_color_var.get()
 
         save_config(self.config)
         self.saved = True
@@ -376,9 +648,22 @@ class SettingsPanel(tk.Frame):
             self.on_save_callback()
 
     def _on_cancel(self) -> None:
-        """Cancel and restore original opacity."""
+        """Cancel and restore all original values."""
+        # Restore opacity
         if self.on_opacity_change:
             self.on_opacity_change(self.original_opacity)
+
+        # Restore font
+        if self.on_font_change:
+            self.on_font_change(self.original_font_family, self.original_font_size)
+
+        # Restore text color
+        if self.on_text_color_change:
+            self.on_text_color_change(self.original_text_color)
+
+        # Restore background color
+        if self.on_bg_color_change:
+            self.on_bg_color_change(self.original_bg_color)
 
         self.saved = False
         self.hide()
@@ -391,7 +676,7 @@ class SettingsPanel(tk.Frame):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("ScreenPrompt Settings Panel Test")
-    root.geometry("400x450")
+    root.geometry("450x500")
     root.configure(bg="#1e1e1e")
 
     # Exclude test window from screen capture
@@ -406,15 +691,23 @@ if __name__ == "__main__":
     content_frame = tk.Frame(root, bg="#1e1e1e")
     content_frame.pack(fill=tk.BOTH, expand=True)
 
-    # Placeholder for main content
-    main_content = tk.Label(
+    # Load config for test text widget
+    config = load_config()
+
+    # Test text widget to show font/color changes
+    test_text = tk.Text(
         content_frame,
-        text="Main overlay content goes here.\n\nClick 'Open Settings' to show panel.",
-        bg="#1e1e1e",
-        fg="#ffffff",
-        font=("Segoe UI", 11)
+        bg=config.get("bg_color", "#2d2d2d"),
+        fg=config.get("font_color", "#FFFFFF"),
+        font=(config.get("font_family", "Consolas"), config.get("font_size", 11)),
+        wrap=tk.WORD,
+        height=6,
+        padx=10,
+        pady=10
     )
-    main_content.pack(fill=tk.BOTH, expand=True, pady=50)
+    test_text.insert("1.0", "Sample text to preview font and color changes.\n\n"
+                            "Open settings to modify appearance.")
+    test_text.pack(fill=tk.BOTH, expand=True, pady=20, padx=20)
 
     # Settings panel (hidden initially)
     settings_panel: Optional[SettingsPanel] = None
@@ -423,13 +716,25 @@ if __name__ == "__main__":
         print(f"Opacity changed to: {val:.0%}")
         root.attributes("-alpha", val)
 
+    def update_font(family: str, size: int) -> None:
+        print(f"Font changed to: {family} {size}pt")
+        test_text.configure(font=(family, size))
+
+    def update_text_color(color: str) -> None:
+        print(f"Text color changed to: {color}")
+        test_text.configure(fg=color)
+
+    def update_bg_color(color: str) -> None:
+        print(f"Background color changed to: {color}")
+        test_text.configure(bg=color)
+
     def on_settings_save() -> None:
         print("Settings saved!")
-        main_content.pack(fill=tk.BOTH, expand=True, pady=50)
+        test_text.pack(fill=tk.BOTH, expand=True, pady=20, padx=20)
 
     def on_settings_cancel() -> None:
         print("Settings cancelled.")
-        main_content.pack(fill=tk.BOTH, expand=True, pady=50)
+        test_text.pack(fill=tk.BOTH, expand=True, pady=20, padx=20)
 
     def toggle_settings() -> None:
         global settings_panel
@@ -437,6 +742,9 @@ if __name__ == "__main__":
             settings_panel = SettingsPanel(
                 content_frame,
                 on_opacity_change=update_opacity,
+                on_font_change=update_font,
+                on_text_color_change=update_text_color,
+                on_bg_color_change=update_bg_color,
                 on_save=on_settings_save,
                 on_cancel=on_settings_cancel
             )
@@ -444,7 +752,7 @@ if __name__ == "__main__":
         if settings_panel.is_visible():
             settings_panel.toggle()
         else:
-            main_content.pack_forget()
+            test_text.pack_forget()
             settings_panel.show()
 
     # Button frame
@@ -466,7 +774,6 @@ if __name__ == "__main__":
     toggle_btn.pack(pady=5)
 
     # Apply saved opacity on start
-    config = load_config()
     root.attributes("-alpha", config.get("opacity", 0.85))
 
     root.mainloop()

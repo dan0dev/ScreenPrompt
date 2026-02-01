@@ -1,0 +1,5 @@
+# ScreenPrompt dependencies
+# Core: Python 3.10+ with tkinter (included in standard library)
+
+# Optional: Global hotkeys support
+keyboard>=0.13.5

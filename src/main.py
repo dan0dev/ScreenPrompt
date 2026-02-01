@@ -33,13 +33,34 @@ import tkinter as tk
 from tkinter import messagebox
 from typing import Optional
 
+try:
+    import keyboard
+    HOTKEYS_AVAILABLE = True
+except ImportError:
+    HOTKEYS_AVAILABLE = False
+    print("Warning: 'keyboard' module not found. Global hotkeys disabled.")
+    print("Install with: pip install keyboard")
+
 from config_manager import (
     load_config,
     save_config,
     is_first_run,
     mark_first_run_complete,
+    DEFAULT_CONFIG,
 )
 from settings_ui import SettingsPanel, get_hwnd, set_capture_exclude
+
+# WinAPI constants for click-through
+GWL_EXSTYLE = -20
+WS_EX_TRANSPARENT = 0x00000020
+WS_EX_LAYERED = 0x00080000
+
+# Load user32.dll
+user32 = ctypes.windll.user32
+user32.GetWindowLongPtrW.restype = ctypes.c_void_p
+user32.GetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int]
+user32.SetWindowLongPtrW.restype = ctypes.c_void_p
+user32.SetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p]
 
 ETHICAL_NOTICE = """ScreenPrompt is intended for legitimate use only, such as:
 - Presentations and meetings
@@ -77,10 +98,25 @@ def check_windows_version() -> tuple[bool, str | None]:
 class ScreenPromptWindow:
     """Main overlay window class."""
 
+    # Opacity levels for cycling
+    OPACITY_LEVELS = [1.0, 0.85, 0.70, 0.50]
+
+    # Edge detection threshold in pixels
+    EDGE_SIZE = 6
+
     def __init__(self):
         self.config = load_config()
         self.drag_data = {"x": 0, "y": 0}
         self.settings_panel: Optional[SettingsPanel] = None
+
+        # State tracking
+        self.visible = True
+        self.quick_edit_mode = False
+        self.opacity_index = 0  # Index into OPACITY_LEVELS
+
+        # Resize state: which edges are being resized
+        # Can be combination of: "n", "s", "e", "w"
+        self.resize_edges = ""
 
         # Create main window
         self.root = tk.Tk()
@@ -95,6 +131,13 @@ class ScreenPromptWindow:
         self.setup_window()
         self.setup_widgets()
         self.apply_capture_exclusion()
+
+        # Apply saved lock state if enabled
+        if self.locked:
+            self._apply_lock_state()
+
+        # Setup global hotkeys
+        self.setup_hotkeys()
 
         # Show window
         self.root.deiconify()
@@ -135,8 +178,31 @@ class ScreenPromptWindow:
         """Create and configure UI widgets."""
         root = self.root
 
+        # Main container with edge frames for resizing
+        self.main_container = tk.Frame(root, bg="#1e1e1e")
+        self.main_container.pack(fill=tk.BOTH, expand=True)
+
+        # Left edge frame for west resize
+        self.left_edge = tk.Frame(self.main_container, width=self.EDGE_SIZE, bg="#1e1e1e")
+        self.left_edge.pack(side=tk.LEFT, fill=tk.Y)
+        self._bind_resize_edge(self.left_edge, "w")
+
+        # Right edge frame for east resize
+        self.right_edge = tk.Frame(self.main_container, width=self.EDGE_SIZE, bg="#1e1e1e")
+        self.right_edge.pack(side=tk.RIGHT, fill=tk.Y)
+        self._bind_resize_edge(self.right_edge, "e")
+
+        # Inner container for actual content
+        self.inner_container = tk.Frame(self.main_container, bg="#1e1e1e")
+        self.inner_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Top edge frame for north resize
+        self.top_edge = tk.Frame(self.inner_container, height=self.EDGE_SIZE, bg="#1e1e1e")
+        self.top_edge.pack(fill=tk.X, side=tk.TOP)
+        self._bind_resize_edge(self.top_edge, "n")
+
         # Title bar frame for dragging and close button
-        self.title_frame = tk.Frame(root, bg="#333333", height=25)
+        self.title_frame = tk.Frame(self.inner_container, bg="#333333", height=25)
         self.title_frame.pack(fill=tk.X, side=tk.TOP)
         self.title_frame.pack_propagate(False)
 
@@ -182,8 +248,91 @@ class ScreenPromptWindow:
         title_label.bind("<Button-1>", self.start_drag)
         title_label.bind("<B1-Motion>", self.do_drag)
 
+        # === PACK BOTTOM ELEMENTS FIRST (before expanding content) ===
+
+        # Resize handle frame (bottom edge)
+        self.resize_frame = tk.Frame(self.inner_container, bg="#333333", height=10)
+        self.resize_frame.pack(fill=tk.X, side=tk.BOTTOM)
+
+        # Resize grip
+        resize_grip = tk.Label(
+            self.resize_frame,
+            text="...",
+            bg="#333333",
+            fg="#666666",
+            font=("Segoe UI", 8)
+        )
+        resize_grip.pack(side=tk.RIGHT, padx=5)
+
+        # Bind resize events (bottom/southeast)
+        self.resize_frame.bind("<Button-1>", self.start_resize)
+        self.resize_frame.bind("<B1-Motion>", self.do_resize)
+        resize_grip.bind("<Button-1>", self.start_resize)
+        resize_grip.bind("<B1-Motion>", self.do_resize)
+
+        # Bottom bar with font size controls
+        self.bottom_bar = tk.Frame(self.inner_container, bg="#333333", height=22)
+        self.bottom_bar.pack(fill=tk.X, side=tk.BOTTOM)
+        self.bottom_bar.pack_propagate(False)
+
+        # Font size controls container (centered)
+        font_controls = tk.Frame(self.bottom_bar, bg="#333333")
+        font_controls.pack(side=tk.LEFT, padx=8)
+
+        # Minus button
+        minus_btn = tk.Label(
+            font_controls,
+            text=" − ",
+            bg="#333333",
+            fg="#aaaaaa",
+            font=("Segoe UI", 10, "bold")
+        )
+        minus_btn.pack(side=tk.LEFT)
+        minus_btn.bind("<Button-1>", lambda e: self._decrease_font_size())
+        minus_btn.bind("<Enter>", lambda e: minus_btn.configure(bg="#555555", fg="#ffffff"))
+        minus_btn.bind("<Leave>", lambda e: minus_btn.configure(bg="#333333", fg="#aaaaaa"))
+
+        # Aa icon
+        aa_label = tk.Label(
+            font_controls,
+            text="Aa",
+            bg="#333333",
+            fg="#888888",
+            font=("Segoe UI", 9)
+        )
+        aa_label.pack(side=tk.LEFT, padx=2)
+
+        # Plus button
+        plus_btn = tk.Label(
+            font_controls,
+            text=" + ",
+            bg="#333333",
+            fg="#aaaaaa",
+            font=("Segoe UI", 10, "bold")
+        )
+        plus_btn.pack(side=tk.LEFT)
+        plus_btn.bind("<Button-1>", lambda e: self._increase_font_size())
+        plus_btn.bind("<Enter>", lambda e: plus_btn.configure(bg="#555555", fg="#ffffff"))
+        plus_btn.bind("<Leave>", lambda e: plus_btn.configure(bg="#333333", fg="#aaaaaa"))
+
+        # Lock button (mouse pass-through toggle)
+        self.locked = self.config.get("locked", False)
+        self.lock_btn = tk.Label(
+            self.bottom_bar,
+            text=" \U0001F512 " if self.locked else " \U0001F513 ",  # Locked/Unlocked icons
+            bg="#333333",
+            fg="#ffaa00" if self.locked else "#aaaaaa",
+            font=("Segoe UI", 10)
+        )
+        self.lock_btn.pack(side=tk.RIGHT, padx=8)
+        self.lock_btn.bind("<Button-1>", lambda e: self._toggle_lock())
+        self.lock_btn.bind("<Enter>", lambda e: self.lock_btn.configure(bg="#555555"))
+        self.lock_btn.bind("<Leave>", lambda e: self.lock_btn.configure(bg="#333333"))
+
+        # === NOW PACK EXPANDING CONTENT (after bottom elements) ===
+
         # Content frame (holds either text widget or settings panel)
-        self.content_frame = tk.Frame(root, bg="#1e1e1e")
+        self.content_frame = tk.Frame(self.inner_container, bg="#1e1e1e")
         self.content_frame.pack(fill=tk.BOTH, expand=True)
 
         # Text widget for prompt content
@@ -211,29 +360,29 @@ class ScreenPromptWindow:
         self.settings_panel = SettingsPanel(
             self.content_frame,
             on_opacity_change=lambda v: self.root.attributes("-alpha", v),
+            on_font_change=self._apply_font,
+            on_text_color_change=self._apply_text_color,
+            on_bg_color_change=self._apply_bg_color,
             on_save=self.on_settings_save,
             on_cancel=self.on_settings_cancel
         )
 
-        # Resize handle frame
-        self.resize_frame = tk.Frame(root, bg="#333333", height=10)
-        self.resize_frame.pack(fill=tk.X, side=tk.BOTTOM)
+    def _bind_resize_edge(self, frame: tk.Frame, edge: str) -> None:
+        """Bind resize events to an edge frame."""
+        def start(event):
+            self.resize_edges = edge
+            self._start_edge_resize(event)
 
-        # Resize grip
-        resize_grip = tk.Label(
-            self.resize_frame,
-            text="...",
-            bg="#333333",
-            fg="#666666",
-            font=("Segoe UI", 8)
-        )
-        resize_grip.pack(side=tk.RIGHT, padx=5)
+        def drag(event):
+            if self.resize_edges:
+                self._do_edge_resize(event)
 
-        # Bind resize events
-        self.resize_frame.bind("<Button-1>", self.start_resize)
-        self.resize_frame.bind("<B1-Motion>", self.do_resize)
-        resize_grip.bind("<Button-1>", self.start_resize)
-        resize_grip.bind("<B1-Motion>", self.do_resize)
+        def release(event):
+            self.resize_edges = ""
+
+        frame.bind("<Button-1>", start)
+        frame.bind("<B1-Motion>", drag)
+        frame.bind("<ButtonRelease-1>", release)
 
     def toggle_settings(self):
         """Toggle between text view and settings panel."""
@@ -245,6 +394,312 @@ class ScreenPromptWindow:
             self.text_widget.pack_forget()
             if self.settings_panel:
                 self.settings_panel.show()
+
+    def _apply_font(self, family: str, size: int) -> None:
+        """Apply font changes to text widget for real-time preview."""
+        self.text_widget.configure(font=(family, size))
+
+    def _apply_text_color(self, hex_color: str) -> None:
+        """Apply text color change to text widget for real-time preview."""
+        self.text_widget.configure(fg=hex_color)
+
+    def _apply_bg_color(self, hex_color: str) -> None:
+        """Apply background color change to text widget for real-time preview."""
+        self.text_widget.configure(bg=hex_color)
+
+    def _decrease_font_size(self) -> None:
+        """Decrease font size by 1 (minimum 8)."""
+        current_size = self.config.get("font_size", 11)
+        new_size = max(8, current_size - 1)
+        if new_size != current_size:
+            self._set_font_size(new_size)
+
+    def _increase_font_size(self) -> None:
+        """Increase font size by 1 (maximum 48)."""
+        current_size = self.config.get("font_size", 11)
+        new_size = min(48, current_size + 1)
+        if new_size != current_size:
+            self._set_font_size(new_size)
+
+    def _set_font_size(self, size: int) -> None:
+        """Set font size and save to config."""
+        self.config["font_size"] = size
+        family = self.config.get("font_family", "Consolas")
+        self.text_widget.configure(font=(family, size))
+        save_config(self.config)
+
+    def _toggle_lock(self) -> None:
+        """Toggle mouse pass-through (click-through) mode."""
+        self.locked = not self.locked
+        self._apply_lock_state()
+        self.config["locked"] = self.locked
+        save_config(self.config)
+
+    def _apply_lock_state(self) -> None:
+        """Apply the current lock state to the window."""
+        hwnd = get_hwnd(self.root)
+        ex_style = user32.GetWindowLongPtrW(hwnd, GWL_EXSTYLE)
+
+        if self.locked:
+            # Enable click-through: add WS_EX_TRANSPARENT
+            user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_TRANSPARENT)
+            self.lock_btn.configure(
+                text=" \U0001F512 ",  # Locked icon
+                fg="#ffaa00"
+            )
+        else:
+            # Disable click-through: remove WS_EX_TRANSPARENT
+            user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex_style & ~WS_EX_TRANSPARENT)
+            self.lock_btn.configure(
+                text=" \U0001F513 ",  # Unlocked icon
+                fg="#aaaaaa"
+            )
+
+    # ========== HOTKEY SYSTEM ==========
+
+    def setup_hotkeys(self) -> None:
+        """Register all global hotkeys."""
+        if not HOTKEYS_AVAILABLE:
+            return
+
+        # Phase 1: Essential shortcuts
+        keyboard.add_hotkey("ctrl+shift+h", self._hotkey_toggle_visibility)
+        keyboard.add_hotkey("ctrl+shift+l", self._hotkey_toggle_lock)
+        keyboard.add_hotkey("ctrl+shift+e", self._hotkey_quick_edit)
+        keyboard.add_hotkey("escape", self._hotkey_emergency_unlock)
+
+        # Phase 2: Font size
+        keyboard.add_hotkey("ctrl+shift+=", self._hotkey_increase_font)
+        keyboard.add_hotkey("ctrl+shift+-", self._hotkey_decrease_font)
+        keyboard.add_hotkey("ctrl+shift+0", self._hotkey_reset_font)
+
+        # Phase 2: Opacity
+        keyboard.add_hotkey("ctrl+shift+o", self._hotkey_cycle_opacity)
+
+        # Phase 2: Position presets (numpad style)
+        keyboard.add_hotkey("ctrl+shift+1", lambda: self._hotkey_position_preset(0, 2))  # Bottom-left
+        keyboard.add_hotkey("ctrl+shift+2", lambda: self._hotkey_position_preset(1, 2))  # Bottom-center
+        keyboard.add_hotkey("ctrl+shift+3", lambda: self._hotkey_position_preset(2, 2))  # Bottom-right
+        keyboard.add_hotkey("ctrl+shift+4", lambda: self._hotkey_position_preset(0, 1))  # Center-left
+        keyboard.add_hotkey("ctrl+shift+5", lambda: self._hotkey_position_preset(1, 1))  # Center
+        keyboard.add_hotkey("ctrl+shift+6", lambda: self._hotkey_position_preset(2, 1))  # Center-right
+        keyboard.add_hotkey("ctrl+shift+7", lambda: self._hotkey_position_preset(0, 0))  # Top-left
+        keyboard.add_hotkey("ctrl+shift+8", lambda: self._hotkey_position_preset(1, 0))  # Top-center
+        keyboard.add_hotkey("ctrl+shift+9", lambda: self._hotkey_position_preset(2, 0))  # Top-right
+
+        # Phase 2: Nudge window
+        keyboard.add_hotkey("ctrl+shift+up", lambda: self._hotkey_nudge(0, -20))
+        keyboard.add_hotkey("ctrl+shift+down", lambda: self._hotkey_nudge(0, 20))
+        keyboard.add_hotkey("ctrl+shift+left", lambda: self._hotkey_nudge(-20, 0))
+        keyboard.add_hotkey("ctrl+shift+right", lambda: self._hotkey_nudge(20, 0))
+
+        # Application shortcuts
+        keyboard.add_hotkey("ctrl+shift+,", self._hotkey_toggle_settings)
+        keyboard.add_hotkey("ctrl+shift+r", self._hotkey_reset_geometry)
+        keyboard.add_hotkey("ctrl+shift+q", self._hotkey_quit)
+
+        # Text shortcuts
+        keyboard.add_hotkey("ctrl+shift+c", self._hotkey_copy_all)
+        keyboard.add_hotkey("ctrl+shift+v", self._hotkey_paste_replace)
+        keyboard.add_hotkey("ctrl+shift+delete", self._hotkey_clear_text)
+
+    def cleanup_hotkeys(self) -> None:
+        """Unregister all global hotkeys."""
+        if HOTKEYS_AVAILABLE:
+            keyboard.unhook_all_hotkeys()
+
+    def _run_in_main_thread(self, func) -> None:
+        """Schedule a function to run in the Tkinter main thread."""
+        self.root.after(0, func)
+
+    # --- Phase 1: Essential shortcuts ---
+
+    def _hotkey_toggle_visibility(self) -> None:
+        """Toggle window visibility (Ctrl+Shift+H)."""
+        def toggle():
+            if self.visible:
+                self.root.withdraw()
+                self.visible = False
+            else:
+                self.root.deiconify()
+                self.root.lift()
+                self.visible = True
+        self._run_in_main_thread(toggle)
+
+    def _hotkey_toggle_lock(self) -> None:
+        """Toggle lock/click-through mode (Ctrl+Shift+L)."""
+        self._run_in_main_thread(self._toggle_lock)
+
+    def _hotkey_quick_edit(self) -> None:
+        """Quick edit mode - unlock, focus, auto-relock on blur (Ctrl+Shift+E)."""
+        def start_quick_edit():
+            # Remember if we were locked
+            was_locked = self.locked
+
+            # Unlock if needed
+            if self.locked:
+                self._toggle_lock()
+
+            # Show and focus
+            if not self.visible:
+                self.root.deiconify()
+                self.visible = True
+
+            self.root.lift()
+            self.text_widget.focus_set()
+
+            # Setup auto-relock on focus loss
+            if was_locked:
+                self.quick_edit_mode = True
+
+                def on_focus_out(event):
+                    if self.quick_edit_mode:
+                        self.quick_edit_mode = False
+                        self._toggle_lock()
+                        self.text_widget.unbind("<FocusOut>")
+
+                self.text_widget.bind("<FocusOut>", on_focus_out)
+
+        self._run_in_main_thread(start_quick_edit)
+
+    def _hotkey_emergency_unlock(self) -> None:
+        """Emergency unlock - always unlocks (Escape)."""
+        def unlock():
+            if self.locked:
+                self._toggle_lock()
+            self.quick_edit_mode = False
+        self._run_in_main_thread(unlock)
+
+    # --- Phase 2: Font size shortcuts ---
+
+    def _hotkey_increase_font(self) -> None:
+        """Increase font size (Ctrl+Shift+=)."""
+        self._run_in_main_thread(self._increase_font_size)
+
+    def _hotkey_decrease_font(self) -> None:
+        """Decrease font size (Ctrl+Shift+-)."""
+        self._run_in_main_thread(self._decrease_font_size)
+
+    def _hotkey_reset_font(self) -> None:
+        """Reset font size to default (Ctrl+Shift+0)."""
+        def reset():
+            self._set_font_size(DEFAULT_CONFIG["font_size"])
+        self._run_in_main_thread(reset)
+
+    # --- Phase 2: Opacity shortcut ---
+
+    def _hotkey_cycle_opacity(self) -> None:
+        """Cycle through opacity levels (Ctrl+Shift+O)."""
+        def cycle():
+            self.opacity_index = (self.opacity_index + 1) % len(self.OPACITY_LEVELS)
+            opacity = self.OPACITY_LEVELS[self.opacity_index]
+            self.root.attributes("-alpha", opacity)
+            self.config["opacity"] = opacity
+            save_config(self.config)
+        self._run_in_main_thread(cycle)
+
+    # --- Phase 2: Position presets ---
+
+    def _hotkey_position_preset(self, x_pos: int, y_pos: int) -> None:
+        """
+        Move window to position preset.
+        x_pos: 0=left, 1=center, 2=right
+        y_pos: 0=top, 1=center, 2=bottom
+        """
+        def move():
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            win_width = self.root.winfo_width()
+            win_height = self.root.winfo_height()
+
+            # Calculate x position
+            if x_pos == 0:  # Left
+                x = 20
+            elif x_pos == 1:  # Center
+                x = (screen_width - win_width) // 2
+            else:  # Right
+                x = screen_width - win_width - 20
+
+            # Calculate y position
+            if y_pos == 0:  # Top
+                y = 20
+            elif y_pos == 1:  # Center
+                y = (screen_height - win_height) // 2
+            else:  # Bottom
+                y = screen_height - win_height - 60  # Account for taskbar
+
+            self.root.geometry(f"+{x}+{y}")
+            self.config["x"] = x
+            self.config["y"] = y
+            save_config(self.config)
+        self._run_in_main_thread(move)
+
+    def _hotkey_nudge(self, dx: int, dy: int) -> None:
+        """Nudge window by delta pixels."""
+        def nudge():
+            x = self.root.winfo_x() + dx
+            y = self.root.winfo_y() + dy
+            self.root.geometry(f"+{x}+{y}")
+        self._run_in_main_thread(nudge)
+
+    # --- Application shortcuts ---
+
+    def _hotkey_toggle_settings(self) -> None:
+        """Toggle settings panel (Ctrl+Shift+,)."""
+        def toggle():
+            # Make sure window is visible first
+            if not self.visible:
+                self.root.deiconify()
+                self.visible = True
+            self.root.lift()
+            self.toggle_settings()
+        self._run_in_main_thread(toggle)
+
+    def _hotkey_reset_geometry(self) -> None:
+        """Reset window position and size to defaults (Ctrl+Shift+R)."""
+        def reset():
+            x = DEFAULT_CONFIG["x"]
+            y = DEFAULT_CONFIG["y"]
+            w = DEFAULT_CONFIG["width"]
+            h = DEFAULT_CONFIG["height"]
+            self.root.geometry(f"{w}x{h}+{x}+{y}")
+            self.config["x"] = x
+            self.config["y"] = y
+            self.config["width"] = w
+            self.config["height"] = h
+            save_config(self.config)
+        self._run_in_main_thread(reset)
+
+    def _hotkey_quit(self) -> None:
+        """Quit application (Ctrl+Shift+Q)."""
+        self._run_in_main_thread(self.on_close)
+
+    # --- Text shortcuts ---
+
+    def _hotkey_copy_all(self) -> None:
+        """Copy all text to clipboard (Ctrl+Shift+C)."""
+        def copy():
+            text = self.text_widget.get("1.0", tk.END).rstrip("\n")
+            self.root.clipboard_clear()
+            self.root.clipboard_append(text)
+        self._run_in_main_thread(copy)
+
+    def _hotkey_paste_replace(self) -> None:
+        """Paste and replace all text (Ctrl+Shift+V)."""
+        def paste():
+            try:
+                text = self.root.clipboard_get()
+                self.text_widget.delete("1.0", tk.END)
+                self.text_widget.insert("1.0", text)
+            except tk.TclError:
+                pass  # Clipboard empty or unavailable
+        self._run_in_main_thread(paste)
+
+    def _hotkey_clear_text(self) -> None:
+        """Clear all text (Ctrl+Shift+Delete)."""
+        def clear():
+            self.text_widget.delete("1.0", tk.END)
+        self._run_in_main_thread(clear)
 
     def on_settings_save(self):
         """Handle settings save - reload config and show text."""
@@ -287,24 +742,107 @@ class ScreenPromptWindow:
         self.root.geometry(f"+{x}+{y}")
 
     def start_resize(self, event):
-        """Initialize window resize operation."""
+        """Initialize window resize operation (for bottom resize bar)."""
+        self.resize_edges = "se"  # Bottom bar = southeast resize
+        self._start_edge_resize(event)
+
+    def do_resize(self, event):
+        """Handle window resizing (for bottom resize bar)."""
+        self._do_edge_resize(event)
+
+    def _detect_edge(self, event) -> str:
+        """
+        Detect which edge(s) the mouse is near.
+        Returns combination of: n, s, e, w (e.g., "nw" for top-left corner).
+        """
+        x, y = event.x, event.y
+        w = self.root.winfo_width()
+        h = self.root.winfo_height()
+        edge = ""
+
+        # Check vertical edges
+        if y < self.EDGE_SIZE:
+            edge += "n"
+        elif y > h - self.EDGE_SIZE:
+            edge += "s"
+
+        # Check horizontal edges
+        if x < self.EDGE_SIZE:
+            edge += "w"
+        elif x > w - self.EDGE_SIZE:
+            edge += "e"
+
+        return edge
+
+    def _on_root_button_press(self, event):
+        """Handle mouse button press on root window for edge resize."""
+        edge = self._detect_edge(event)
+        if edge:
+            self.resize_edges = edge
+            self._start_edge_resize(event)
+
+    def _on_root_button_motion(self, event):
+        """Handle mouse drag on root window for edge resize."""
+        if self.resize_edges:
+            self._do_edge_resize(event)
+
+    def _on_root_button_release(self, event):
+        """Handle mouse button release - end resize."""
+        self.resize_edges = ""
+
+    def _start_edge_resize(self, event):
+        """Initialize edge resize operation."""
         self.drag_data["x"] = event.x_root
         self.drag_data["y"] = event.y_root
         self.drag_data["width"] = self.root.winfo_width()
         self.drag_data["height"] = self.root.winfo_height()
+        self.drag_data["win_x"] = self.root.winfo_x()
+        self.drag_data["win_y"] = self.root.winfo_y()
 
-    def do_resize(self, event):
-        """Handle window resizing."""
+    def _do_edge_resize(self, event):
+        """Handle edge resize based on which edges are active."""
+        if not self.resize_edges:
+            return
+
         dx = event.x_root - self.drag_data["x"]
         dy = event.y_root - self.drag_data["y"]
 
-        new_width = max(200, self.drag_data["width"] + dx)
-        new_height = max(150, self.drag_data["height"] + dy)
+        new_x = self.drag_data["win_x"]
+        new_y = self.drag_data["win_y"]
+        new_w = self.drag_data["width"]
+        new_h = self.drag_data["height"]
 
-        self.root.geometry(f"{new_width}x{new_height}")
+        min_w, min_h = 200, 150
+
+        # Handle west (left) edge
+        if "w" in self.resize_edges:
+            potential_w = self.drag_data["width"] - dx
+            if potential_w >= min_w:
+                new_w = potential_w
+                new_x = self.drag_data["win_x"] + dx
+
+        # Handle east (right) edge
+        if "e" in self.resize_edges:
+            new_w = max(min_w, self.drag_data["width"] + dx)
+
+        # Handle north (top) edge
+        if "n" in self.resize_edges:
+            potential_h = self.drag_data["height"] - dy
+            if potential_h >= min_h:
+                new_h = potential_h
+                new_y = self.drag_data["win_y"] + dy
+
+        # Handle south (bottom) edge
+        if "s" in self.resize_edges:
+            new_h = max(min_h, self.drag_data["height"] + dy)
+
+        self.root.geometry(f"{new_w}x{new_h}+{new_x}+{new_y}")
 
     def on_close(self):
         """Save state and close the application."""
+        # Cleanup hotkeys
+        self.cleanup_hotkeys()
+
         # Update config with current state
         self.config["x"] = self.root.winfo_x()
         self.config["y"] = self.root.winfo_y()

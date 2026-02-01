@@ -83,3 +83,49 @@
 - References:
   - https://learn.microsoft.com/en-us/answers/questions/700122/setwindowdisplayaffinity-on-windows-11
   - https://github.com/electron/electron/issues/12973
+
+### Global Hotkeys (2026-02-01)
+- **Dependency**: `keyboard` library (`pip install keyboard`)
+- **Graceful degradation**: App works without hotkeys if library not installed
+- **Thread safety**: All hotkey callbacks use `root.after(0, func)` to run in main Tkinter thread
+- **Cleanup**: Must call `keyboard.unhook_all_hotkeys()` on app close
+
+**Essential Shortcuts (Phase 1):**
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Shift+H` | Hide/Show overlay |
+| `Ctrl+Shift+L` | Toggle lock (click-through) |
+| `Ctrl+Shift+E` | Quick edit (unlock→focus→auto-relock) |
+| `Escape` | Emergency unlock |
+
+**Font & Appearance (Phase 2):**
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Shift+=` | Increase font size |
+| `Ctrl+Shift+-` | Decrease font size |
+| `Ctrl+Shift+0` | Reset font size to default |
+| `Ctrl+Shift+O` | Cycle opacity (100%→85%→70%→50%) |
+
+**Position Presets (Numpad-style):**
+| Shortcut | Position |
+|----------|----------|
+| `Ctrl+Shift+7/8/9` | Top-left / Top-center / Top-right |
+| `Ctrl+Shift+4/5/6` | Center-left / Center / Center-right |
+| `Ctrl+Shift+1/2/3` | Bottom-left / Bottom-center / Bottom-right |
+| `Ctrl+Shift+Arrows` | Nudge window 20px |
+
+**Application & Text:**
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Shift+,` | Open settings |
+| `Ctrl+Shift+R` | Reset window geometry |
+| `Ctrl+Shift+Q` | Quit application |
+| `Ctrl+Shift+C` | Copy all text |
+| `Ctrl+Shift+V` | Paste and replace all |
+| `Ctrl+Shift+Delete` | Clear all text |
+
+### Mouse Pass-Through (Click-Through) Mode (2026-02-01)
+- **WinAPI**: Use `WS_EX_TRANSPARENT` extended window style
+- **Toggle**: Add/remove style with `SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ...)`
+- **Critical**: `Ctrl+Shift+L` hotkey essential - can't click unlock button when locked!
+- **Config key**: `"locked": false` in config.json

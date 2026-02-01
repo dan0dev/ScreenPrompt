@@ -52,6 +52,7 @@ DEFAULT_CONFIG = {
     # State
     "text": "Enter your prompt here...",
     "first_run_shown": False,
+    "locked": False,  # Mouse pass-through mode
 }
 
 
