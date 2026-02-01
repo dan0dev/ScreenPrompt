@@ -104,7 +104,7 @@ Settings are stored in `%APPDATA%\ScreenPrompt\config.json` and include:
 
 ## Known Limitations
 
-- **Browser-based screen sharing** (Google Meet, Discord Web, browser-based Teams) shows a black box instead of hiding the window. This is a limitation of the browser's `getDisplayMedia` API, not our software. Use native desktop applications (Zoom, OBS, Teams desktop) for proper capture exclusion.
+- **Browser-based screen sharing** (Google Meet, Discord Web, browser-based Teams) may occasionally show a black box instead of hiding the window. This occurs in roughly ~10% of cases due to how the browser's `getDisplayMedia` API interacts with Windows display affinity. Native desktop applications (Zoom, OBS, Teams desktop) provide the most reliable capture exclusion. *This behavior needs more testing - please [report your experience](../../issues/new?template=bug_report.md) to help us improve!*
 
 ## Intended Use and Ethical Notice
 
