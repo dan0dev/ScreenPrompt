@@ -33,10 +33,39 @@ Font/color pickers stubbed for Phase 2.
 
 import tkinter as tk
 from tkinter import ttk
+import ctypes
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Callable, Optional
+
+# WinAPI constants
+WDA_EXCLUDEFROMCAPTURE = 0x11
+
+
+def is_windows_compatible() -> bool:
+    """Check if Windows version supports WDA_EXCLUDEFROMCAPTURE (Build 2004+)."""
+    if sys.platform != "win32":
+        return False
+    # Build 2004 = 10.0.19041
+    version = sys.getwindowsversion()
+    return version.major >= 10 and version.build >= 19041
+
+
+def set_capture_exclude(hwnd: int) -> bool:
+    """
+    Apply WDA_EXCLUDEFROMCAPTURE to a window handle.
+    Returns True if successful, False otherwise.
+    """
+    if not is_windows_compatible():
+        return False
+    try:
+        user32 = ctypes.windll.user32
+        result = user32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)
+        return result != 0
+    except Exception:
+        return False
 
 
 def get_config_path() -> Path:
@@ -131,6 +160,10 @@ class SettingsDialog:
         x = self.parent.winfo_x() + (self.parent.winfo_width() // 2) - 175
         y = self.parent.winfo_y() + (self.parent.winfo_height() // 2) - 150
         self.dialog.geometry(f"+{x}+{y}")
+
+        # Exclude from screen capture (Zoom, Teams, OBS, etc.)
+        hwnd = self.dialog.winfo_id()
+        set_capture_exclude(hwnd)
 
         self._build_ui()
 
@@ -256,6 +289,14 @@ if __name__ == "__main__":
     root = tk.Tk()
     root.title("ScreenPrompt (Test)")
     root.geometry("400x200")
+
+    # Exclude main test window from capture
+    root.update_idletasks()
+    hwnd = root.winfo_id()
+    if set_capture_exclude(hwnd):
+        print("Capture exclusion enabled for test window")
+    else:
+        print("Warning: Capture exclusion not available (requires Win10 2004+)")
 
     def update_opacity(val: float) -> None:
         print(f"Opacity changed to: {val:.0%}")
