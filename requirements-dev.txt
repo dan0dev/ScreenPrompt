@@ -1,0 +1,11 @@
+# ScreenPrompt development dependencies
+
+# Include runtime dependencies
+-r requirements.txt
+
+# Building
+pyinstaller>=6.0
+pillow>=10.0  # For icon generation
+
+# Testing
+pytest>=7.0

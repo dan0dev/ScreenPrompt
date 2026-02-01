@@ -3,3 +3,6 @@
 
 # Optional: Global hotkeys support
 keyboard>=0.13.5
+
+# Development dependencies (for building)
+# pip install -r requirements-dev.txt

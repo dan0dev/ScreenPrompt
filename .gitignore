@@ -39,10 +39,9 @@ htmlcov/
 
 # ScreenPrompt specific
 *.msi
-*.exe
 
-# Build artifacts
-*.spec
+# Executables (keep .spec for reproducible builds)
+*.exe
 
 # Local settings (Claude Code)
 .claude/settings.local.json
