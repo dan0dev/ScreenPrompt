@@ -148,6 +148,9 @@ class ScreenPromptWindow:
         self.setup_widgets()
         self.apply_capture_exclusion()
 
+        # Re-apply opacity after capture exclusion (SetLayeredWindowAttributes resets it)
+        self.root.attributes("-alpha", self.config["opacity"])
+
         # Apply saved lock state if enabled
         if self.locked:
             self._apply_lock_state()
@@ -331,10 +334,10 @@ class ScreenPromptWindow:
         plus_btn.bind("<Enter>", lambda e: plus_btn.configure(bg="#555555", fg="#ffffff"))
         plus_btn.bind("<Leave>", lambda e: plus_btn.configure(bg="#333333", fg="#aaaaaa"))
 
-        # Clear/bin button
+        # Clear/reset button
         clear_btn = tk.Label(
             self.bottom_bar,
-            text=" bin ",
+            text=" reset ",
             bg="#333333",
             fg="#aaaaaa",
             font=("Segoe UI", 8)
