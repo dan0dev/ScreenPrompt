@@ -50,7 +50,7 @@ DEFAULT_CONFIG = {
     "font_color": "#FFFFFF",
     "bg_color": "#2d2d2d",
     # State
-    "text": "Enter your prompt here...",
+    "text": "",  # Empty default - placeholder shown in UI
     "first_run_shown": False,
     "locked": False,  # Mouse pass-through mode
 }

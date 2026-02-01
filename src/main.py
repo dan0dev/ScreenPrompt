@@ -115,6 +115,10 @@ class ScreenPromptWindow:
     # Nudge distance in pixels
     NUDGE_DISTANCE = 20
 
+    # Placeholder text
+    PLACEHOLDER_TEXT = "Enter your prompt here..."
+    PLACEHOLDER_COLOR = "#888888"
+
     def __init__(self):
         self.config = load_config()
         self.drag_data = {"x": 0, "y": 0}
@@ -124,6 +128,7 @@ class ScreenPromptWindow:
         self.visible = True
         self.quick_edit_mode = False
         self.opacity_index = 0  # Index into OPACITY_LEVELS
+        self.placeholder_active = False  # Track if placeholder is showing
 
         # Resize state: which edges are being resized
         # Can be combination of: "n", "s", "e", "w"
@@ -346,11 +351,14 @@ class ScreenPromptWindow:
         self.content_frame = tk.Frame(self.inner_container, bg="#1e1e1e")
         self.content_frame.pack(fill=tk.BOTH, expand=True)
 
+        # Store original text color for placeholder toggling
+        self.text_color = self.config.get("font_color", "#ffffff")
+
         # Text widget for prompt content
         self.text_widget = tk.Text(
             self.content_frame,
             bg=self.config.get("bg_color", "#2d2d2d"),
-            fg=self.config.get("font_color", "#ffffff"),
+            fg=self.text_color,
             insertbackground="#ffffff",
             font=(
                 self.config.get("font_family", "Consolas"),
@@ -365,8 +373,16 @@ class ScreenPromptWindow:
         )
         self.text_widget.pack(fill=tk.BOTH, expand=True, padx=2, pady=(0, 2))
 
-        # Load saved text
-        self.text_widget.insert("1.0", self.config.get("text", ""))
+        # Load saved text or show placeholder
+        saved_text = self.config.get("text", "")
+        if saved_text:
+            self.text_widget.insert("1.0", saved_text)
+        else:
+            self._show_placeholder()
+
+        # Bind focus events for placeholder behavior
+        self.text_widget.bind("<FocusIn>", self._on_text_focus_in)
+        self.text_widget.bind("<FocusOut>", self._on_text_focus_out)
 
         # Create settings panel (hidden initially)
         self.settings_panel = SettingsPanel(
@@ -413,11 +429,44 @@ class ScreenPromptWindow:
 
     def _apply_text_color(self, hex_color: str) -> None:
         """Apply text color change to text widget for real-time preview."""
-        self.text_widget.configure(fg=hex_color)
+        self.text_color = hex_color
+        if not self.placeholder_active:
+            self.text_widget.configure(fg=hex_color)
 
     def _apply_bg_color(self, hex_color: str) -> None:
         """Apply background color change to text widget for real-time preview."""
         self.text_widget.configure(bg=hex_color)
+
+    def _show_placeholder(self) -> None:
+        """Show placeholder text in the text widget."""
+        self.text_widget.delete("1.0", tk.END)
+        self.text_widget.insert("1.0", self.PLACEHOLDER_TEXT)
+        self.text_widget.configure(fg=self.PLACEHOLDER_COLOR)
+        self.placeholder_active = True
+
+    def _hide_placeholder(self) -> None:
+        """Hide placeholder and restore normal text color."""
+        if self.placeholder_active:
+            self.text_widget.delete("1.0", tk.END)
+            self.text_widget.configure(fg=self.text_color)
+            self.placeholder_active = False
+
+    def _on_text_focus_in(self, event=None) -> None:
+        """Handle text widget gaining focus - hide placeholder."""
+        if self.placeholder_active:
+            self._hide_placeholder()
+
+    def _on_text_focus_out(self, event=None) -> None:
+        """Handle text widget losing focus - show placeholder if empty."""
+        content = self.text_widget.get("1.0", tk.END).strip()
+        if not content:
+            self._show_placeholder()
+
+    def _get_text_content(self) -> str:
+        """Get text content, returning empty string if placeholder is active."""
+        if self.placeholder_active:
+            return ""
+        return self.text_widget.get("1.0", tk.END).rstrip("\n")
 
     def _decrease_font_size(self) -> None:
         """Decrease font size by 1 (minimum 8)."""
@@ -708,9 +757,10 @@ class ScreenPromptWindow:
     def _hotkey_copy_all(self) -> None:
         """Copy all text to clipboard (Ctrl+Shift+C)."""
         def copy():
-            text = self.text_widget.get("1.0", tk.END).rstrip("\n")
-            self.root.clipboard_clear()
-            self.root.clipboard_append(text)
+            text = self._get_text_content()  # Don't copy placeholder
+            if text:
+                self.root.clipboard_clear()
+                self.root.clipboard_append(text)
         self._run_in_main_thread(copy)
 
     def _hotkey_paste_replace(self) -> None:
@@ -718,6 +768,7 @@ class ScreenPromptWindow:
         def paste():
             try:
                 text = self.root.clipboard_get()
+                self._hide_placeholder()  # Clear placeholder first
                 self.text_widget.delete("1.0", tk.END)
                 self.text_widget.insert("1.0", text)
             except tk.TclError:
@@ -727,7 +778,7 @@ class ScreenPromptWindow:
     def _hotkey_clear_text(self) -> None:
         """Clear all text (Ctrl+Shift+Delete)."""
         def clear():
-            self.text_widget.delete("1.0", tk.END)
+            self._show_placeholder()  # Clear and show placeholder
         self._run_in_main_thread(clear)
 
     def on_settings_save(self):
@@ -837,7 +888,7 @@ class ScreenPromptWindow:
         self.config["y"] = self.root.winfo_y()
         self.config["width"] = self.root.winfo_width()
         self.config["height"] = self.root.winfo_height()
-        self.config["text"] = self.text_widget.get("1.0", tk.END).rstrip("\n")
+        self.config["text"] = self._get_text_content()  # Don't save placeholder
 
         # Save config
         save_config(self.config)
