@@ -250,7 +250,8 @@ class SettingsDialog:
             to=1.0,
             orient=tk.HORIZONTAL,
             variable=self.opacity_var,
-            command=self._on_opacity_slide
+            command=self._on_opacity_slide,
+            cursor="hand2"
         )
         opacity_slider.pack(fill=tk.X, side=tk.LEFT, expand=True)
 
@@ -290,14 +291,16 @@ class SettingsDialog:
         cancel_btn = ttk.Button(
             button_frame,
             text="Cancel",
-            command=self._on_cancel
+            command=self._on_cancel,
+            cursor="hand2"
         )
         cancel_btn.pack(side=tk.RIGHT, padx=(5, 0))
 
         save_btn = ttk.Button(
             button_frame,
             text="Save",
-            command=self._on_save
+            command=self._on_save,
+            cursor="hand2"
         )
         save_btn.pack(side=tk.RIGHT)
 
@@ -359,7 +362,7 @@ if __name__ == "__main__":
         else:
             print("Settings cancelled.")
 
-    ttk.Button(root, text="Open Settings", command=open_settings).pack(pady=50)
+    ttk.Button(root, text="Open Settings", command=open_settings, cursor="hand2").pack(pady=50)
 
     # Apply saved opacity on start
     config = load_config()
