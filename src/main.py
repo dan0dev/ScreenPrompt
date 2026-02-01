@@ -50,10 +50,11 @@ from config_manager import (
 )
 from settings_ui import SettingsPanel, get_hwnd, set_capture_exclude
 
-# WinAPI constants for click-through
+# WinAPI constants for click-through and hiding from taskbar/alt-tab
 GWL_EXSTYLE = -20
 WS_EX_TRANSPARENT = 0x00000020
 WS_EX_LAYERED = 0x00080000
+WS_EX_TOOLWINDOW = 0x00000080  # Hides from taskbar and Alt+Tab
 
 # Load user32.dll
 user32 = ctypes.windll.user32
@@ -829,6 +830,10 @@ class ScreenPromptWindow:
         hwnd = get_hwnd(self.root)
         if not set_capture_exclude(hwnd):
             print("Warning: SetWindowDisplayAffinity failed")
+
+        # Hide from taskbar and Alt+Tab
+        ex_style = user32.GetWindowLongPtrW(hwnd, GWL_EXSTYLE)
+        user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_TOOLWINDOW)
 
     def start_drag(self, event):
         """Initialize window drag operation."""
