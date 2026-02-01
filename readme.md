@@ -6,7 +6,12 @@ A transparent overlay window for Windows that is **invisible to screen capture s
 ![Python](https://img.shields.io/badge/Python-3.10%2B-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-![ScreenPrompt Demo](https://github.com/dan0dev/ScreenPrompt/blob/main/hero-video%20(1).gif)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dan0dev/ScreenPrompt/main/hero-video%20(1).gif"
+       width="900"
+       alt="ScreenPrompt Demo">
+</p>
+
 
 ## Features
 
