@@ -60,3 +60,7 @@ mvp-ui/
 planning/
 winapi-tests/
 usage.txt
+
+# Internal development files (keep local only)
+CLAUDE.md
+ScreenPrompt_Project_Spec_2026-02-01.md
