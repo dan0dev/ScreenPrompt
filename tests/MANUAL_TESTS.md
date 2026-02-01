@@ -140,17 +140,16 @@
 
 **Steps:**
 1. Launch ScreenPrompt
-2. Click the gear icon to open Settings
-3. Change opacity to 0.7
-4. Click Save
-5. Move window to specific position
-6. Close ScreenPrompt
-7. Reopen ScreenPrompt
+2. Change opacity to 0.7
+3. Change font size to 18
+4. Move window to specific position
+5. Close ScreenPrompt
+6. Reopen ScreenPrompt
 
 **Expected Result:**
 - [ ] Opacity restored to 0.7
+- [ ] Font size restored to 18
 - [ ] Window position restored
-- [ ] Text content preserved
 - [ ] All other settings preserved
 
 **Notes:** _______________________________
@@ -162,7 +161,7 @@
 **Objective:** Verify opacity slider respects 0.5-1.0 range.
 
 **Steps:**
-1. Click gear icon to open Settings dialog
+1. Open Settings dialog
 2. Try to set opacity below 0.5
 3. Try to set opacity above 1.0
 4. Set opacity to 0.5 and verify readability
@@ -172,6 +171,75 @@
 - [ ] Slider maximum is 1.0
 - [ ] Text remains readable at 0.5 opacity
 - [ ] Changes apply in real-time (preview)
+
+**Notes:** _______________________________
+
+---
+
+## Test 9: Settings Dialog Capture Exclusion
+
+**Objective:** Verify Settings dialog is hidden from screen capture (Zoom, Teams, OBS).
+
+### Test 9a: Settings Dialog in Zoom
+
+**Steps:**
+1. Launch ScreenPrompt
+2. Open Zoom and start a meeting (can be solo)
+3. Click "Share Screen" and select your desktop
+4. While sharing, open ScreenPrompt Settings dialog
+5. Observe both your screen and Zoom's shared preview
+
+**Expected Result:**
+- [ ] Settings dialog visible on your actual screen
+- [ ] Settings dialog NOT visible in Zoom's shared view
+- [ ] No black rectangle where Settings dialog was
+- [ ] Dialog remains functional while sharing
+
+**Notes:** _______________________________
+
+### Test 9b: Settings Dialog in Teams
+
+**Steps:**
+1. Launch ScreenPrompt
+2. Open Teams and start a call/meeting
+3. Click "Share" and select screen
+4. While sharing, open ScreenPrompt Settings dialog
+5. Check shared view or ask participant to confirm
+
+**Expected Result:**
+- [ ] Settings dialog visible locally
+- [ ] Settings dialog NOT visible to participants
+- [ ] No visual artifacts in shared content
+
+**Notes:** _______________________________
+
+### Test 9c: Settings Dialog in OBS
+
+**Steps:**
+1. Launch ScreenPrompt
+2. Open OBS Studio with Display Capture source
+3. Open ScreenPrompt Settings dialog
+4. Check OBS preview window
+
+**Expected Result:**
+- [ ] Settings dialog visible on display
+- [ ] Settings dialog NOT visible in OBS preview
+- [ ] Recording does not capture Settings dialog
+
+**Notes:** _______________________________
+
+### Test 9d: Settings Dialog with Snipping Tool
+
+**Steps:**
+1. Launch ScreenPrompt and open Settings dialog
+2. Position Settings dialog clearly visible
+3. Press Win+Shift+S to capture area including dialog
+4. Paste screenshot into Paint
+
+**Expected Result:**
+- [ ] Settings dialog visible during selection
+- [ ] Settings dialog NOT in captured screenshot
+- [ ] No artifacts where dialog was
 
 **Notes:** _______________________________
 
@@ -189,6 +257,10 @@
 | 6. Ethical Popup | [ ] | [ ] | |
 | 7. Settings Persistence | [ ] | [ ] | |
 | 8. Opacity Range | [ ] | [ ] | |
+| 9a. Settings Dialog - Zoom | [ ] | [ ] | |
+| 9b. Settings Dialog - Teams | [ ] | [ ] | |
+| 9c. Settings Dialog - OBS | [ ] | [ ] | |
+| 9d. Settings Dialog - Snipping | [ ] | [ ] | |
 
 **Tested By:** _______________________________
 
