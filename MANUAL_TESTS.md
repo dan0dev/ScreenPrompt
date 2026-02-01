@@ -176,6 +176,89 @@
 
 ---
 
+## Test 9: Settings Dialog Capture Exclusion
+
+**Objective:** Verify Settings dialog is hidden from screen capture (Zoom, Teams, OBS).
+
+**Black Box Fix Verification:** The dialog should be INVISIBLE (transparent), NOT a black rectangle.
+If you see a black box where the dialog should be, the fix is not working correctly.
+
+**Technical Background:** `SetWindowDisplayAffinity` requires `SetLayeredWindowAttributes` style,
+not `UpdateLayeredWindow` (per-pixel transparency). The 3-step process is:
+1. Add `WS_EX_LAYERED` extended style
+2. Apply `SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA)`
+3. Apply `SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)`
+
+### Test 9a: Settings Dialog in Zoom
+
+**Steps:**
+1. Launch ScreenPrompt
+2. Open Zoom and start a meeting (can be solo)
+3. Click "Share Screen" and select your desktop
+4. While sharing, open ScreenPrompt Settings dialog
+5. Observe both your screen and Zoom's shared preview
+
+**Expected Result:**
+- [ ] Settings dialog visible on your actual screen
+- [ ] Settings dialog NOT visible in Zoom's shared view
+- [ ] **NO BLACK BOX** where Settings dialog was (critical!)
+- [ ] Background behind dialog is visible in capture
+- [ ] Dialog remains functional while sharing
+
+**Notes:** _______________________________
+
+### Test 9b: Settings Dialog in Teams
+
+**Steps:**
+1. Launch ScreenPrompt
+2. Open Teams and start a call/meeting
+3. Click "Share" and select screen
+4. While sharing, open ScreenPrompt Settings dialog
+5. Check shared view or ask participant to confirm
+
+**Expected Result:**
+- [ ] Settings dialog visible locally
+- [ ] Settings dialog NOT visible to participants
+- [ ] **NO BLACK BOX** - area should show background content
+- [ ] No visual artifacts in shared content
+
+**Notes:** _______________________________
+
+### Test 9c: Settings Dialog in OBS
+
+**Steps:**
+1. Launch ScreenPrompt
+2. Open OBS Studio with Display Capture source
+3. Open ScreenPrompt Settings dialog
+4. Check OBS preview window
+
+**Expected Result:**
+- [ ] Settings dialog visible on display
+- [ ] Settings dialog NOT visible in OBS preview
+- [ ] **NO BLACK BOX** in OBS preview (this was the original bug!)
+- [ ] Recording does not capture Settings dialog
+- [ ] Background content visible where dialog is
+
+**Notes:** _______________________________
+
+### Test 9d: Settings Dialog with Snipping Tool
+
+**Steps:**
+1. Launch ScreenPrompt and open Settings dialog
+2. Position Settings dialog clearly visible
+3. Press Win+Shift+S to capture area including dialog
+4. Paste screenshot into Paint
+
+**Expected Result:**
+- [ ] Settings dialog visible during selection
+- [ ] Settings dialog NOT in captured screenshot
+- [ ] **NO BLACK BOX** - background visible in screenshot
+- [ ] No artifacts where dialog was
+
+**Notes:** _______________________________
+
+---
+
 ## Test Summary
 
 | Test | Pass | Fail | Notes |
@@ -188,6 +271,10 @@
 | 6. Ethical Popup | [ ] | [ ] | |
 | 7. Settings Persistence | [ ] | [ ] | |
 | 8. Opacity Range | [ ] | [ ] | |
+| 9a. Settings Dialog - Zoom | [ ] | [ ] | |
+| 9b. Settings Dialog - Teams | [ ] | [ ] | |
+| 9c. Settings Dialog - OBS | [ ] | [ ] | |
+| 9d. Settings Dialog - Snipping | [ ] | [ ] | |
 
 **Tested By:** _______________________________
 
@@ -213,6 +300,29 @@
 - Some older capture methods may not respect `WDA_EXCLUDEFROMCAPTURE`
 - Window Capture (vs Display Capture) may behave differently
 - Hardware-accelerated capture may have different behavior
+
+### Black box instead of invisible window
+
+**Root Cause:** Per-pixel transparency (`UpdateLayeredWindow`) is incompatible with `SetWindowDisplayAffinity`.
+
+**Fix:** Must use `SetLayeredWindowAttributes` style instead. The 3-step process:
+```python
+# Step 1: Add WS_EX_LAYERED style
+ex_style = user32.GetWindowLongPtrW(hwnd, GWL_EXSTYLE)
+user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_LAYERED)
+
+# Step 2: Use SetLayeredWindowAttributes (NOT UpdateLayeredWindow)
+user32.SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA)
+
+# Step 3: NOW apply capture exclusion
+user32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)
+```
+
+**Verification:**
+1. Check that all 3 steps are being called
+2. Verify step order (layered attrs BEFORE display affinity)
+3. Use `c_void_p` for HWND on 64-bit (not `c_int`)
+4. Reference: https://learn.microsoft.com/en-us/answers/questions/700122/setwindowdisplayaffinity-on-windows-11
 
 ### Settings not saving
 
