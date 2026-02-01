@@ -8,22 +8,55 @@ build/
 dist/
 *.egg-info/
 .eggs/
+*.egg
 
 # Virtual environments
 venv/
 .venv/
 ENV/
+env/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
 
 # ScreenPrompt specific
 *.msi
 *.exe
+
+# Build artifacts
+*.spec
+
+# Local settings (Claude Code)
+.claude/settings.local.json
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Git worktrees (development branches)
+mvp-core/
+mvp-ui/
+planning/
+winapi-tests/

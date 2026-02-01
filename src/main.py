@@ -104,6 +104,17 @@ class ScreenPromptWindow:
     # Edge detection threshold in pixels
     EDGE_SIZE = 6
 
+    # Window constraints
+    MIN_WIDTH = 200
+    MIN_HEIGHT = 150
+
+    # Position margins
+    SCREEN_MARGIN = 20
+    TASKBAR_HEIGHT = 60
+
+    # Nudge distance in pixels
+    NUDGE_DISTANCE = 20
+
     def __init__(self):
         self.config = load_config()
         self.drag_data = {"x": 0, "y": 0}
@@ -282,7 +293,7 @@ class ScreenPromptWindow:
         # Minus button
         minus_btn = tk.Label(
             font_controls,
-            text=" − ",
+            text=" - ",
             bg="#333333",
             fg="#aaaaaa",
             font=("Segoe UI", 10, "bold")
@@ -348,6 +359,7 @@ class ScreenPromptWindow:
             wrap=tk.WORD,
             borderwidth=0,
             highlightthickness=0,
+            cursor="arrow",
             padx=10,
             pady=10
         )
@@ -462,46 +474,56 @@ class ScreenPromptWindow:
         if not HOTKEYS_AVAILABLE:
             return
 
+        def safe_add_hotkey(hotkey: str, callback, description: str = "") -> bool:
+            """Safely register a hotkey, returning False on failure."""
+            try:
+                keyboard.add_hotkey(hotkey, callback)
+                return True
+            except Exception as e:
+                print(f"Warning: Failed to register hotkey '{hotkey}' ({description}): {e}")
+                return False
+
         # Phase 1: Essential shortcuts
-        keyboard.add_hotkey("ctrl+shift+h", self._hotkey_toggle_visibility)
-        keyboard.add_hotkey("ctrl+shift+l", self._hotkey_toggle_lock)
-        keyboard.add_hotkey("ctrl+shift+e", self._hotkey_quick_edit)
-        keyboard.add_hotkey("escape", self._hotkey_emergency_unlock)
+        safe_add_hotkey("ctrl+shift+h", self._hotkey_toggle_visibility, "toggle visibility")
+        safe_add_hotkey("ctrl+shift+l", self._hotkey_toggle_lock, "toggle lock")
+        safe_add_hotkey("ctrl+shift+e", self._hotkey_quick_edit, "quick edit")
+        safe_add_hotkey("escape", self._hotkey_emergency_unlock, "emergency unlock")
 
         # Phase 2: Font size
-        keyboard.add_hotkey("ctrl+shift+=", self._hotkey_increase_font)
-        keyboard.add_hotkey("ctrl+shift+-", self._hotkey_decrease_font)
-        keyboard.add_hotkey("ctrl+shift+0", self._hotkey_reset_font)
+        safe_add_hotkey("ctrl+shift+plus", self._hotkey_increase_font, "increase font")
+        safe_add_hotkey("ctrl+shift+minus", self._hotkey_decrease_font, "decrease font")
+        safe_add_hotkey("ctrl+shift+0", self._hotkey_reset_font, "reset font")
 
         # Phase 2: Opacity
-        keyboard.add_hotkey("ctrl+shift+o", self._hotkey_cycle_opacity)
+        safe_add_hotkey("ctrl+shift+o", self._hotkey_cycle_opacity, "cycle opacity")
 
         # Phase 2: Position presets (numpad style)
-        keyboard.add_hotkey("ctrl+shift+1", lambda: self._hotkey_position_preset(0, 2))  # Bottom-left
-        keyboard.add_hotkey("ctrl+shift+2", lambda: self._hotkey_position_preset(1, 2))  # Bottom-center
-        keyboard.add_hotkey("ctrl+shift+3", lambda: self._hotkey_position_preset(2, 2))  # Bottom-right
-        keyboard.add_hotkey("ctrl+shift+4", lambda: self._hotkey_position_preset(0, 1))  # Center-left
-        keyboard.add_hotkey("ctrl+shift+5", lambda: self._hotkey_position_preset(1, 1))  # Center
-        keyboard.add_hotkey("ctrl+shift+6", lambda: self._hotkey_position_preset(2, 1))  # Center-right
-        keyboard.add_hotkey("ctrl+shift+7", lambda: self._hotkey_position_preset(0, 0))  # Top-left
-        keyboard.add_hotkey("ctrl+shift+8", lambda: self._hotkey_position_preset(1, 0))  # Top-center
-        keyboard.add_hotkey("ctrl+shift+9", lambda: self._hotkey_position_preset(2, 0))  # Top-right
+        safe_add_hotkey("ctrl+shift+1", lambda: self._hotkey_position_preset(0, 2), "bottom-left")
+        safe_add_hotkey("ctrl+shift+2", lambda: self._hotkey_position_preset(1, 2), "bottom-center")
+        safe_add_hotkey("ctrl+shift+3", lambda: self._hotkey_position_preset(2, 2), "bottom-right")
+        safe_add_hotkey("ctrl+shift+4", lambda: self._hotkey_position_preset(0, 1), "center-left")
+        safe_add_hotkey("ctrl+shift+5", lambda: self._hotkey_position_preset(1, 1), "center")
+        safe_add_hotkey("ctrl+shift+6", lambda: self._hotkey_position_preset(2, 1), "center-right")
+        safe_add_hotkey("ctrl+shift+7", lambda: self._hotkey_position_preset(0, 0), "top-left")
+        safe_add_hotkey("ctrl+shift+8", lambda: self._hotkey_position_preset(1, 0), "top-center")
+        safe_add_hotkey("ctrl+shift+9", lambda: self._hotkey_position_preset(2, 0), "top-right")
 
         # Phase 2: Nudge window
-        keyboard.add_hotkey("ctrl+shift+up", lambda: self._hotkey_nudge(0, -20))
-        keyboard.add_hotkey("ctrl+shift+down", lambda: self._hotkey_nudge(0, 20))
-        keyboard.add_hotkey("ctrl+shift+left", lambda: self._hotkey_nudge(-20, 0))
-        keyboard.add_hotkey("ctrl+shift+right", lambda: self._hotkey_nudge(20, 0))
+        nd = self.NUDGE_DISTANCE
+        safe_add_hotkey("ctrl+shift+up", lambda: self._hotkey_nudge(0, -nd), "nudge up")
+        safe_add_hotkey("ctrl+shift+down", lambda: self._hotkey_nudge(0, nd), "nudge down")
+        safe_add_hotkey("ctrl+shift+left", lambda: self._hotkey_nudge(-nd, 0), "nudge left")
+        safe_add_hotkey("ctrl+shift+right", lambda: self._hotkey_nudge(nd, 0), "nudge right")
 
         # Application shortcuts
-        keyboard.add_hotkey("ctrl+shift+,", self._hotkey_toggle_settings)
-        keyboard.add_hotkey("ctrl+shift+r", self._hotkey_reset_geometry)
-        keyboard.add_hotkey("ctrl+shift+q", self._hotkey_quit)
+        safe_add_hotkey("ctrl+shift+comma", self._hotkey_toggle_settings, "toggle settings")
+        safe_add_hotkey("ctrl+shift+r", self._hotkey_reset_geometry, "reset geometry")
+        safe_add_hotkey("ctrl+shift+q", self._hotkey_quit, "quit")
 
         # Text shortcuts
-        keyboard.add_hotkey("ctrl+shift+c", self._hotkey_copy_all)
-        keyboard.add_hotkey("ctrl+shift+v", self._hotkey_paste_replace)
-        keyboard.add_hotkey("ctrl+shift+delete", self._hotkey_clear_text)
+        safe_add_hotkey("ctrl+shift+c", self._hotkey_copy_all, "copy all")
+        safe_add_hotkey("ctrl+shift+v", self._hotkey_paste_replace, "paste replace")
+        safe_add_hotkey("ctrl+shift+delete", self._hotkey_clear_text, "clear text")
 
     def cleanup_hotkeys(self) -> None:
         """Unregister all global hotkeys."""
@@ -550,6 +572,8 @@ class ScreenPromptWindow:
 
             # Setup auto-relock on focus loss
             if was_locked:
+                # Clear any previous binding first to prevent accumulation
+                self.text_widget.unbind("<FocusOut>")
                 self.quick_edit_mode = True
 
                 def on_focus_out(event):
@@ -611,22 +635,23 @@ class ScreenPromptWindow:
             screen_height = self.root.winfo_screenheight()
             win_width = self.root.winfo_width()
             win_height = self.root.winfo_height()
+            margin = self.SCREEN_MARGIN
 
             # Calculate x position
             if x_pos == 0:  # Left
-                x = 20
+                x = margin
             elif x_pos == 1:  # Center
                 x = (screen_width - win_width) // 2
             else:  # Right
-                x = screen_width - win_width - 20
+                x = screen_width - win_width - margin
 
             # Calculate y position
             if y_pos == 0:  # Top
-                y = 20
+                y = margin
             elif y_pos == 1:  # Center
                 y = (screen_height - win_height) // 2
             else:  # Bottom
-                y = screen_height - win_height - 60  # Account for taskbar
+                y = screen_height - win_height - self.TASKBAR_HEIGHT
 
             self.root.geometry(f"+{x}+{y}")
             self.config["x"] = x
@@ -635,11 +660,15 @@ class ScreenPromptWindow:
         self._run_in_main_thread(move)
 
     def _hotkey_nudge(self, dx: int, dy: int) -> None:
-        """Nudge window by delta pixels."""
+        """Nudge window by delta pixels and save position."""
         def nudge():
             x = self.root.winfo_x() + dx
             y = self.root.winfo_y() + dy
             self.root.geometry(f"+{x}+{y}")
+            # Save position to config
+            self.config["x"] = x
+            self.config["y"] = y
+            save_config(self.config)
         self._run_in_main_thread(nudge)
 
     # --- Application shortcuts ---
@@ -750,46 +779,6 @@ class ScreenPromptWindow:
         """Handle window resizing (for bottom resize bar)."""
         self._do_edge_resize(event)
 
-    def _detect_edge(self, event) -> str:
-        """
-        Detect which edge(s) the mouse is near.
-        Returns combination of: n, s, e, w (e.g., "nw" for top-left corner).
-        """
-        x, y = event.x, event.y
-        w = self.root.winfo_width()
-        h = self.root.winfo_height()
-        edge = ""
-
-        # Check vertical edges
-        if y < self.EDGE_SIZE:
-            edge += "n"
-        elif y > h - self.EDGE_SIZE:
-            edge += "s"
-
-        # Check horizontal edges
-        if x < self.EDGE_SIZE:
-            edge += "w"
-        elif x > w - self.EDGE_SIZE:
-            edge += "e"
-
-        return edge
-
-    def _on_root_button_press(self, event):
-        """Handle mouse button press on root window for edge resize."""
-        edge = self._detect_edge(event)
-        if edge:
-            self.resize_edges = edge
-            self._start_edge_resize(event)
-
-    def _on_root_button_motion(self, event):
-        """Handle mouse drag on root window for edge resize."""
-        if self.resize_edges:
-            self._do_edge_resize(event)
-
-    def _on_root_button_release(self, event):
-        """Handle mouse button release - end resize."""
-        self.resize_edges = ""
-
     def _start_edge_resize(self, event):
         """Initialize edge resize operation."""
         self.drag_data["x"] = event.x_root
@@ -812,7 +801,7 @@ class ScreenPromptWindow:
         new_w = self.drag_data["width"]
         new_h = self.drag_data["height"]
 
-        min_w, min_h = 200, 150
+        min_w, min_h = self.MIN_WIDTH, self.MIN_HEIGHT
 
         # Handle west (left) edge
         if "w" in self.resize_edges:
@@ -868,8 +857,28 @@ def main():
         print("Error: ScreenPrompt is only supported on Windows.")
         sys.exit(1)
 
-    app = ScreenPromptWindow()
-    app.run()
+    try:
+        app = ScreenPromptWindow()
+        app.run()
+    except KeyboardInterrupt:
+        print("\nScreenPrompt closed by user.")
+    except Exception as e:
+        # Log unexpected errors (safely handle Unicode)
+        error_msg = str(e).encode('ascii', 'replace').decode('ascii')
+        print(f"Error: An unexpected error occurred: {error_msg}")
+        # Show error dialog if Tk is available
+        try:
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror(
+                "ScreenPrompt Error",
+                f"An unexpected error occurred:\n\n{e}\n\n"
+                "Please report this issue at:\n"
+                "https://github.com/yourusername/screenprompt/issues"
+            )
+        except Exception:
+            pass
+        sys.exit(1)
 
 
 if __name__ == "__main__":

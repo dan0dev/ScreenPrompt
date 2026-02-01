@@ -224,7 +224,7 @@ class SettingsPanel(tk.Frame):
         prioritized = [f for f in PRIORITY_FONTS if f in available]
         remaining = sorted([f for f in available if f not in prioritized])
         if prioritized and remaining:
-            return prioritized + ["─" * 20] + remaining
+            return prioritized + ["-" * 20] + remaining
         return prioritized + remaining
 
     def _build_ui(self) -> None:
@@ -248,7 +248,7 @@ class SettingsPanel(tk.Frame):
 
         close_btn = tk.Label(
             header_frame,
-            text=" × ",
+            text=" x ",
             font=("Segoe UI", 14),
             bg="#2a2a2a",
             fg="#888888"
@@ -580,7 +580,7 @@ class SettingsPanel(tk.Frame):
         """Handle font family selection change."""
         family = self.font_family_var.get()
         # Skip separator line
-        if family.startswith("─"):
+        if family.startswith("-"):
             return
         if self.on_font_change:
             try:
@@ -625,7 +625,7 @@ class SettingsPanel(tk.Frame):
 
         if self.font_family_var:
             family = self.font_family_var.get()
-            if not family.startswith("─"):  # Skip separator
+            if not family.startswith("-"):  # Skip separator
                 self.config["font_family"] = family
 
         if self.font_size_var:
