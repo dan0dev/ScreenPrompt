@@ -906,6 +906,9 @@ class ScreenPromptWindow:
         self.config["width"] = self.root.winfo_width()
         self.config["height"] = self.root.winfo_height()
         self.config["text"] = self._get_text_content()  # Don't save placeholder
+        self.config["opacity"] = self.root.attributes("-alpha")
+        self.config["locked"] = self.locked
+        self.config["font_color"] = self.text_color
 
         # Save config
         save_config(self.config)
