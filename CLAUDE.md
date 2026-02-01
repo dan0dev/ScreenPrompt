@@ -52,9 +52,7 @@
 ### Tkinter on Windows (2026-02-01)
 - Cursor names differ from X11: use `size_nw_se` not `se_resize`
 - Valid Windows cursors: `arrow`, `hand2`, `size_nw_se`, `size_ns`, `size_we`, `watch`
-- **ALWAYS add `cursor="hand2"` to clickable widgets** (Button, Scale, etc.)
-  - Default arrow cursor on buttons looks unpolished and reveals non-native UI
-  - Apply to: `ttk.Button`, `ttk.Scale`, clickable labels, any interactive element
+- **Use default cursor everywhere** - no custom cursors on buttons, labels, or interactive elements
 - **HWND Bug**: `winfo_id()` returns internal Tk frame, NOT the real window handle
   - WRONG: `hwnd = widget.winfo_id()`
   - RIGHT: `hwnd = GetParent(widget.winfo_id())` with fallback to `winfo_id()` if 0

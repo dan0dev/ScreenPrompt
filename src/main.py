@@ -156,8 +156,7 @@ class ScreenPromptWindow:
             text=" X ",
             bg="#333333",
             fg="#ffffff",
-            font=("Segoe UI", 9, "bold"),
-            cursor="hand2"
+            font=("Segoe UI", 9, "bold")
         )
         close_btn.pack(side=tk.RIGHT, padx=2)
         close_btn.bind("<Button-1>", lambda e: self.on_close())
@@ -170,8 +169,7 @@ class ScreenPromptWindow:
             text=" \u2699 ",  # Unicode gear
             bg="#333333",
             fg="#ffffff",
-            font=("Segoe UI", 10),
-            cursor="hand2"
+            font=("Segoe UI", 10)
         )
         self.settings_btn.pack(side=tk.RIGHT, padx=2)
         self.settings_btn.bind("<Button-1>", lambda e: self.toggle_settings())
@@ -218,7 +216,7 @@ class ScreenPromptWindow:
         )
 
         # Resize handle frame
-        self.resize_frame = tk.Frame(root, bg="#333333", height=10, cursor="size_nw_se")
+        self.resize_frame = tk.Frame(root, bg="#333333", height=10)
         self.resize_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
         # Resize grip

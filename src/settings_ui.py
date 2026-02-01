@@ -185,8 +185,7 @@ class SettingsPanel(tk.Frame):
             text=" × ",
             font=("Segoe UI", 14),
             bg="#2a2a2a",
-            fg="#888888",
-            cursor="hand2"
+            fg="#888888"
         )
         close_btn.pack(side=tk.RIGHT)
         close_btn.bind("<Button-1>", lambda e: self._on_cancel())
@@ -237,7 +236,6 @@ class SettingsPanel(tk.Frame):
             orient=tk.HORIZONTAL,
             variable=self.opacity_var,
             command=self._on_opacity_slide,
-            cursor="hand2",
             style="Dark.Horizontal.TScale"
         )
         opacity_slider.pack(fill=tk.X, side=tk.LEFT, expand=True)
@@ -310,8 +308,7 @@ class SettingsPanel(tk.Frame):
             activeforeground="#ffffff",
             relief=tk.FLAT,
             padx=15,
-            pady=3,
-            cursor="hand2"
+            pady=3
         )
         cancel_btn.pack(side=tk.RIGHT, padx=(5, 0))
 
@@ -325,8 +322,7 @@ class SettingsPanel(tk.Frame):
             activeforeground="#ffffff",
             relief=tk.FLAT,
             padx=15,
-            pady=3,
-            cursor="hand2"
+            pady=3
         )
         save_btn.pack(side=tk.RIGHT)
 
@@ -465,8 +461,7 @@ if __name__ == "__main__":
         activebackground="#555555",
         activeforeground="#ffffff",
         relief=tk.FLAT,
-        padx=15,
-        cursor="hand2"
+        padx=15
     )
     toggle_btn.pack(pady=5)
 
