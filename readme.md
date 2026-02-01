@@ -20,14 +20,25 @@ A transparent overlay window for Windows that is **invisible to screen capture s
 ## Requirements
 
 - Windows 10 (Build 2004+) or Windows 11
-- Python 3.10 or higher
 
 ## Installation
 
+### Option 1: Download Executable (Recommended)
+
+1. Go to the [Releases](../../releases) page
+2. Download the latest `ScreenPrompt.exe`
+3. Run the executable - no installation required!
+
+> **Note:** A Windows MSI installer with Start Menu integration is coming soon.
+
+### Option 2: Run from Source
+
+Requires Python 3.10 or higher.
+
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/screenprompt.git
-   cd screenprompt
+   git clone https://github.com/dan0dev/ScreenPrompt.git
+   cd ScreenPrompt
    ```
 
 2. Install dependencies:
