@@ -53,6 +53,21 @@ def is_windows_compatible() -> bool:
     return version.major >= 10 and version.build >= 19041
 
 
+def get_hwnd(widget: tk.Tk | tk.Toplevel) -> int:
+    """
+    Get the real Windows HWND for a Tkinter window.
+
+    Tkinter's winfo_id() returns an internal frame ID, not the top-level
+    window handle. Use GetParent() to get the actual HWND that Windows
+    manages for screen capture exclusion.
+    """
+    frame_id = widget.winfo_id()
+    hwnd = ctypes.windll.user32.GetParent(frame_id)
+    if hwnd == 0:
+        hwnd = frame_id
+    return hwnd
+
+
 def set_capture_exclude(hwnd: int) -> bool:
     """
     Apply WDA_EXCLUDEFROMCAPTURE to a window handle.
@@ -162,7 +177,7 @@ class SettingsDialog:
         self.dialog.geometry(f"+{x}+{y}")
 
         # Exclude from screen capture (Zoom, Teams, OBS, etc.)
-        hwnd = self.dialog.winfo_id()
+        hwnd = get_hwnd(self.dialog)
         set_capture_exclude(hwnd)
 
         self._build_ui()
@@ -292,7 +307,7 @@ if __name__ == "__main__":
 
     # Exclude main test window from capture
     root.update_idletasks()
-    hwnd = root.winfo_id()
+    hwnd = get_hwnd(root)
     if set_capture_exclude(hwnd):
         print("Capture exclusion enabled for test window")
     else:
