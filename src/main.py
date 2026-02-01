@@ -331,6 +331,19 @@ class ScreenPromptWindow:
         plus_btn.bind("<Enter>", lambda e: plus_btn.configure(bg="#555555", fg="#ffffff"))
         plus_btn.bind("<Leave>", lambda e: plus_btn.configure(bg="#333333", fg="#aaaaaa"))
 
+        # Clear/bin button
+        clear_btn = tk.Label(
+            self.bottom_bar,
+            text=" bin ",
+            bg="#333333",
+            fg="#aaaaaa",
+            font=("Segoe UI", 8)
+        )
+        clear_btn.pack(side=tk.LEFT, padx=(8, 0))
+        clear_btn.bind("<Button-1>", lambda e: self._clear_text())
+        clear_btn.bind("<Enter>", lambda e: clear_btn.configure(bg="#555555", fg="#ff6666"))
+        clear_btn.bind("<Leave>", lambda e: clear_btn.configure(bg="#333333", fg="#aaaaaa"))
+
         # Lock button (mouse pass-through toggle)
         self.locked = self.config.get("locked", False)
         self.lock_btn = tk.Label(
@@ -467,6 +480,10 @@ class ScreenPromptWindow:
         if self.placeholder_active:
             return ""
         return self.text_widget.get("1.0", tk.END).rstrip("\n")
+
+    def _clear_text(self) -> None:
+        """Clear all text and show placeholder."""
+        self._show_placeholder()
 
     def _decrease_font_size(self) -> None:
         """Decrease font size by 1 (minimum 8)."""
