@@ -1,12 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
-    ['src\\main.py'],
-    pathex=[],
+    ['src/main.py'],
+    pathex=['src'],  # Add src to path so local modules are found
     binaries=[],
     datas=[('assets', 'assets')],
-    hiddenimports=['keyboard'],
+    hiddenimports=['keyboard', 'config_manager', 'settings_ui'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -32,7 +31,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['assets\\icon.ico'],
+    icon=['assets/icon.ico'],
 )
 coll = COLLECT(
     exe,
