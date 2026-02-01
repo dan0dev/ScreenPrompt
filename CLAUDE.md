@@ -56,3 +56,13 @@
   - WRONG: `hwnd = widget.winfo_id()`
   - RIGHT: `hwnd = GetParent(widget.winfo_id())` with fallback to `winfo_id()` if 0
   - Required for `SetWindowDisplayAffinity` to work on Toplevel windows
+
+### SetWindowDisplayAffinity Black Box Fix (2026-02-01)
+- **Problem**: Window shows as BLACK BOX in OBS/capture instead of invisible
+- **Cause**: Per-pixel transparency (UpdateLayeredWindow) incompatible with display affinity
+- **Fix**: Use SetLayeredWindowAttributes style instead. Order matters:
+  1. `SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_LAYERED)`
+  2. `SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA)` ← makes it compatible
+  3. `SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)`
+- Configure ctypes argtypes for 64-bit: use `c_void_p` for HWND, not `c_int`
+- Reference: https://learn.microsoft.com/en-us/answers/questions/700122/setwindowdisplayaffinity-on-windows-11
