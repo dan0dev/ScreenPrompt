@@ -42,6 +42,22 @@ from typing import Callable, Optional
 
 # WinAPI constants
 WDA_EXCLUDEFROMCAPTURE = 0x11
+GWL_EXSTYLE = -20
+WS_EX_LAYERED = 0x00080000
+LWA_ALPHA = 0x02
+
+# Load user32.dll once
+user32 = ctypes.windll.user32
+
+# Configure function signatures for 64-bit compatibility
+user32.GetWindowLongPtrW.restype = ctypes.c_void_p
+user32.GetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int]
+user32.SetWindowLongPtrW.restype = ctypes.c_void_p
+user32.SetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p]
+user32.SetLayeredWindowAttributes.argtypes = [
+    ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint8, ctypes.c_uint32
+]
+user32.SetWindowDisplayAffinity.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
 
 
 def is_windows_compatible() -> bool:
@@ -62,7 +78,7 @@ def get_hwnd(widget: tk.Tk | tk.Toplevel) -> int:
     manages for screen capture exclusion.
     """
     frame_id = widget.winfo_id()
-    hwnd = ctypes.windll.user32.GetParent(frame_id)
+    hwnd = user32.GetParent(frame_id)
     if hwnd == 0:
         hwnd = frame_id
     return hwnd
@@ -71,12 +87,31 @@ def get_hwnd(widget: tk.Tk | tk.Toplevel) -> int:
 def set_capture_exclude(hwnd: int) -> bool:
     """
     Apply WDA_EXCLUDEFROMCAPTURE to a window handle.
+
+    For layered windows, we must use SetLayeredWindowAttributes (not
+    UpdateLayeredWindow) for SetWindowDisplayAffinity to work properly.
+    Otherwise OBS and other capture tools show a black box.
+
+    Order matters:
+    1. Add WS_EX_LAYERED extended style
+    2. Call SetLayeredWindowAttributes (makes it compatible with affinity)
+    3. Call SetWindowDisplayAffinity
+
     Returns True if successful, False otherwise.
     """
     if not is_windows_compatible():
         return False
     try:
-        user32 = ctypes.windll.user32
+        # Step 1: Get current extended style and add WS_EX_LAYERED
+        ex_style = user32.GetWindowLongPtrW(hwnd, GWL_EXSTYLE)
+        user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_LAYERED)
+
+        # Step 2: Set layered attributes (255 = fully opaque, LWA_ALPHA mode)
+        # This makes it a "SetLayeredWindowAttributes window" which is
+        # compatible with SetWindowDisplayAffinity (unlike UpdateLayeredWindow)
+        user32.SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA)
+
+        # Step 3: Now apply capture exclusion
         result = user32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)
         return result != 0
     except Exception:
