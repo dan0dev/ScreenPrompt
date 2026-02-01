@@ -38,11 +38,7 @@ from config_manager import (
     is_first_run,
     mark_first_run_complete,
 )
-from settings_ui import SettingsDialog
-
-
-# Constants
-WDA_EXCLUDEFROMCAPTURE = 0x00000011
+from settings_ui import SettingsDialog, get_hwnd, set_capture_exclude
 
 ETHICAL_NOTICE = """ScreenPrompt is intended for legitimate use only, such as:
 - Presentations and meetings
@@ -252,17 +248,10 @@ class ScreenPromptWindow:
         # Need to update window to get valid HWND
         self.root.update_idletasks()
 
-        # Get the window handle
-        hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
-        if hwnd == 0:
-            hwnd = self.root.winfo_id()
-
-        # Apply capture exclusion
-        result = ctypes.windll.user32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)
-
-        if result == 0:
-            error_code = ctypes.windll.kernel32.GetLastError()
-            print(f"Warning: SetWindowDisplayAffinity failed with error code {error_code}")
+        # Get the window handle and apply 3-step capture exclusion
+        hwnd = get_hwnd(self.root)
+        if not set_capture_exclude(hwnd):
+            print("Warning: SetWindowDisplayAffinity failed")
 
     def start_drag(self, event):
         """Initialize window drag operation."""
