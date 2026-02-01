@@ -52,3 +52,7 @@
 ### Tkinter on Windows (2026-02-01)
 - Cursor names differ from X11: use `size_nw_se` not `se_resize`
 - Valid Windows cursors: `arrow`, `hand2`, `size_nw_se`, `size_ns`, `size_we`, `watch`
+- **HWND Bug**: `winfo_id()` returns internal Tk frame, NOT the real window handle
+  - WRONG: `hwnd = widget.winfo_id()`
+  - RIGHT: `hwnd = GetParent(widget.winfo_id())` with fallback to `winfo_id()` if 0
+  - Required for `SetWindowDisplayAffinity` to work on Toplevel windows
