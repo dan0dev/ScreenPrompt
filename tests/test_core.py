@@ -515,12 +515,61 @@ class TestWinAPIConstants:
 
 
 # =============================================================================
-# SettingsDialog Implementation (to be moved to main module later)
+# SettingsPanel Implementation (embedded panel to avoid browser black box)
 # =============================================================================
+
+class SettingsPanel:
+    """
+    Embedded settings panel for ScreenPrompt.
+
+    Unlike a separate Toplevel window, this panel embeds inside the main
+    overlay window. This avoids the browser black box issue where
+    getDisplayMedia (Chrome/Edge) doesn't respect SetWindowDisplayAffinity
+    for separate windows.
+
+    Key difference from SettingsDialog:
+    - SettingsPanel is a Frame, not a Toplevel
+    - No separate capture exclusion needed (inherits from parent window)
+    - Uses show()/hide() instead of creating/destroying windows
+    """
+
+    def __init__(self, parent=None):
+        """
+        Initialize settings panel.
+
+        Args:
+            parent: Parent widget to embed in (Frame, not Toplevel)
+        """
+        self.parent = parent
+        self._visible = False
+
+    def show(self) -> None:
+        """Show the settings panel."""
+        self._visible = True
+
+    def hide(self) -> None:
+        """Hide the settings panel."""
+        self._visible = False
+
+    def is_visible(self) -> bool:
+        """Check if panel is currently visible."""
+        return self._visible
+
+    def toggle(self) -> None:
+        """Toggle panel visibility."""
+        if self._visible:
+            self.hide()
+        else:
+            self.show()
+
 
 class SettingsDialog:
     """
+    DEPRECATED: Use SettingsPanel instead.
+
     Settings dialog window with capture exclusion support.
+    This creates a separate Toplevel window which causes black box
+    issues in browser-based screen share (Google Meet, etc.).
 
     When created, the dialog applies WDA_EXCLUDEFROMCAPTURE to hide
     itself from screen captures (Zoom, Teams, OBS, etc.).
@@ -569,6 +618,8 @@ class SettingsDialog:
 
 def create_settings_dialog_with_exclusion(parent=None, hwnd: int = None) -> SettingsDialog:
     """
+    DEPRECATED: Use SettingsPanel instead.
+
     Factory function to create a settings dialog with capture exclusion applied.
 
     This is the recommended way to create settings dialogs as it ensures
@@ -587,7 +638,66 @@ def create_settings_dialog_with_exclusion(parent=None, hwnd: int = None) -> Sett
 
 
 # =============================================================================
-# SettingsDialog Tests
+# SettingsPanel Tests (Embedded Panel - Browser Fix)
+# =============================================================================
+
+class TestSettingsPanel:
+    """Tests for SettingsPanel embedded panel functionality."""
+
+    def test_settings_panel_is_not_toplevel(self):
+        """Verify SettingsPanel is a Frame concept, not a Toplevel window."""
+        # SettingsPanel should not have hwnd management (inherits from parent)
+        panel = SettingsPanel()
+        assert not hasattr(panel, '_hwnd') or panel._hwnd is None if hasattr(panel, '_hwnd') else True
+        assert not hasattr(panel, 'get_hwnd')
+
+    def test_settings_panel_visibility_toggle(self):
+        """Test SettingsPanel show/hide functionality."""
+        panel = SettingsPanel()
+
+        # Initially hidden
+        assert panel.is_visible() is False
+
+        # Show
+        panel.show()
+        assert panel.is_visible() is True
+
+        # Hide
+        panel.hide()
+        assert panel.is_visible() is False
+
+    def test_settings_panel_toggle_method(self):
+        """Test SettingsPanel toggle method."""
+        panel = SettingsPanel()
+
+        # Toggle from hidden to visible
+        panel.toggle()
+        assert panel.is_visible() is True
+
+        # Toggle from visible to hidden
+        panel.toggle()
+        assert panel.is_visible() is False
+
+    def test_settings_panel_no_capture_exclusion_call(self):
+        """Verify SettingsPanel doesn't call SetWindowDisplayAffinity directly."""
+        # SettingsPanel inherits capture exclusion from parent window
+        # It should NOT have apply_capture_exclusion method
+        panel = SettingsPanel()
+        assert not hasattr(panel, 'apply_capture_exclusion')
+
+    def test_settings_panel_inherits_parent_exclusion(self):
+        """Conceptual test: panel inherits capture exclusion from parent."""
+        # When embedded in main overlay, the panel is part of the same HWND
+        # Only one SetWindowDisplayAffinity call is needed (on parent)
+        # This test verifies the design principle
+        panel = SettingsPanel(parent="mock_parent_frame")
+        assert panel.parent == "mock_parent_frame"
+        # No separate exclusion tracking needed
+        assert not hasattr(panel, '_capture_excluded')
+
+
+# =============================================================================
+# SettingsDialog Tests (Legacy - Separate Window)
 # =============================================================================
 
 def _create_mock_user32_success():

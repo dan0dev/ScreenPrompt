@@ -69,3 +69,19 @@
   3. `SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)`
 - Configure ctypes argtypes for 64-bit: use `c_void_p` for HWND, not `c_int`
 - Reference: https://learn.microsoft.com/en-us/answers/questions/700122/setwindowdisplayaffinity-on-windows-11
+
+### Browser-Based Screen Share Limitation (2026-02-01)
+- **Problem**: Black box in Google Meet, browser-based Teams, Discord web
+- **Cause**: Browser `getDisplayMedia` API doesn't respect `SetWindowDisplayAffinity`
+  - Native apps (Zoom desktop, OBS, Snipping Tool) work correctly
+  - Browser apps (Chrome, Edge) show black box for excluded windows
+  - This is a Windows/Chrome limitation, NOT fixable in our code
+- **Workaround**: Embed settings as a **panel inside main overlay** instead of separate Toplevel
+  - One window = one HWND = one capture exclusion = no extra black box
+  - SettingsPanel (tk.Frame) instead of SettingsDialog (tk.Toplevel)
+  - Use `pack()`/`pack_forget()` to show/hide panel
+  - No separate `SetWindowDisplayAffinity` call needed for panel
+- **UI Note**: Add warning banner in settings panel about browser limitations
+- References:
+  - https://learn.microsoft.com/en-us/answers/questions/700122/setwindowdisplayaffinity-on-windows-11
+  - https://github.com/electron/electron/issues/12973

@@ -31,6 +31,7 @@ import ctypes
 import sys
 import tkinter as tk
 from tkinter import messagebox
+from typing import Optional
 
 from config_manager import (
     load_config,
@@ -38,7 +39,7 @@ from config_manager import (
     is_first_run,
     mark_first_run_complete,
 )
-from settings_ui import SettingsDialog, get_hwnd, set_capture_exclude
+from settings_ui import SettingsPanel, get_hwnd, set_capture_exclude
 
 ETHICAL_NOTICE = """ScreenPrompt is intended for legitimate use only, such as:
 - Presentations and meetings
@@ -79,6 +80,7 @@ class ScreenPromptWindow:
     def __init__(self):
         self.config = load_config()
         self.drag_data = {"x": 0, "y": 0}
+        self.settings_panel: Optional[SettingsPanel] = None
 
         # Create main window
         self.root = tk.Tk()
@@ -134,13 +136,13 @@ class ScreenPromptWindow:
         root = self.root
 
         # Title bar frame for dragging and close button
-        title_frame = tk.Frame(root, bg="#333333", height=25)
-        title_frame.pack(fill=tk.X, side=tk.TOP)
-        title_frame.pack_propagate(False)
+        self.title_frame = tk.Frame(root, bg="#333333", height=25)
+        self.title_frame.pack(fill=tk.X, side=tk.TOP)
+        self.title_frame.pack_propagate(False)
 
         # Title label
         title_label = tk.Label(
-            title_frame,
+            self.title_frame,
             text="ScreenPrompt",
             bg="#333333",
             fg="#ffffff",
@@ -150,7 +152,7 @@ class ScreenPromptWindow:
 
         # Close button
         close_btn = tk.Label(
-            title_frame,
+            self.title_frame,
             text=" X ",
             bg="#333333",
             fg="#ffffff",
@@ -163,28 +165,32 @@ class ScreenPromptWindow:
         close_btn.bind("<Leave>", lambda e: close_btn.configure(bg="#333333"))
 
         # Settings button (gear icon)
-        settings_btn = tk.Label(
-            title_frame,
+        self.settings_btn = tk.Label(
+            self.title_frame,
             text=" \u2699 ",  # Unicode gear
             bg="#333333",
             fg="#ffffff",
             font=("Segoe UI", 10),
             cursor="hand2"
         )
-        settings_btn.pack(side=tk.RIGHT, padx=2)
-        settings_btn.bind("<Button-1>", lambda e: self.open_settings())
-        settings_btn.bind("<Enter>", lambda e: settings_btn.configure(bg="#555555"))
-        settings_btn.bind("<Leave>", lambda e: settings_btn.configure(bg="#333333"))
+        self.settings_btn.pack(side=tk.RIGHT, padx=2)
+        self.settings_btn.bind("<Button-1>", lambda e: self.toggle_settings())
+        self.settings_btn.bind("<Enter>", lambda e: self.settings_btn.configure(bg="#555555"))
+        self.settings_btn.bind("<Leave>", lambda e: self.settings_btn.configure(bg="#333333"))
 
         # Bind drag events to title bar
-        title_frame.bind("<Button-1>", self.start_drag)
-        title_frame.bind("<B1-Motion>", self.do_drag)
+        self.title_frame.bind("<Button-1>", self.start_drag)
+        self.title_frame.bind("<B1-Motion>", self.do_drag)
         title_label.bind("<Button-1>", self.start_drag)
         title_label.bind("<B1-Motion>", self.do_drag)
 
+        # Content frame (holds either text widget or settings panel)
+        self.content_frame = tk.Frame(root, bg="#1e1e1e")
+        self.content_frame.pack(fill=tk.BOTH, expand=True)
+
         # Text widget for prompt content
         self.text_widget = tk.Text(
-            root,
+            self.content_frame,
             bg=self.config.get("bg_color", "#2d2d2d"),
             fg=self.config.get("font_color", "#ffffff"),
             insertbackground="#ffffff",
@@ -203,13 +209,21 @@ class ScreenPromptWindow:
         # Load saved text
         self.text_widget.insert("1.0", self.config.get("text", ""))
 
+        # Create settings panel (hidden initially)
+        self.settings_panel = SettingsPanel(
+            self.content_frame,
+            on_opacity_change=lambda v: self.root.attributes("-alpha", v),
+            on_save=self.on_settings_save,
+            on_cancel=self.on_settings_cancel
+        )
+
         # Resize handle frame
-        resize_frame = tk.Frame(root, bg="#333333", height=10, cursor="size_nw_se")
-        resize_frame.pack(fill=tk.X, side=tk.BOTTOM)
+        self.resize_frame = tk.Frame(root, bg="#333333", height=10, cursor="size_nw_se")
+        self.resize_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
         # Resize grip
         resize_grip = tk.Label(
-            resize_frame,
+            self.resize_frame,
             text="...",
             bg="#333333",
             fg="#666666",
@@ -218,20 +232,30 @@ class ScreenPromptWindow:
         resize_grip.pack(side=tk.RIGHT, padx=5)
 
         # Bind resize events
-        resize_frame.bind("<Button-1>", self.start_resize)
-        resize_frame.bind("<B1-Motion>", self.do_resize)
+        self.resize_frame.bind("<Button-1>", self.start_resize)
+        self.resize_frame.bind("<B1-Motion>", self.do_resize)
         resize_grip.bind("<Button-1>", self.start_resize)
         resize_grip.bind("<B1-Motion>", self.do_resize)
 
-    def open_settings(self):
-        """Open the settings dialog."""
-        dialog = SettingsDialog(
-            self.root,
-            on_opacity_change=lambda v: self.root.attributes("-alpha", v)
-        )
-        if dialog.show():
-            # Reload config after save
-            self.config = load_config()
+    def toggle_settings(self):
+        """Toggle between text view and settings panel."""
+        if self.settings_panel and self.settings_panel.is_visible():
+            # Settings is visible, this will be handled by cancel callback
+            self.settings_panel.toggle()
+        else:
+            # Show settings, hide text
+            self.text_widget.pack_forget()
+            if self.settings_panel:
+                self.settings_panel.show()
+
+    def on_settings_save(self):
+        """Handle settings save - reload config and show text."""
+        self.config = load_config()
+        self.text_widget.pack(fill=tk.BOTH, expand=True, padx=2, pady=(0, 2))
+
+    def on_settings_cancel(self):
+        """Handle settings cancel - show text."""
+        self.text_widget.pack(fill=tk.BOTH, expand=True, padx=2, pady=(0, 2))
 
     def apply_capture_exclusion(self):
         """Apply WDA_EXCLUDEFROMCAPTURE to hide window from screen capture."""

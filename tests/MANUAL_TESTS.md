@@ -259,6 +259,70 @@ not `UpdateLayeredWindow` (per-pixel transparency). The 3-step process is:
 
 ---
 
+## Test 10: Embedded Settings Panel (Browser Black Box Fix)
+
+**Objective:** Verify embedded settings panel doesn't cause black box in browser-based screen share.
+
+**Background:** Browser apps (Chrome/Edge) use `getDisplayMedia` API which doesn't respect
+`SetWindowDisplayAffinity` for separate windows. The fix is to embed settings as a panel
+inside the main overlay (single HWND) instead of a separate Toplevel window.
+
+### Test 10a: Google Meet (Chrome)
+
+**Steps:**
+1. Launch ScreenPrompt
+2. Open Google Meet in Chrome, start a meeting
+3. Share your screen (entire screen or window)
+4. Click the gear icon (⚙) to open Settings panel
+5. Observe both your screen and Meet's shared preview
+
+**Expected Result:**
+- [ ] Settings panel visible locally inside overlay
+- [ ] Main overlay area excluded from capture (expected behavior)
+- [ ] **NO EXTRA BLACK BOX** for settings (key fix!)
+- [ ] Settings panel warning banner visible mentioning browser limitation
+- [ ] Panel can be closed and reopened without issues
+
+**Notes:** _______________________________
+
+### Test 10b: Settings Panel Toggle
+
+**Steps:**
+1. Launch ScreenPrompt
+2. Click gear icon (⚙) → settings panel should appear
+3. Click Save → panel hides, text returns
+4. Click gear icon (⚙) → settings panel appears again
+5. Click Cancel → panel hides, text returns, opacity restored
+6. Click gear icon (⚙) → settings panel appears
+7. Click X button → panel hides
+
+**Expected Result:**
+- [ ] Panel appears inside main window (not separate popup)
+- [ ] Save hides panel and applies changes
+- [ ] Cancel hides panel and restores original values
+- [ ] X button hides panel (same as Cancel)
+- [ ] Text widget reappears after panel closes
+- [ ] Opacity preview works during slider drag
+
+**Notes:** _______________________________
+
+### Test 10c: Native Apps Still Work
+
+**Steps:**
+1. Launch ScreenPrompt
+2. Open Zoom desktop app and start screen share
+3. Open Settings panel in ScreenPrompt
+4. Check Zoom's shared preview
+
+**Expected Result:**
+- [ ] Settings panel visible locally
+- [ ] Settings panel NOT visible in Zoom (invisible, not black box)
+- [ ] Same behavior as before the embedded panel change
+
+**Notes:** _______________________________
+
+---
+
 ## Test Summary
 
 | Test | Pass | Fail | Notes |
@@ -275,6 +339,9 @@ not `UpdateLayeredWindow` (per-pixel transparency). The 3-step process is:
 | 9b. Settings Dialog - Teams | [ ] | [ ] | |
 | 9c. Settings Dialog - OBS | [ ] | [ ] | |
 | 9d. Settings Dialog - Snipping | [ ] | [ ] | |
+| 10a. Settings Panel - Meet | [ ] | [ ] | |
+| 10b. Settings Panel - Toggle | [ ] | [ ] | |
+| 10c. Settings Panel - Native | [ ] | [ ] | |
 
 **Tested By:** _______________________________
 
