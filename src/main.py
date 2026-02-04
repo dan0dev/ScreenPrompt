@@ -28,6 +28,7 @@ The authors are not responsible for any misuse of this software.
 """
 
 import ctypes
+import os
 import sys
 import tkinter as tk
 from tkinter import messagebox
@@ -140,6 +141,9 @@ class ScreenPromptWindow:
         self.root.title("ScreenPrompt")
         self.root.withdraw()  # Hide initially
 
+        # Set window icon
+        self._set_window_icon()
+
         # Show ethical notice on first run
         if is_first_run():
             self.show_ethical_notice()
@@ -168,6 +172,28 @@ class ScreenPromptWindow:
             "ScreenPrompt - Important Notice",
             ETHICAL_NOTICE
         )
+
+    def _set_window_icon(self):
+        """Set the window icon from PNG file."""
+        try:
+            # Try to find the icon in common locations
+            icon_paths = [
+                os.path.join(os.path.dirname(__file__), '..', 'assets', 'icon-128.png'),
+                os.path.join(os.path.dirname(__file__), 'assets', 'icon-128.png'),
+                os.path.join(sys._MEIPASS, 'assets', 'icon-128.png') if hasattr(sys, '_MEIPASS') else None,
+            ]
+
+            for icon_path in icon_paths:
+                if icon_path and os.path.exists(icon_path):
+                    icon = tk.PhotoImage(file=icon_path)
+                    self.root.iconphoto(True, icon)
+                    # Keep a reference to prevent garbage collection
+                    self._icon_image = icon
+                    return
+
+        except Exception as e:
+            # Silently ignore icon errors - not critical
+            pass
 
     def setup_window(self):
         """Configure the main window properties."""
