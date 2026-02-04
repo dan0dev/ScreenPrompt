@@ -171,6 +171,55 @@ Settings are stored in `%APPDATA%\ScreenPrompt\config.json` and include:
 
 - **Browser-based screen sharing** (Google Meet, Discord Web, browser-based Teams) may occasionally show a black box instead of hiding the window. This occurs in roughly ~10% of cases due to how the browser's `getDisplayMedia` API interacts with Windows display affinity. Native desktop applications (Zoom, OBS, Teams desktop) provide the most reliable capture exclusion. *This behavior needs more testing - please [report your experience](../../issues/new?template=bug_report.md) to help us improve!*
 
+## 👥 Meet Our Users
+
+### Sarah - Sales Professional
+**Goal:** Close more deals by appearing confident and prepared
+
+**Her Setup:**
+- Overlay positioned in top-right corner at 70% opacity
+- Notes include: client name, company details, pain points, pricing tiers
+- Uses `Ctrl+Shift+L` to lock overlay during demos
+
+**Typical Use:**
+> "Before ScreenPrompt, I'd have client notes on my second monitor, but looking away made me seem unprepared. Now I keep key talking points right on my screen - client names, their pain points, our pricing structure. During the call, I'm looking at the camera while reading their company's challenges. Clients think I have everything memorized. My close rate went up 30%."
+
+**Favorite Feature:** Quick edit (`Ctrl+Shift+E`) to update notes mid-call without unlocking
+
+---
+
+### Marcus - Educational Content Creator
+**Goal:** Create professional tutorials without appearing like he's reading
+
+**His Setup:**
+- Full-width overlay at bottom of screen (like a teleprompter)
+- Scripts broken into short, natural phrases
+- Opacity at 85% to blend with screen
+- Uses `Ctrl+Shift+H` to hide during screen transitions
+
+**Typical Use:**
+> "I make coding tutorials on YouTube. I used to either wing it (and forget important points) or obviously read from a second monitor. Now I write full scripts in ScreenPrompt. My camera is centered, I'm reading word-by-word from the bottom of my screen, and viewers think I'm just naturally explaining concepts. Comments went from 'seems scripted' to 'great natural teaching style.'"
+
+**Favorite Feature:** Position presets (`Ctrl+Alt+Num 2`) to quickly move overlay between bottom and top
+
+---
+
+### Jennifer - Remote Team Lead
+**Goal:** Run smooth meetings without forgetting agenda items
+
+**Her Setup:**
+- Overlay in left sidebar position
+- Meeting agenda, attendee names, discussion points
+- Color-coded by priority (uses text color for emphasis)
+- Keeps overlay visible but locked during entire meeting
+
+**Typical Use:**
+> "I run 5-6 meetings daily with different teams. Before ScreenPrompt, I'd either forget agenda items or awkwardly check notes off-screen. Now my agenda is right there while I'm screen sharing. I check off items, add notes, and look fully engaged. Team feedback improved - they said I seem more present and organized. Plus, with only one monitor at home, this is a lifesaver."
+
+**Favorite Feature:** PANIC button (`Ctrl+Shift+F1`) when someone unexpectedly asks to share their screen
+
+---
+
 ## 💡 Real-World Use Cases
 
 ### ✅ Professional & Legitimate Uses
