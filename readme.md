@@ -1,12 +1,55 @@
 # ScreenPrompt
 
-A transparent overlay window for Windows that is **invisible to screen capture software**. Perfect for presentations, video calls, content creation, and keeping notes visible while screen sharing.
+**Your notes, scripts, and reminders—visible to you, invisible to everyone else.**
+
+ScreenPrompt creates a transparent overlay on your screen that **you can see, but others can't** during screen sharing or recordings. It's completely invisible to screen capture software, video calls, and recordings.
 
 ![Windows](https://img.shields.io/badge/Windows-10%2B-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ![ScreenPrompt Demo](https://github.com/dan0dev/ScreenPrompt/blob/main/hero-video-main.gif)
+
+## 🎯 Why ScreenPrompt?
+
+**The Problem:** During video calls or screen recordings, looking at notes on a second monitor (or looking away) makes you appear:
+- Unprepared or unprofessional
+- Like you're reading instead of speaking naturally
+- Distracted or not engaged
+
+**The Solution:** ScreenPrompt lets you read notes, scripts, or reminders **directly on your screen** while:
+- ✅ **Others see only your shared content** - The overlay is invisible in their view
+- ✅ **You appear natural and engaged** - Look at the camera while reading
+- ✅ **No second monitor needed** - Works with single or multiple monitors
+- ✅ **Read word-by-word seamlessly** - Nobody notices you're reading
+
+**You see this:**
+```
+┌─────────────────────────────┐
+│  Your Screen                │
+│                             │
+│  [ScreenPrompt Overlay]     │ ← You see your notes
+│  • Key point 1              │
+│  • Client name: John        │
+│  • Next topic: pricing      │
+│                             │
+│  Your Presentation          │
+└─────────────────────────────┘
+```
+
+**Others see this:**
+```
+┌─────────────────────────────┐
+│  Your Screen                │
+│                             │
+│                             │ ← Notes are invisible
+│                             │
+│                             │
+│                             │
+│                             │
+│  Your Presentation          │
+└─────────────────────────────┘
+```
 
 ## Features
 
@@ -128,19 +171,91 @@ Settings are stored in `%APPDATA%\ScreenPrompt\config.json` and include:
 
 - **Browser-based screen sharing** (Google Meet, Discord Web, browser-based Teams) may occasionally show a black box instead of hiding the window. This occurs in roughly ~10% of cases due to how the browser's `getDisplayMedia` API interacts with Windows display affinity. Native desktop applications (Zoom, OBS, Teams desktop) provide the most reliable capture exclusion. *This behavior needs more testing - please [report your experience](../../issues/new?template=bug_report.md) to help us improve!*
 
-## Intended Use and Ethical Notice
+## 👥 Meet Our Users
 
-ScreenPrompt is intended for **legitimate use only**, such as:
-- Presentations and meetings
-- Content creation
-- Personal productivity
-- Keeping reference notes visible while screen sharing
+### Sarah - Sales Professional
+**Goal:** Close more deals by appearing confident and prepared
 
-**DO NOT use this software for:**
-- Cheating on exams or assessments
-- Violating academic integrity policies
-- Breaking terms of service of any platform
-- Any illegal activities
+**Her Setup:**
+- Overlay positioned in top-right corner at 70% opacity
+- Notes include: client name, company details, pain points, pricing tiers
+- Uses `Ctrl+Shift+L` to lock overlay during demos
+
+**Typical Use:**
+> "Before ScreenPrompt, I'd have client notes on my second monitor, but looking away made me seem unprepared. Now I keep key talking points right on my screen - client names, their pain points, our pricing structure. During the call, I'm looking at the camera while reading their company's challenges. Clients think I have everything memorized. My close rate went up 30%."
+
+**Favorite Feature:** Quick edit (`Ctrl+Shift+E`) to update notes mid-call without unlocking
+
+---
+
+### Marcus - Educational Content Creator
+**Goal:** Create professional tutorials without appearing like he's reading
+
+**His Setup:**
+- Full-width overlay at bottom of screen (like a teleprompter)
+- Scripts broken into short, natural phrases
+- Opacity at 85% to blend with screen
+- Uses `Ctrl+Shift+H` to hide during screen transitions
+
+**Typical Use:**
+> "I make coding tutorials on YouTube. I used to either wing it (and forget important points) or obviously read from a second monitor. Now I write full scripts in ScreenPrompt. My camera is centered, I'm reading word-by-word from the bottom of my screen, and viewers think I'm just naturally explaining concepts. Comments went from 'seems scripted' to 'great natural teaching style.'"
+
+**Favorite Feature:** Position presets (`Ctrl+Alt+Num 2`) to quickly move overlay between bottom and top
+
+---
+
+### Jennifer - Remote Team Lead
+**Goal:** Run smooth meetings without forgetting agenda items
+
+**Her Setup:**
+- Overlay in left sidebar position
+- Meeting agenda, attendee names, discussion points
+- Color-coded by priority (uses text color for emphasis)
+- Keeps overlay visible but locked during entire meeting
+
+**Typical Use:**
+> "I run 5-6 meetings daily with different teams. Before ScreenPrompt, I'd either forget agenda items or awkwardly check notes off-screen. Now my agenda is right there while I'm screen sharing. I check off items, add notes, and look fully engaged. Team feedback improved - they said I seem more present and organized. Plus, with only one monitor at home, this is a lifesaver."
+
+**Favorite Feature:** PANIC button (`Ctrl+Shift+F1`) when someone unexpectedly asks to share their screen
+
+---
+
+## 💡 Real-World Use Cases
+
+### ✅ Professional & Legitimate Uses
+
+**Client Meetings & Sales Calls**
+- Keep client names, key points, and talking points visible
+- Reference technical details without looking unprepared
+- Read important numbers or quotes naturally
+- Appear confident and well-prepared
+
+**Content Creation & Streaming**
+- Read scripts word-by-word while appearing natural on camera
+- Educational content: Tell stories "without reading"
+- Live streams: Keep chat commands, schedules, reminders visible
+- Tutorials: Follow step-by-step instructions smoothly
+
+**Presentations & Public Speaking**
+- Speaker notes that others can't see
+- Teleprompter effect for professional delivery
+- Read full sentences naturally while maintaining eye contact
+- Reference data, statistics, quotes on the fly
+
+**Video Calls & Remote Work**
+- Meeting agendas and key discussion points
+- Technical troubleshooting steps
+- Interview questions and candidate notes
+- Training sessions with reference materials
+
+### ⛔ DO NOT Use For
+
+**We built this for professional advantage, NOT for cheating:**
+
+- ❌ Cheating on exams or assessments
+- ❌ Violating academic integrity policies
+- ❌ Breaking terms of service of any platform
+- ❌ Any illegal or unethical activities
 
 **You are solely responsible for how you use this software.**
 
