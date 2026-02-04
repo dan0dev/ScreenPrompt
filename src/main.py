@@ -50,6 +50,7 @@ from config_manager import (
     DEFAULT_CONFIG,
 )
 from settings_ui import SettingsPanel, get_hwnd, set_capture_exclude
+from updater import check_for_updates_async, get_updater
 
 # WinAPI constants for click-through and hiding from taskbar/alt-tab
 GWL_EXSTYLE = -20
@@ -131,6 +132,8 @@ class ScreenPromptWindow:
         self.quick_edit_mode = False
         self.opacity_index = 0  # Index into OPACITY_LEVELS
         self.placeholder_active = False  # Track if placeholder is showing
+        self.update_available = False  # Track if update is available
+        self.update_version: Optional[str] = None
 
         # Resize state: which edges are being resized
         # Can be combination of: "n", "s", "e", "w"
@@ -165,6 +168,84 @@ class ScreenPromptWindow:
 
         # Show window
         self.root.deiconify()
+
+        # Check for updates (async, non-blocking)
+        if self.config.get("auto_check_updates", True):
+            self._check_for_updates()
+
+    def _check_for_updates(self):
+        """Check for updates asynchronously."""
+        def on_update_check(available: bool, version: Optional[str], notes: Optional[str]):
+            if available and version:
+                self.update_available = True
+                self.update_version = version
+                # Update UI in main thread
+                self.root.after(0, self._show_update_indicator)
+
+        check_for_updates_async(on_update_check)
+
+    def _show_update_indicator(self):
+        """Show update available indicator in title bar."""
+        if hasattr(self, 'update_btn'):
+            self.update_btn.configure(
+                text=f" \u2B06 v{self.update_version} ",  # Up arrow
+                fg="#00ff00"
+            )
+            self.update_btn.pack(side=tk.RIGHT, padx=2)
+
+    def _on_update_click(self):
+        """Handle click on update button."""
+        if not self.update_available:
+            return
+
+        # Ask user if they want to update
+        result = messagebox.askyesno(
+            "Update Available",
+            f"ScreenPrompt v{self.update_version} is available.\n\n"
+            "Would you like to download and install the update?\n\n"
+            "The application will close and the installer will run."
+        )
+
+        if result:
+            self._download_and_install_update()
+
+    def _download_and_install_update(self):
+        """Download and install the update."""
+        updater = get_updater()
+
+        # Show downloading message
+        messagebox.showinfo(
+            "Downloading Update",
+            "Downloading update... This may take a moment.\n\n"
+            "The installer will start automatically when ready."
+        )
+
+        def on_download_complete(path: Optional[str]):
+            if path:
+                # Launch installer and close app
+                self.root.after(0, lambda: self._launch_update_installer(path))
+            else:
+                self.root.after(0, lambda: messagebox.showerror(
+                    "Download Failed",
+                    "Failed to download the update.\n\n"
+                    "Please try again later or download manually from:\n"
+                    "https://github.com/dan0dev/ScreenPrompt/releases"
+                ))
+
+        updater.download_update_async(complete_callback=on_download_complete)
+
+    def _launch_update_installer(self, installer_path: str):
+        """Launch the update installer and close the app."""
+        updater = get_updater()
+        if updater.install_update():
+            # Save config and exit
+            self.on_close()
+        else:
+            messagebox.showerror(
+                "Update Failed",
+                "Failed to launch the installer.\n\n"
+                f"You can run it manually from:\n{installer_path}"
+            )
 
     def show_ethical_notice(self):
         """Display ethical use notice on first run."""
@@ -287,6 +368,19 @@ class ScreenPromptWindow:
         self.settings_btn.bind("<Button-1>", lambda e: self.toggle_settings())
         self.settings_btn.bind("<Enter>", lambda e: self.settings_btn.configure(bg="#555555"))
         self.settings_btn.bind("<Leave>", lambda e: self.settings_btn.configure(bg="#333333"))
+
+        # Update button (hidden by default, shown when update available)
+        self.update_btn = tk.Label(
+            self.title_frame,
+            text="",  # Empty until update is available
+            bg="#333333",
+            fg="#00cc00",
+            font=("Segoe UI", 8)
+        )
+        # Don't pack yet - will be shown when update is available
+        self.update_btn.bind("<Button-1>", lambda e: self._on_update_click())
+        self.update_btn.bind("<Enter>", lambda e: self.update_btn.configure(bg="#555555") if self.update_available else None)
+        self.update_btn.bind("<Leave>", lambda e: self.update_btn.configure(bg="#333333") if self.update_available else None)
 
         # Bind drag events to title bar
         self.title_frame.bind("<Button-1>", self.start_drag)

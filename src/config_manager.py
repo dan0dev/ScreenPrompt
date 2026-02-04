@@ -53,6 +53,8 @@ DEFAULT_CONFIG = {
     "text": "",  # Empty default - placeholder shown in UI
     "first_run_shown": False,
     "locked": False,  # Mouse pass-through mode
+    # Updates
+    "auto_check_updates": True,  # Check for updates on startup
 }
 
 

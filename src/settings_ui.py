@@ -206,6 +206,7 @@ class SettingsPanel(tk.Frame):
         self.original_font_size = self.config.get("font_size", 11)
         self.original_text_color = self.config.get("font_color", "#FFFFFF")
         self.original_bg_color = self.config.get("bg_color", "#2d2d2d")
+        self.original_auto_check_updates = self.config.get("auto_check_updates", True)
 
         # Tkinter variables
         self.opacity_var: Optional[tk.DoubleVar] = None
@@ -485,6 +486,40 @@ class SettingsPanel(tk.Frame):
             swatch.bind("<Enter>", lambda e, s=swatch: s.configure(relief=tk.GROOVE))
             swatch.bind("<Leave>", lambda e, s=swatch: s.configure(relief=tk.RAISED))
 
+        # Updates section
+        updates_frame = tk.Frame(main_frame, bg="#333333", padx=10, pady=8)
+        updates_frame.pack(fill=tk.X, pady=(0, 8))
+
+        updates_header = tk.Label(
+            updates_frame,
+            text="Updates",
+            font=("Segoe UI", 9, "bold"),
+            bg="#333333",
+            fg="#ffffff"
+        )
+        updates_header.pack(anchor=tk.W)
+
+        # Auto-check updates row
+        auto_update_row = tk.Frame(updates_frame, bg="#333333")
+        auto_update_row.pack(fill=tk.X, pady=(5, 0))
+
+        self.auto_check_updates_var = tk.BooleanVar(
+            value=self.config.get("auto_check_updates", True)
+        )
+
+        auto_update_check = tk.Checkbutton(
+            auto_update_row,
+            text="Check for updates on startup",
+            variable=self.auto_check_updates_var,
+            bg="#333333",
+            fg="#cccccc",
+            selectcolor="#444444",
+            activebackground="#333333",
+            activeforeground="#ffffff",
+            font=("Segoe UI", 9)
+        )
+        auto_update_check.pack(side=tk.LEFT)
+
         # Button row
         button_frame = tk.Frame(main_frame, bg="#2a2a2a")
         button_frame.pack(fill=tk.X, pady=(5, 0))
@@ -541,6 +576,7 @@ class SettingsPanel(tk.Frame):
         self.original_font_size = self.config.get("font_size", 11)
         self.original_text_color = self.config.get("font_color", "#FFFFFF")
         self.original_bg_color = self.config.get("bg_color", "#2d2d2d")
+        self.original_auto_check_updates = self.config.get("auto_check_updates", True)
 
         # Update UI to match config
         if self.opacity_var:
@@ -560,6 +596,9 @@ class SettingsPanel(tk.Frame):
         if self.bg_color_var:
             self.bg_color_var.set(self.original_bg_color)
             self.bg_color_swatch.configure(bg=self.original_bg_color)
+
+        if hasattr(self, 'auto_check_updates_var'):
+            self.auto_check_updates_var.set(self.original_auto_check_updates)
 
         self.saved = False
         self._visible = True
@@ -653,6 +692,9 @@ class SettingsPanel(tk.Frame):
 
         if self.bg_color_var:
             self.config["bg_color"] = self.bg_color_var.get()
+
+        if hasattr(self, 'auto_check_updates_var'):
+            self.config["auto_check_updates"] = self.auto_check_updates_var.get()
 
         save_config(self.config)
         self.saved = True
