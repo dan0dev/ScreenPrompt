@@ -921,6 +921,19 @@ class ScreenPromptWindow:
 
         self.root.geometry(f"{new_w}x{new_h}+{new_x}+{new_y}")
 
+    def _get_current_config(self) -> dict:
+        """Get current window state as config dict."""
+        config = self.config.copy()
+        config["x"] = self.root.winfo_x()
+        config["y"] = self.root.winfo_y()
+        config["width"] = self.root.winfo_width()
+        config["height"] = self.root.winfo_height()
+        config["text"] = self._get_text_content()
+        config["opacity"] = self.root.attributes("-alpha")
+        config["locked"] = self.locked
+        config["font_color"] = self.text_color
+        return config
+
     def on_close(self):
         """Save state and close the application."""
         # Cleanup hotkeys
@@ -971,7 +984,7 @@ def main():
                 "ScreenPrompt Error",
                 f"An unexpected error occurred:\n\n{e}\n\n"
                 "Please report this issue at:\n"
-                "https://github.com/yourusername/screenprompt/issues"
+                "https://github.com/dan0dev/ScreenPrompt/issues"
             )
         except Exception:
             pass
