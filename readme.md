@@ -10,10 +10,20 @@ ScreenPrompt creates a transparent overlay on your screen that **you can see, bu
 
 ![ScreenPrompt Demo](https://github.com/dan0dev/ScreenPrompt/blob/main/hero-video-main.gif)
 
-| Your Screen | What Others See |
-|:--:|:--:|
-| ![Your Screen](https://i.imgur.com/Se11s8b.jpeg) | ![Screen Share](https://i.imgur.com/fSqLQf0.png) |
-| *Overlay visible on your display* | *Overlay invisible during screen share* |
+<table>
+<tr>
+<th width="50%" align="center">Your Screen</th>
+<th width="50%" align="center">What Others See</th>
+</tr>
+<tr>
+<td align="center"><img src="https://i.imgur.com/Se11s8b.jpeg" alt="Your Screen"></td>
+<td align="center"><img src="https://i.imgur.com/fSqLQf0.png" alt="Screen Share"></td>
+</tr>
+<tr>
+<td align="center"><em>Overlay visible on your display</em></td>
+<td align="center"><em>Overlay invisible during screen share</em></td>
+</tr>
+</table>
 
 ## 🎯 Why ScreenPrompt?
 
