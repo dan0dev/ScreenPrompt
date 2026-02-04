@@ -25,13 +25,21 @@ A transparent overlay window for Windows that is **invisible to screen capture s
 
 ## Installation
 
-### Option 1: Download Executable (Recommended)
+### Option 1: Windows Installer (Recommended)
 
 1. Go to the [Releases](../../releases) page
-2. Download the latest `ScreenPrompt.exe`
-3. Run the executable - no installation required!
+2. Download `ScreenPrompt-{version}-Setup.exe`
+3. Run the installer
+4. Choose installation options:
+   - ✅ Start Menu shortcuts (recommended)
+   - ✅ Desktop shortcut (optional)
+5. Launch from Start Menu or Desktop
 
-> **Note:** A Windows MSI installer with Start Menu integration is coming soon.
+**Features:**
+- Professional Windows installer
+- Automatic uninstaller in Add/Remove Programs
+- Preserves settings when upgrading
+- One-click installation
 
 ### Option 2: Run from Source
 
@@ -76,6 +84,7 @@ Requires Python 3.10 or higher.
 | `Ctrl+Shift+O` | Cycle opacity |
 | `Ctrl+Shift+S` | Open settings |
 | `Ctrl+Shift+Q` | Quit application |
+| **`Ctrl+Shift+F1`** | **🚨 PANIC - Instant close (no confirmation)** |
 
 ### Position Presets (Numpad)
 
@@ -93,6 +102,17 @@ Requires Python 3.10 or higher.
 | `Ctrl+Shift+C` | Copy all text |
 | `Ctrl+Shift+V` | Paste and replace all |
 | `Ctrl+Shift+Delete` | Clear all text |
+
+## 🚨 PANIC Button (Emergency Exit)
+
+The **`Ctrl+Shift+F1`** hotkey provides an instant emergency exit:
+
+- **No confirmation dialogs** - Closes immediately
+- **Saves your settings** - Configuration is preserved
+- **Works even when locked** - Bypasses click-through mode
+- **Use in emergencies** - When you need to close the app instantly
+
+This is different from `Ctrl+Shift+Q` which performs a normal close with cleanup.
 
 ## Configuration
 

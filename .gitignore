@@ -43,6 +43,9 @@ htmlcov/
 # Executables (keep .spec for reproducible builds)
 *.exe
 
+# NSIS build artifacts
+dist/*-Setup.exe
+
 # Local settings (Claude Code)
 .claude/settings.local.json
 
@@ -64,3 +67,6 @@ usage.txt
 # Internal development files (keep local only)
 CLAUDE.md
 ScreenPrompt_Project_Spec_2026-02-01.md
+
+# Alternative implementation (Tauri - not used)
+screenprompt-tauri/

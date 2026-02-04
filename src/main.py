@@ -589,6 +589,7 @@ class ScreenPromptWindow:
         safe_add_hotkey("ctrl+shift+s", self._hotkey_toggle_settings, "toggle settings")
         safe_add_hotkey("ctrl+shift+r", self._hotkey_reset_geometry, "reset geometry")
         safe_add_hotkey("ctrl+shift+q", self._hotkey_quit, "quit")
+        safe_add_hotkey("ctrl+shift+f1", self._hotkey_panic, "PANIC - instant close")
 
         # Text shortcuts
         safe_add_hotkey("ctrl+shift+c", self._hotkey_copy_all, "copy all")
@@ -772,6 +773,23 @@ class ScreenPromptWindow:
     def _hotkey_quit(self) -> None:
         """Quit application (Ctrl+Shift+Q)."""
         self._run_in_main_thread(self.on_close)
+
+    def _hotkey_panic(self) -> None:
+        """PANIC button - instantly close app without confirmation (Ctrl+Shift+F1)."""
+        def panic_close():
+            try:
+                # Save config first
+                save_config(self._get_current_config())
+                # Cleanup hotkeys
+                self.cleanup_hotkeys()
+                # Force immediate exit
+                self.root.quit()
+                self.root.destroy()
+                sys.exit(0)
+            except Exception:
+                # Even if something fails, force exit
+                sys.exit(0)
+        self._run_in_main_thread(panic_close)
 
     # --- Text shortcuts ---
 
