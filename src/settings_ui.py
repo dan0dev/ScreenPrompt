@@ -33,6 +33,7 @@ Provides opacity slider, font selection, and color pickers with real-time previe
 import ctypes
 import sys
 import tkinter as tk
+import webbrowser
 from tkinter import ttk
 from tkinter import font as tkfont
 from typing import Callable, Optional
@@ -488,6 +489,19 @@ class SettingsPanel(tk.Frame):
         button_frame = tk.Frame(main_frame, bg="#2a2a2a")
         button_frame.pack(fill=tk.X, pady=(5, 0))
 
+        # Docs link (left side)
+        docs_link = tk.Label(
+            button_frame,
+            text="Docs & Help",
+            font=("Segoe UI", 9, "underline"),
+            bg="#2a2a2a",
+            fg="#6699cc"
+        )
+        docs_link.pack(side=tk.LEFT)
+        docs_link.bind("<Button-1>", lambda e: self._open_docs())
+        docs_link.bind("<Enter>", lambda e: docs_link.configure(fg="#88bbee"))
+        docs_link.bind("<Leave>", lambda e: docs_link.configure(fg="#6699cc"))
+
         cancel_btn = tk.Button(
             button_frame,
             text="Cancel",
@@ -670,6 +684,10 @@ class SettingsPanel(tk.Frame):
 
         if self.on_cancel_callback:
             self.on_cancel_callback()
+
+    def _open_docs(self) -> None:
+        """Open the documentation/repository in the default browser."""
+        webbrowser.open("https://github.com/dan0dev/ScreenPrompt")
 
 
 # Standalone test
