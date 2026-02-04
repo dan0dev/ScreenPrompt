@@ -37,12 +37,12 @@ VSVersionInfo(
                     [
                         StringStruct(u'CompanyName', u'ScreenPrompt'),
                         StringStruct(u'FileDescription', u'ScreenPrompt - AI-powered screen capture tool'),
-                        StringStruct(u'FileVersion', u'1.0.1.0'),
+                        StringStruct(u'FileVersion', u'1.0.2.0'),
                         StringStruct(u'InternalName', u'ScreenPrompt'),
                         StringStruct(u'LegalCopyright', u'Copyright (c) 2025 ScreenPrompt. MIT License.'),
                         StringStruct(u'OriginalFilename', u'ScreenPrompt.exe'),
                         StringStruct(u'ProductName', u'ScreenPrompt'),
-                        StringStruct(u'ProductVersion', u'1.0.1.0'),
+                        StringStruct(u'ProductVersion', u'1.0.2.0'),
                         StringStruct(u'Comments', u'Open source AI prompt capture tool. https://github.com/dan0dev/ScreenPrompt'),
                     ]
                 )
