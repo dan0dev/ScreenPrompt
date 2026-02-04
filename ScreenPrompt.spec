@@ -7,8 +7,8 @@ a = Analysis(
     ['src/main.py'],
     pathex=['src'],  # Add src to path so local modules are found
     binaries=[],
-    datas=[('assets', 'assets')],
-    hiddenimports=['keyboard', 'config_manager', 'settings_ui'],
+    datas=[('assets', 'assets'), ('version.txt', '.')],
+    hiddenimports=['keyboard', 'config_manager', 'settings_ui', 'updater'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
