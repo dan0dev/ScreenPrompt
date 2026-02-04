@@ -10,6 +10,9 @@ ScreenPrompt creates a transparent overlay on your screen that **you can see, bu
 
 ![ScreenPrompt Demo](https://github.com/dan0dev/ScreenPrompt/blob/main/hero-video-main.gif)
 
+![Comparison](https://i.imgur.com/cBvv6w1.png)
+*Top: Your screen with the overlay visible. Bottom: What others see during screen share — no overlay.*
+
 ## 🎯 Why ScreenPrompt?
 
 **The Problem:** During video calls or screen recordings, looking at notes on a second monitor (or looking away) makes you appear:
