@@ -16,8 +16,8 @@ ScreenPrompt creates a transparent overlay on your screen that **you can see, bu
 <th width="50%" align="center">What Others See</th>
 </tr>
 <tr>
-<td align="center"><img src="https://i.imgur.com/Se11s8b.jpeg" alt="Your Screen"></td>
-<td align="center"><img src="https://i.imgur.com/fSqLQf0.png" alt="Screen Share"></td>
+<td align="center"><img src="https://i.imgur.com/wAmlwOe.png" alt="Your Screen"></td>
+<td align="center"><img src="https://i.imgur.com/G7RpK9e.png" alt="Screen Share"></td>
 </tr>
 <tr>
 <td align="center"><em>Overlay visible on your display</em></td>
