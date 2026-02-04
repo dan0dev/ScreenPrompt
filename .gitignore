@@ -70,3 +70,6 @@ ScreenPrompt_Project_Spec_2026-02-01.md
 
 # Alternative implementation (Tauri - not used)
 screenprompt-tauri/
+
+# Custom PyInstaller source (built locally for AV mitigation)
+tools/pyinstaller-src/

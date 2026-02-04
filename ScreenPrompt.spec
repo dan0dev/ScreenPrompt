@@ -1,5 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+# AV Mitigation: Disable UPX compression to avoid heuristic triggers
+# Custom bootloader should be built via scripts/setup_pyinstaller.py
+
 a = Analysis(
     ['src/main.py'],
     pathex=['src'],  # Add src to path so local modules are found
@@ -24,7 +27,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # Disabled to avoid AV heuristic triggers
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -32,13 +35,14 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=['assets/icon.ico'],
+    version='version_info.txt',  # EXE metadata for AV trust
 )
 coll = COLLECT(
     exe,
     a.binaries,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,  # Disabled to avoid AV heuristic triggers
     upx_exclude=[],
     name='ScreenPrompt',
 )

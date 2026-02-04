@@ -7,6 +7,10 @@ Usage:
     python scripts/build.py --onefile      # Single file (larger startup time)
     python scripts/build.py --installer    # Build PyInstaller + NSIS installer
     python scripts/build.py --nsis-only    # Build NSIS installer (requires existing build)
+
+AV Mitigation:
+    For reduced AV false positives, run scripts/setup_pyinstaller.py first
+    to build a custom PyInstaller bootloader with a unique binary signature.
 """
 
 import os
@@ -16,6 +20,27 @@ import subprocess
 import argparse
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CUSTOM_PYINSTALLER_PATH = os.path.join(PROJECT_ROOT, 'tools', 'pyinstaller-src')
+
+
+def check_custom_pyinstaller():
+    """Check if custom PyInstaller bootloader is installed."""
+    try:
+        import PyInstaller
+        pyinstaller_path = PyInstaller.__path__[0]
+
+        # Check if it's our custom build
+        if 'pyinstaller-src' in pyinstaller_path or CUSTOM_PYINSTALLER_PATH in pyinstaller_path:
+            print(f"Using custom PyInstaller from: {pyinstaller_path}")
+            return True
+        else:
+            print(f"Warning: Using standard PyInstaller from: {pyinstaller_path}")
+            print("For reduced AV false positives, run: python scripts/setup_pyinstaller.py")
+            print("This will build a custom bootloader with a unique binary signature.\n")
+            return False
+    except ImportError:
+        print("Error: PyInstaller not installed. Run: pip install pyinstaller")
+        return False
 
 
 def clean_build():
@@ -38,15 +63,21 @@ def clean_build():
     print("Clean complete.")
 
 
-def build(onefile=False):
+def build(onefile=False, noupx=False):
     """Build the executable."""
     os.chdir(PROJECT_ROOT)
+
+    # Check PyInstaller installation
+    check_custom_pyinstaller()
 
     # Ensure icon exists
     icon_path = os.path.join(PROJECT_ROOT, 'assets', 'icon.ico')
     if not os.path.exists(icon_path):
         print("Icon not found, generating...")
         subprocess.run([sys.executable, 'scripts/create_icon.py'], check=True)
+
+    # Version info for EXE metadata
+    version_info_path = os.path.join(PROJECT_ROOT, 'version_info.txt')
 
     # Build command
     if onefile:
@@ -61,8 +92,14 @@ def build(onefile=False):
             '--icon', icon_path,
             '--add-data', f'assets{os.pathsep}assets',
             '--hidden-import', 'keyboard',
-            'src/main.py'
         ]
+        # Add version info if it exists
+        if os.path.exists(version_info_path):
+            cmd.extend(['--version-file', version_info_path])
+        # Disable UPX for AV mitigation (default for onefile mode now)
+        if noupx:
+            cmd.append('--noupx')
+        cmd.append('src/main.py')
     else:
         # Use spec file for one-dir build
         cmd = [
@@ -177,9 +214,15 @@ def main():
     parser = argparse.ArgumentParser(description='Build ScreenPrompt executable')
     parser.add_argument('--clean', action='store_true', help='Clean build artifacts')
     parser.add_argument('--onefile', action='store_true', help='Build single executable')
+    parser.add_argument('--noupx', action='store_true', help='Disable UPX compression (for AV mitigation in onefile mode)')
     parser.add_argument('--installer', action='store_true', help='Build executable + NSIS installer')
     parser.add_argument('--nsis-only', action='store_true', help='Build NSIS installer only (requires existing build)')
+    parser.add_argument('--check-pyinstaller', action='store_true', help='Check PyInstaller installation status')
     args = parser.parse_args()
+
+    if args.check_pyinstaller:
+        check_custom_pyinstaller()
+        return
 
     if args.clean:
         clean_build()
@@ -190,7 +233,7 @@ def main():
         build_nsis_installer()
         return
 
-    build(onefile=args.onefile)
+    build(onefile=args.onefile, noupx=args.noupx)
 
     if args.installer:
         print("\n" + "="*60)
