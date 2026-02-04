@@ -1,12 +1,55 @@
 # ScreenPrompt
 
-A transparent overlay window for Windows that is **invisible to screen capture software**. Perfect for presentations, video calls, content creation, and keeping notes visible while screen sharing.
+**Your notes, scripts, and reminders—visible to you, invisible to everyone else.**
+
+ScreenPrompt creates a transparent overlay on your screen that **you can see, but others can't** during screen sharing or recordings. It's completely invisible to screen capture software, video calls, and recordings.
 
 ![Windows](https://img.shields.io/badge/Windows-10%2B-blue)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ![ScreenPrompt Demo](https://github.com/dan0dev/ScreenPrompt/blob/main/hero-video-main.gif)
+
+## 🎯 Why ScreenPrompt?
+
+**The Problem:** During video calls or screen recordings, looking at notes on a second monitor (or looking away) makes you appear:
+- Unprepared or unprofessional
+- Like you're reading instead of speaking naturally
+- Distracted or not engaged
+
+**The Solution:** ScreenPrompt lets you read notes, scripts, or reminders **directly on your screen** while:
+- ✅ **Others see only your shared content** - The overlay is invisible in their view
+- ✅ **You appear natural and engaged** - Look at the camera while reading
+- ✅ **No second monitor needed** - Works with single or multiple monitors
+- ✅ **Read word-by-word seamlessly** - Nobody notices you're reading
+
+**You see this:**
+```
+┌─────────────────────────────┐
+│  Your Screen                │
+│                             │
+│  [ScreenPrompt Overlay]     │ ← You see your notes
+│  • Key point 1              │
+│  • Client name: John        │
+│  • Next topic: pricing      │
+│                             │
+│  Your Presentation          │
+└─────────────────────────────┘
+```
+
+**Others see this:**
+```
+┌─────────────────────────────┐
+│  Your Screen                │
+│                             │
+│                             │ ← Notes are invisible
+│                             │
+│                             │
+│                             │
+│                             │
+│  Your Presentation          │
+└─────────────────────────────┘
+```
 
 ## Features
 
@@ -128,19 +171,42 @@ Settings are stored in `%APPDATA%\ScreenPrompt\config.json` and include:
 
 - **Browser-based screen sharing** (Google Meet, Discord Web, browser-based Teams) may occasionally show a black box instead of hiding the window. This occurs in roughly ~10% of cases due to how the browser's `getDisplayMedia` API interacts with Windows display affinity. Native desktop applications (Zoom, OBS, Teams desktop) provide the most reliable capture exclusion. *This behavior needs more testing - please [report your experience](../../issues/new?template=bug_report.md) to help us improve!*
 
-## Intended Use and Ethical Notice
+## 💡 Real-World Use Cases
 
-ScreenPrompt is intended for **legitimate use only**, such as:
-- Presentations and meetings
-- Content creation
-- Personal productivity
-- Keeping reference notes visible while screen sharing
+### ✅ Professional & Legitimate Uses
 
-**DO NOT use this software for:**
-- Cheating on exams or assessments
-- Violating academic integrity policies
-- Breaking terms of service of any platform
-- Any illegal activities
+**Client Meetings & Sales Calls**
+- Keep client names, key points, and talking points visible
+- Reference technical details without looking unprepared
+- Read important numbers or quotes naturally
+- Appear confident and well-prepared
+
+**Content Creation & Streaming**
+- Read scripts word-by-word while appearing natural on camera
+- Educational content: Tell stories "without reading"
+- Live streams: Keep chat commands, schedules, reminders visible
+- Tutorials: Follow step-by-step instructions smoothly
+
+**Presentations & Public Speaking**
+- Speaker notes that others can't see
+- Teleprompter effect for professional delivery
+- Read full sentences naturally while maintaining eye contact
+- Reference data, statistics, quotes on the fly
+
+**Video Calls & Remote Work**
+- Meeting agendas and key discussion points
+- Technical troubleshooting steps
+- Interview questions and candidate notes
+- Training sessions with reference materials
+
+### ⛔ DO NOT Use For
+
+**We built this for professional advantage, NOT for cheating:**
+
+- ❌ Cheating on exams or assessments
+- ❌ Violating academic integrity policies
+- ❌ Breaking terms of service of any platform
+- ❌ Any illegal or unethical activities
 
 **You are solely responsible for how you use this software.**
 
