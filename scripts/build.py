@@ -153,9 +153,19 @@ def check_nsis():
     return None
 
 
-def build_nsis_installer():
+def get_python_arch():
+    """Get the architecture of the current Python interpreter."""
+    import struct
+    return 'x64' if struct.calcsize('P') * 8 == 64 else 'x86'
+
+
+def build_nsis_installer(arch=None):
     """Build NSIS installer."""
     os.chdir(PROJECT_ROOT)
+
+    # Auto-detect architecture if not specified
+    if arch is None:
+        arch = get_python_arch()
 
     # Check if PyInstaller build exists
     dist_dir = os.path.join(PROJECT_ROOT, 'dist', 'ScreenPrompt')
@@ -189,12 +199,13 @@ def build_nsis_installer():
 
     print(f"\nBuilding NSIS installer using: {makensis}")
     print(f"Version: {version}")
+    print(f"Architecture: {arch}")
 
-    cmd = [makensis, '/V3', nsi_script]
+    cmd = [makensis, '/V3', f'/DARCH={arch}', nsi_script]
     result = subprocess.run(cmd)
 
     if result.returncode == 0:
-        installer_path = os.path.join(PROJECT_ROOT, 'dist', f'ScreenPrompt-{version}-Setup.exe')
+        installer_path = os.path.join(PROJECT_ROOT, 'dist', f'ScreenPrompt_{version}_{arch}-setup.exe')
         if os.path.exists(installer_path):
             size_mb = os.path.getsize(installer_path) / (1024 * 1024)
             print("\n" + "="*60)
@@ -202,6 +213,7 @@ def build_nsis_installer():
             print("="*60)
             print(f"Installer: {installer_path}")
             print(f"Size: {size_mb:.1f} MB")
+            print(f"Architecture: {arch}")
             print("="*60)
         else:
             print("\nInstaller build completed but file not found at expected location.")
@@ -217,6 +229,7 @@ def main():
     parser.add_argument('--noupx', action='store_true', help='Disable UPX compression (for AV mitigation in onefile mode)')
     parser.add_argument('--installer', action='store_true', help='Build executable + NSIS installer')
     parser.add_argument('--nsis-only', action='store_true', help='Build NSIS installer only (requires existing build)')
+    parser.add_argument('--arch', choices=['x64', 'x86'], help='Target architecture (auto-detected from Python if not specified)')
     parser.add_argument('--check-pyinstaller', action='store_true', help='Check PyInstaller installation status')
     args = parser.parse_args()
 
@@ -224,13 +237,17 @@ def main():
         check_custom_pyinstaller()
         return
 
+    # Auto-detect architecture from current Python
+    arch = args.arch if args.arch else get_python_arch()
+    print(f"Target architecture: {arch}")
+
     if args.clean:
         clean_build()
         if not (args.onefile or args.installer):
             return
 
     if args.nsis_only:
-        build_nsis_installer()
+        build_nsis_installer(arch=arch)
         return
 
     build(onefile=args.onefile, noupx=args.noupx)
@@ -239,7 +256,7 @@ def main():
         print("\n" + "="*60)
         print("PyInstaller build complete, now building NSIS installer...")
         print("="*60 + "\n")
-        build_nsis_installer()
+        build_nsis_installer(arch=arch)
 
 
 if __name__ == '__main__':
