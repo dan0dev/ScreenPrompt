@@ -34,7 +34,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['assets/icon.ico'],
+    icon=['assets/icon-256x256.ico'],
     version='version_info.txt',  # EXE metadata for AV trust
 )
 coll = COLLECT(

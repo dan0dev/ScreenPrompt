@@ -71,10 +71,10 @@ def build(onefile=False, noupx=False):
     check_custom_pyinstaller()
 
     # Ensure icon exists
-    icon_path = os.path.join(PROJECT_ROOT, 'assets', 'icon.ico')
+    icon_path = os.path.join(PROJECT_ROOT, 'assets', 'icon-256x256.ico')
     if not os.path.exists(icon_path):
-        print("Icon not found, generating...")
-        subprocess.run([sys.executable, 'scripts/create_icon.py'], check=True)
+        print("Error: Icon not found at", icon_path)
+        sys.exit(1)
 
     # Version info for EXE metadata
     version_info_path = os.path.join(PROJECT_ROOT, 'version_info.txt')
