@@ -71,7 +71,7 @@ def build(onefile=False, noupx=False):
     check_custom_pyinstaller()
 
     # Ensure icon exists
-    icon_path = os.path.join(PROJECT_ROOT, 'assets', 'icon-256x256.ico')
+    icon_path = os.path.join(PROJECT_ROOT, 'assets', 'icon.ico')
     if not os.path.exists(icon_path):
         print("Error: Icon not found at", icon_path)
         sys.exit(1)
