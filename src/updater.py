@@ -95,8 +95,8 @@ class UpdateChecker:
             # Find the installer asset
             assets = data.get('assets', [])
             for asset in assets:
-                name = asset.get('name', '')
-                if name.endswith('-Setup.exe'):
+                name = asset.get('name', '').lower()
+                if name.endswith('-setup.exe'):
                     self.download_url = asset.get('browser_download_url')
                     break
 
