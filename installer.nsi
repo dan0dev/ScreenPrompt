@@ -14,14 +14,23 @@
 !define /file VERSION "version.txt"
 !define PRODUCT_NAME "ScreenPrompt"
 !define PRODUCT_PUBLISHER "ScreenPrompt Contributors"
-!define PRODUCT_WEB_SITE "https://github.com/screenprompt/screenprompt"
+!define PRODUCT_WEB_SITE "https://github.com/dan0dev/ScreenPrompt"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
+; Architecture - passed via /DARCH=x64 or /DARCH=x86 (default: x64)
+!ifndef ARCH
+    !define ARCH "x64"
+!endif
+
 ; Application details
 Name "${PRODUCT_NAME} ${VERSION}"
-OutFile "dist\ScreenPrompt-${VERSION}-Setup.exe"
-InstallDir "$PROGRAMFILES64\${PRODUCT_NAME}"
+OutFile "dist\${PRODUCT_NAME}_${VERSION}_${ARCH}-setup.exe"
+!if "${ARCH}" == "x64"
+    InstallDir "$PROGRAMFILES64\${PRODUCT_NAME}"
+!else
+    InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
+!endif
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 RequestExecutionLevel admin
 
