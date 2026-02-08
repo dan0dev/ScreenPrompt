@@ -28,8 +28,10 @@ The authors are not responsible for any misuse of this software.
 """
 
 import ctypes
+import ctypes.wintypes
 import os
 import sys
+import threading
 import tkinter as tk
 from tkinter import messagebox
 from typing import Optional
@@ -58,12 +60,46 @@ WS_EX_TRANSPARENT = 0x00000020
 WS_EX_LAYERED = 0x00080000
 WS_EX_TOOLWINDOW = 0x00000080  # Hides from taskbar and Alt+Tab
 
+# Mouse hook constants for scroll-through in locked mode
+WH_MOUSE_LL = 14
+WM_MOUSEWHEEL = 0x020A
+
 # Load user32.dll
 user32 = ctypes.windll.user32
 user32.GetWindowLongPtrW.restype = ctypes.c_void_p
 user32.GetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int]
 user32.SetWindowLongPtrW.restype = ctypes.c_void_p
 user32.SetWindowLongPtrW.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p]
+
+# Mouse hook structure
+class MSLLHOOKSTRUCT(ctypes.Structure):
+    _fields_ = [
+        ("pt", ctypes.wintypes.POINT),
+        ("mouseData", ctypes.wintypes.DWORD),
+        ("flags", ctypes.wintypes.DWORD),
+        ("time", ctypes.wintypes.DWORD),
+        ("dwExtraInfo", ctypes.c_void_p),
+    ]
+
+LowLevelMouseProc = ctypes.WINFUNCTYPE(
+    ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p
+)
+
+# Mouse hook function signatures
+user32.SetWindowsHookExW.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.wintypes.DWORD]
+user32.SetWindowsHookExW.restype = ctypes.c_void_p
+user32.UnhookWindowsHookEx.argtypes = [ctypes.c_void_p]
+user32.UnhookWindowsHookEx.restype = ctypes.wintypes.BOOL
+user32.CallNextHookEx.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p]
+user32.CallNextHookEx.restype = ctypes.c_void_p
+user32.GetMessageW.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+user32.GetMessageW.restype = ctypes.c_int
+user32.TranslateMessage.argtypes = [ctypes.c_void_p]
+user32.DispatchMessageW.argtypes = [ctypes.c_void_p]
+user32.PostThreadMessageW.argtypes = [ctypes.wintypes.DWORD, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p]
+user32.PostThreadMessageW.restype = ctypes.wintypes.BOOL
+user32.GetWindowRect.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.wintypes.RECT)]
+user32.GetWindowRect.restype = ctypes.wintypes.BOOL
 
 ETHICAL_NOTICE = """ScreenPrompt is intended for legitimate use only, such as:
 - Presentations and meetings
@@ -134,6 +170,11 @@ class ScreenPromptWindow:
         self.placeholder_active = False  # Track if placeholder is showing
         self.update_available = False  # Track if update is available
         self.update_version: Optional[str] = None
+
+        # Scroll hook state (for scroll-through in locked mode)
+        self._scroll_hook_id = None
+        self._scroll_hook_proc = None
+        self._scroll_hook_thread = None
 
         # Resize state: which edges are being resized
         # Can be combination of: "n", "s", "e", "w"
@@ -649,13 +690,89 @@ class ScreenPromptWindow:
                 text=" \U0001F512 ",  # Locked icon
                 fg="#ffaa00"
             )
+            # Install scroll hook so scroll wheel works through the overlay
+            self._install_scroll_hook()
         else:
+            # Uninstall scroll hook before removing click-through
+            self._uninstall_scroll_hook()
             # Disable click-through: remove WS_EX_TRANSPARENT
             user32.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex_style & ~WS_EX_TRANSPARENT)
             self.lock_btn.configure(
                 text=" \U0001F513 ",  # Unlocked icon
                 fg="#aaaaaa"
             )
+
+    # ========== SCROLL HOOK (locked mode) ==========
+
+    def _install_scroll_hook(self) -> None:
+        """Install a low-level mouse hook to capture scroll events in locked mode."""
+        if self._scroll_hook_id is not None:
+            return
+
+        def _low_level_mouse_proc(nCode, wParam, lParam):
+            if nCode >= 0 and wParam == WM_MOUSEWHEEL:
+                info = MSLLHOOKSTRUCT.from_address(lParam)
+                if self.visible and self._is_cursor_over_window(info.pt.x, info.pt.y):
+                    delta = ctypes.c_short(info.mouseData >> 16).value
+                    try:
+                        self.root.after(0, lambda d=delta: self._on_scroll_event(d))
+                    except Exception:
+                        pass
+                    return 1  # Consume the event
+            return user32.CallNextHookEx(None, nCode, wParam, lParam)
+
+        # Must keep a reference to prevent garbage collection
+        self._scroll_hook_proc = LowLevelMouseProc(_low_level_mouse_proc)
+
+        def _hook_thread():
+            self._scroll_hook_id = user32.SetWindowsHookExW(
+                WH_MOUSE_LL, self._scroll_hook_proc, None, 0
+            )
+            if not self._scroll_hook_id:
+                return
+            # Message loop required for low-level hooks
+            msg = ctypes.wintypes.MSG()
+            while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
+                user32.TranslateMessage(ctypes.byref(msg))
+                user32.DispatchMessageW(ctypes.byref(msg))
+
+        self._scroll_hook_thread = threading.Thread(target=_hook_thread, daemon=True)
+        self._scroll_hook_thread.start()
+
+    def _uninstall_scroll_hook(self) -> None:
+        """Uninstall the mouse scroll hook."""
+        hook_id = self._scroll_hook_id
+        if hook_id is not None:
+            user32.UnhookWindowsHookEx(hook_id)
+            self._scroll_hook_id = None
+
+        thread = self._scroll_hook_thread
+        if thread is not None and thread.is_alive():
+            # Post WM_QUIT to break the message loop
+            user32.PostThreadMessageW(
+                ctypes.wintypes.DWORD(thread.ident), 0x0012, 0, 0
+            )
+            thread.join(timeout=2)
+
+        self._scroll_hook_thread = None
+        self._scroll_hook_proc = None
+
+    def _is_cursor_over_window(self, cursor_x: int, cursor_y: int) -> bool:
+        """Check if screen coordinates are within our window bounds."""
+        try:
+            rect = ctypes.wintypes.RECT()
+            hwnd = get_hwnd(self.root)
+            user32.GetWindowRect(hwnd, ctypes.byref(rect))
+            return (rect.left <= cursor_x <= rect.right
+                    and rect.top <= cursor_y <= rect.bottom)
+        except Exception:
+            return False
+
+    def _on_scroll_event(self, delta: int) -> None:
+        """Handle scroll event forwarded from the mouse hook."""
+        # delta: positive = up, negative = down; 120 per notch
+        lines = -int(delta / 120) * 3
+        self.text_widget.yview_scroll(lines, "units")
 
     # ========== HOTKEY SYSTEM ==========
 
@@ -717,7 +834,8 @@ class ScreenPromptWindow:
         safe_add_hotkey("ctrl+shift+delete", self._hotkey_clear_text, "clear text")
 
     def cleanup_hotkeys(self) -> None:
-        """Unregister all global hotkeys."""
+        """Unregister all global hotkeys and scroll hook."""
+        self._uninstall_scroll_hook()
         if HOTKEYS_AVAILABLE:
             keyboard.unhook_all_hotkeys()
 
