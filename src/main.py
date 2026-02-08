@@ -296,21 +296,18 @@ class ScreenPromptWindow:
         )
 
     def _set_window_icon(self):
-        """Set the window icon from PNG file."""
+        """Set the window icon from ICO file."""
         try:
             # Try to find the icon in common locations
             icon_paths = [
-                os.path.join(os.path.dirname(__file__), '..', 'assets', 'icon-128.png'),
-                os.path.join(os.path.dirname(__file__), 'assets', 'icon-128.png'),
-                os.path.join(sys._MEIPASS, 'assets', 'icon-128.png') if hasattr(sys, '_MEIPASS') else None,
+                os.path.join(os.path.dirname(__file__), '..', 'assets', 'icon-256x256.ico'),
+                os.path.join(os.path.dirname(__file__), 'assets', 'icon-256x256.ico'),
+                os.path.join(sys._MEIPASS, 'assets', 'icon-256x256.ico') if hasattr(sys, '_MEIPASS') else None,
             ]
 
             for icon_path in icon_paths:
                 if icon_path and os.path.exists(icon_path):
-                    icon = tk.PhotoImage(file=icon_path)
-                    self.root.iconphoto(True, icon)
-                    # Keep a reference to prevent garbage collection
-                    self._icon_image = icon
+                    self.root.iconbitmap(icon_path)
                     return
 
         except Exception as e:
