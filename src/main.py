@@ -300,9 +300,9 @@ class ScreenPromptWindow:
         try:
             # Try to find the icon in common locations
             icon_paths = [
-                os.path.join(os.path.dirname(__file__), '..', 'assets', 'icon-256x256.ico'),
-                os.path.join(os.path.dirname(__file__), 'assets', 'icon-256x256.ico'),
-                os.path.join(sys._MEIPASS, 'assets', 'icon-256x256.ico') if hasattr(sys, '_MEIPASS') else None,
+                os.path.join(os.path.dirname(__file__), '..', 'assets', 'icon.ico'),
+                os.path.join(os.path.dirname(__file__), 'assets', 'icon.ico'),
+                os.path.join(sys._MEIPASS, 'assets', 'icon.ico') if hasattr(sys, '_MEIPASS') else None,
             ]
 
             for icon_path in icon_paths:

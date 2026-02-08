@@ -41,8 +41,8 @@ SetCompressor /SOLID lzma
 ; Interface Settings
 
 !define MUI_ABORTWARNING
-!define MUI_ICON "assets\icon-256x256.ico"
-!define MUI_UNICON "assets\icon-256x256.ico"
+!define MUI_ICON "assets\icon.ico"
+!define MUI_UNICON "assets\icon.ico"
 !define MUI_HEADERIMAGE
 !define MUI_WELCOMEFINISHPAGE_BITMAP_NOSTRETCH
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP_NOSTRETCH
