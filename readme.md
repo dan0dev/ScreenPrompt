@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icon-source-512.png" alt="ScreenPrompt" width="128" height="128">
+</p>
+
 # ScreenPrompt
 
 **Your notes, scripts, and reminders—visible to you, invisible to everyone else.**
