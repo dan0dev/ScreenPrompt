@@ -9,7 +9,7 @@
 ScreenPrompt creates a transparent overlay on your screen that **you can see, but others can't** during screen sharing or recordings. It's completely invisible to screen capture software, video calls, and recordings.
 
 ![Windows](https://img.shields.io/badge/Windows-10%2B-blue)
-![Python](https://img.shields.io/badge/Python-3.10%2B-green)
+![Tauri](https://img.shields.io/badge/Tauri-2-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ![ScreenPrompt Demo](https://github.com/dan0dev/ScreenPrompt/blob/main/hero-video-main.gif)
@@ -77,6 +77,7 @@ ScreenPrompt creates a transparent overlay on your screen that **you can see, bu
 - **Click-Through Mode**: Lock the overlay so clicks pass through to applications beneath
 - **Customizable Appearance**: Adjust opacity, font family, font size, text color, and background color
 - **Keyboard Shortcuts**: Control everything without clicking
+- **Keyboard Layout Support**: Auto-detects Hungarian (QWERTZ) or English (QWERTY) layout, with manual override in settings
 - **Position Presets**: Quickly snap to screen corners or center
 - **Persistent Settings**: Your preferences are saved between sessions
 - **100% Local**: No internet connection, no data collection, no telemetry
@@ -87,41 +88,27 @@ ScreenPrompt creates a transparent overlay on your screen that **you can see, bu
 
 ## Installation
 
-### Option 1: Windows Installer (Recommended)
+### Windows Installer (Recommended)
 
 1. Go to the [Releases](../../releases) page
-2. Download `ScreenPrompt-{version}-Setup.exe`
+2. Download `ScreenPrompt_{version}_x64-setup.exe`
 3. Run the installer
-4. Choose installation options:
-   - ✅ Start Menu shortcuts (recommended)
-   - ✅ Desktop shortcut (optional)
-5. Launch from Start Menu or Desktop
+4. Launch from Start Menu or Desktop
 
-**Features:**
-- Professional Windows installer
-- Automatic uninstaller in Add/Remove Programs
-- Preserves settings when upgrading
-- One-click installation
+If you're upgrading from the older Python-based version, the new installer will replace it.
 
-### Option 2: Run from Source
+### Build from Source
 
-Requires Python 3.10 or higher.
+Requires [Node.js](https://nodejs.org/) 20+ and [Rust](https://rustup.rs/) 1.77+.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/dan0dev/ScreenPrompt.git
-   cd ScreenPrompt
-   ```
+```bash
+git clone https://github.com/dan0dev/ScreenPrompt.git
+cd ScreenPrompt/screenprompt-tauri
+npm install
+npm run tauri build
+```
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Run the application:
-   ```bash
-   python src/main.py
-   ```
+The installer will be in `src-tauri/target/release/bundle/nsis/`.
 
 ## Usage
 
@@ -148,13 +135,28 @@ Requires Python 3.10 or higher.
 | `Ctrl+Shift+Q` | Quit application |
 | **`Ctrl+Shift+F1`** | **🚨 PANIC - Instant close (no confirmation)** |
 
-### Position Presets (Numpad)
+### Position Presets
+
+Shortcuts depend on your keyboard layout (auto-detected, or set in Settings):
+
+**English (QWERTY):**
 
 | Shortcut | Position |
 |----------|----------|
-| `Ctrl+Alt+Numpad 7/8/9` | Top-left / Top-center / Top-right |
-| `Ctrl+Alt+Numpad 4/5/6` | Center-left / Center / Center-right |
-| `Ctrl+Alt+Numpad 1/2/3` | Bottom-left / Bottom-center / Bottom-right |
+| `Ctrl+Alt+7/8/9` | Top-left / Top-center / Top-right |
+| `Ctrl+Alt+4/5/6` | Center-left / Center / Center-right |
+| `Ctrl+Alt+1/2/3` | Bottom-left / Bottom-center / Bottom-right |
+
+**Hungarian (QWERTZ):**
+
+| Shortcut | Position |
+|----------|----------|
+| `Ctrl+Shift+7/8/9` | Top-left / Top-center / Top-right |
+| `Ctrl+Shift+4/5/6` | Center-left / Center / Center-right |
+| `Ctrl+Shift+1/2/3` | Bottom-left / Bottom-center / Bottom-right |
+
+| Shortcut | Action |
+|----------|--------|
 | `Ctrl+Shift+Arrows` | Nudge window 20px |
 
 ### Text Shortcuts
@@ -178,12 +180,13 @@ This is different from `Ctrl+Shift+Q` which performs a normal close with cleanup
 
 ## Configuration
 
-Settings are stored in `%APPDATA%\ScreenPrompt\config.json` and include:
+Settings are stored locally via the app's config store and include:
 
 - Window position and size
 - Opacity level
 - Font family and size
 - Text and background colors
+- Keyboard layout preference
 - Lock state
 
 ## 💡 Real-World Use Cases

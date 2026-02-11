@@ -1,0 +1,40 @@
+/* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
+
+.text-editor {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.text-area {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 10px;
+  line-height: 1.5;
+  overflow-y: auto;
+  overflow-x: hidden;
+  word-wrap: break-word;
+}
+
+.text-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.text-area::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.text-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.text-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.text-area::placeholder {
+  color: #888888;
+}
