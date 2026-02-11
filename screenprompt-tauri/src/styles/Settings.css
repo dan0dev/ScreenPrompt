@@ -1,0 +1,279 @@
+/* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
+
+.settings {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #2a2a2a;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.settings-header h2 {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  color: #888888;
+  font-size: 20px;
+  cursor: default;
+  padding: 4px 8px;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #ffffff;
+}
+
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.settings-section {
+  background-color: #333333;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.settings-section label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffffff;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.opacity-value {
+  color: #ffffff;
+  font-weight: 500;
+  min-width: 40px;
+  text-align: right;
+}
+
+.opacity-slider {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #555555;
+}
+
+.opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: default;
+}
+
+.opacity-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: default;
+  border: none;
+}
+
+.font-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.font-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.font-label {
+  color: #cccccc;
+  font-size: 12px;
+  min-width: 50px;
+}
+
+.font-select {
+  flex: 1;
+  background-color: #555555;
+  color: #ffffff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: default;
+}
+
+.font-size-input {
+  background-color: #555555;
+  color: #ffffff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  width: 50px;
+  font-size: 12px;
+}
+
+.font-unit {
+  color: #cccccc;
+  font-size: 12px;
+}
+
+.color-palette {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-color {
+  width: 30px;
+  height: 22px;
+  border-radius: 3px;
+  border: 1px solid #555555;
+  flex-shrink: 0;
+}
+
+.color-swatches {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border: 1px solid #555555;
+  border-radius: 3px;
+  cursor: default;
+  transition: transform 0.1s;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  border-color: #ffffff;
+}
+
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #444444;
+}
+
+.button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: default;
+  transition: background-color 0.2s;
+}
+
+.cancel-button {
+  background-color: #444444;
+  color: #ffffff;
+}
+
+.cancel-button:hover {
+  background-color: #555555;
+}
+
+.save-button {
+  background-color: #4a7a4a;
+  color: #ffffff;
+}
+
+.save-button:hover {
+  background-color: #5a8a5a;
+}
+
+.updates-row {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #cccccc;
+  font-size: 12px;
+  cursor: default;
+}
+
+.checkbox-label input[type="checkbox"] {
+  cursor: default;
+  accent-color: #4a7a4a;
+}
+
+.settings-version-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 0;
+  margin-top: 6px;
+  border-top: 1px solid #444444;
+}
+
+.version-label {
+  color: #888888;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.version-up-to-date {
+  color: #5a9a5a;
+  font-size: 11px;
+}
+
+.version-update-link {
+  background: transparent;
+  border: none;
+  color: #4caf50;
+  font-size: 11px;
+  cursor: default;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.version-update-link:hover {
+  color: #66bb6a;
+}
+
+.docs-link {
+  background: transparent;
+  border: none;
+  color: #6cb6ff;
+  font-size: 12px;
+  cursor: default;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.docs-link:hover {
+  color: #8ecaff;
+}
+
+.footer-spacer {
+  flex: 1;
+}

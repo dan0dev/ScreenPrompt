@@ -1,0 +1,79 @@
+/* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
+
+.bottom-bar {
+  height: 26px;
+  background-color: #333333;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.font-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.font-label {
+  color: #888888;
+  font-size: 11px;
+  user-select: none;
+  line-height: 1;
+  width: 20px;
+  text-align: center;
+}
+
+.control-button {
+  background: transparent;
+  border: none;
+  color: #aaaaaa;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 0;
+  cursor: default;
+  border-radius: 3px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-button:hover {
+  background-color: #555555;
+  color: #ffffff;
+}
+
+.font-btn {
+  width: 20px;
+  height: 20px;
+}
+
+.clear-button {
+  font-size: 10px;
+  font-weight: normal;
+  padding: 2px 8px;
+  height: 20px;
+}
+
+.clear-button:hover {
+  color: #ff6666;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.lock-button {
+  width: 24px;
+  height: 20px;
+}
+
+.lock-button.locked {
+  color: #ffaa00;
+}
+
+.lock-button.locked:hover {
+  color: #ffcc00;
+}

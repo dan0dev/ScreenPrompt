@@ -1,0 +1,98 @@
+/* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
+
+.title-bar {
+  height: 28px;
+  background-color: #333333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 0 8px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.title-icon {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.title {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.title-bar-buttons {
+  display: flex;
+  gap: 2px;
+}
+
+.title-bar-button {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  padding: 2px 8px;
+  cursor: default;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.title-bar-button:hover {
+  background-color: #555555;
+}
+
+.title-bar-button.close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  text-align: center;
+  line-height: 28px;
+  border-radius: 0;
+}
+
+.title-bar-button.close:hover {
+  background-color: #ff4444;
+}
+
+.title-bar-button.settings {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 0;
+}
+
+.title-bar-button.update-badge {
+  background-color: #2e7d32;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.title-bar-button.update-badge:hover {
+  background-color: #388e3c;
+}
+
+.version-badge {
+  color: #888888;
+  font-size: 10px;
+  padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}

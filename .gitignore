@@ -1,11 +1,9 @@
-# Python
+# Python (legacy)
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-build/
-dist/
 *.egg-info/
 .eggs/
 *.egg
@@ -40,11 +38,8 @@ htmlcov/
 # ScreenPrompt specific
 *.msi
 
-# Executables (keep .spec for reproducible builds)
+# Executables
 *.exe
-
-# NSIS build artifacts
-dist/*-Setup.exe
 
 # Local settings (Claude Code)
 .claude/settings.local.json
@@ -68,8 +63,12 @@ usage.txt
 CLAUDE.md
 ScreenPrompt_Project_Spec_2026-02-01.md
 
-# Alternative implementation (Tauri - not used)
-screenprompt-tauri/
+# Tauri build artifacts
+screenprompt-tauri/src-tauri/target/
+screenprompt-tauri/node_modules/
+screenprompt-tauri/dist/
 
-# Custom PyInstaller source (built locally for AV mitigation)
+# Legacy Python build artifacts
+dist/
+build/
 tools/pyinstaller-src/
