@@ -15,7 +15,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
    - Clear, descriptive title
    - Steps to reproduce
    - Expected vs actual behavior
-   - Windows version and Python version
+   - Windows version and app version
    - Screenshots if applicable
 
 ### Requesting Features
@@ -36,62 +36,49 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ## Development Setup
 
+Requires [Node.js](https://nodejs.org/) 20+ and [Rust](https://rustup.rs/) 1.77+.
+
 1. Clone your fork:
    ```bash
    git clone https://github.com/yourusername/screenprompt.git
-   cd screenprompt
+   cd screenprompt/screenprompt-tauri
    ```
 
-2. Create a virtual environment:
+2. Install dependencies:
    ```bash
-   python -m venv venv
-   venv\Scripts\activate  # Windows
+   npm install
    ```
 
-3. Install dependencies:
+3. Run the application in development mode:
    ```bash
-   pip install -r requirements.txt
+   npm run tauri dev
    ```
 
-4. Run the application:
+4. Build a release installer:
    ```bash
-   python src/main.py
+   npm run tauri build
    ```
+   The installer will be in `src-tauri/target/release/bundle/nsis/`.
 
 ## Code Style Guidelines
 
 ### General
 
 - **Language**: All code, comments, and documentation must be in English
-- **Python version**: 3.10+ (use modern type hints)
+- **Frontend**: TypeScript + React, following the existing ESLint config (`npm run lint`)
+- **Backend**: Rust (2021 edition), formatted with `cargo fmt` and checked with `cargo clippy`
 - **Line length**: 100 characters max
-- **Imports**: Standard library first, then third-party, then local
-
-### File Headers
-
-Every `.py` file must include the MIT license header:
-
-```python
-# MIT License
-#
-# Copyright (c) 2026 ScreenPrompt Contributors
-#
-# [Full license text...]
-```
 
 ### Naming Conventions
 
-- **Variables/functions**: `snake_case`
-- **Classes**: `PascalCase`
-- **Constants**: `UPPER_SNAKE_CASE`
-- **Private methods**: `_leading_underscore`
+- **TypeScript**: `camelCase` for variables/functions, `PascalCase` for components/types, `UPPER_SNAKE_CASE` for constants
+- **Rust**: `snake_case` for functions/variables, `PascalCase` for types/structs, `SCREAMING_SNAKE_CASE` for constants
 
 ### Documentation
 
-- Add docstrings to all public functions and classes
+- Add doc comments to public functions, structs, and components
 - Keep comments concise and meaningful
 - Update README.md for user-facing changes
-- Update CLAUDE.md for implementation patterns
 
 ## Testing
 
@@ -121,16 +108,21 @@ Test capture exclusion with:
 
 ```
 screenprompt/
-├── src/
-│   ├── main.py           # Main application window
-│   ├── settings_ui.py    # Settings panel UI
-│   └── config_manager.py # Configuration handling
-├── tests/                # Test files
-├── requirements.txt      # Dependencies
-├── README.md            # User documentation
-├── CONTRIBUTING.md      # This file
-├── LICENSE              # MIT License
-└── CLAUDE.md            # Development rules & patterns
+├── screenprompt-tauri/
+│   ├── src/               # React/TypeScript frontend
+│   │   ├── components/    # UI components (overlay, settings, etc.)
+│   │   ├── hooks/         # React hooks
+│   │   └── utils/         # Frontend utilities
+│   └── src-tauri/
+│       └── src/           # Rust backend
+│           ├── main.rs        # App entry point
+│           ├── lib.rs         # Tauri app wiring
+│           ├── windows_api.rs # Capture-exclusion / window styling
+│           ├── keyboard_hook.rs
+│           └── mouse_hook.rs
+├── readme.md              # User documentation
+├── CONTRIBUTING.md        # This file
+└── LICENSE                # MIT License
 ```
 
 ## Questions?
