@@ -40,6 +40,9 @@ usage.txt
 CLAUDE.md
 ScreenPrompt_Project_Spec_2026-02-01.md
 
+# Local design reference (Apple HIG guides — keep local only)
+apple-*.md
+
 # Tauri build artifacts
 screenprompt-tauri/src-tauri/target/
 screenprompt-tauri/node_modules/

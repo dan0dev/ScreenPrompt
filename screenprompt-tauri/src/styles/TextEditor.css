@@ -1,5 +1,6 @@
 /* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
 
+/* The reading/content layer: flat and fully opaque. No glass, no shadow here. */
 .text-editor {
   flex: 1;
   display: flex;
@@ -11,30 +12,32 @@
   border: none;
   outline: none;
   resize: none;
-  padding: 10px;
-  line-height: 1.5;
+  background: transparent; /* shows the translucent .app background beneath */
+  padding: 16px 18px;
+  line-height: 1.6;
   overflow-y: auto;
   overflow-x: hidden;
   word-wrap: break-word;
+  cursor: text;
 }
 
 .text-area::-webkit-scrollbar {
   width: 8px;
 }
-
 .text-area::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+  background: transparent;
 }
-
 .text-area::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.18);
   border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
-
 .text-area::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
 }
 
 .text-area::placeholder {
-  color: #888888;
+  color: var(--sp-label-3);
 }

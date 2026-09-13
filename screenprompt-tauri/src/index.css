@@ -1,5 +1,64 @@
 /* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
 
+/*
+ * Design tokens.
+ *
+ * ScreenPrompt is a floating overlay: it lives permanently in a dark, glassy
+ * "chrome" world (title bar, bottom bar, settings), while the reading area's
+ * colors are chosen by the user. So the chrome commits to one refined dark
+ * palette rather than a light/dark theme pair. Following Apple's HIG:
+ *   - chrome (controls) uses translucent "glass"; the content layer stays flat
+ *   - elevation in a dark UI reads through *lighter* nested surfaces, not shadow
+ *   - color is semantic (roles), text uses opacity tiers, one type family
+ */
+:root {
+  color-scheme: dark;
+
+  /* Accent + semantic colors (Apple system colors, dark-mode variants) */
+  --sp-accent: #0a84ff;         /* systemBlue */
+  --sp-accent-hover: #409cff;
+  --sp-accent-soft: rgba(10, 132, 255, 0.16);
+  --sp-danger: #ff453a;         /* systemRed */
+  --sp-danger-soft: rgba(255, 69, 58, 0.18);
+  --sp-success: #30d158;        /* systemGreen */
+  --sp-warning: #ff9f0a;        /* systemOrange */
+
+  /* Chrome glass (the floating control layer) */
+  --sp-glass-fill: rgba(38, 38, 42, 0.72);
+  --sp-glass-fill-strong: rgba(30, 30, 34, 0.9);
+  --sp-glass-rim: rgba(255, 255, 255, 0.14);   /* top highlight / hairline border */
+  --sp-glass-blur: blur(20px) saturate(180%);
+
+  /* Nested-surface ladder (dark mode: lighter as it nests deeper) */
+  --sp-elevated-0: #1c1c1e;   /* settings page */
+  --sp-elevated-1: #2c2c2e;   /* section card */
+  --sp-elevated-2: #3a3a3c;   /* input inside a card */
+  --sp-elevated-2-hover: #48484a;
+  --sp-separator: rgba(255, 255, 255, 0.1);
+
+  /* Label opacity tiers (Apple's four-tier text hierarchy) */
+  --sp-label: rgba(255, 255, 255, 0.92);
+  --sp-label-2: rgba(255, 255, 255, 0.58);
+  --sp-label-3: rgba(255, 255, 255, 0.34);
+
+  /* Radii — concentric: inner = outer − padding */
+  --sp-radius-window: 12px;
+  --sp-radius-bar: 10px;
+  --sp-radius-card: 12px;
+  --sp-radius-control: 8px;
+  --sp-radius-pill: 999px;
+
+  /* Shadows — soft, low-opacity; only for genuinely floating chrome */
+  --sp-shadow-float: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --sp-shadow-pop: 0 10px 34px rgba(0, 0, 0, 0.5);
+
+  /* Type + motion */
+  --sp-font-ui: -apple-system, "SF Pro Text", "Segoe UI Variable Text",
+    "Segoe UI", system-ui, sans-serif;
+  --sp-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --sp-fast: 130ms;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -8,14 +67,31 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
-    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family: var(--sp-font-ui);
+  color: var(--sp-label);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
+  background: transparent; /* window is transparent; the .app shell paints itself */
 }
 
 #root {
   width: 100vw;
   height: 100vh;
+}
+
+/* Visible, non-suppressed keyboard focus everywhere (accessibility requirement) */
+:focus-visible {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

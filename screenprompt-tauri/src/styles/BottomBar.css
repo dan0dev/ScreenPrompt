@@ -1,79 +1,92 @@
 /* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
 
+/* Always-visible bottom bar (font size, clear, lock). In-flow, glass control strip. */
 .bottom-bar {
-  height: 26px;
-  background-color: #333333;
+  flex-shrink: 0;
+  height: 32px;
   display: flex;
   align-items: center;
+  gap: 6px;
   padding: 0 8px;
-  gap: 8px;
-  flex-shrink: 0;
+  user-select: none;
+
+  background: var(--sp-glass-fill);
+  backdrop-filter: var(--sp-glass-blur);
+  -webkit-backdrop-filter: var(--sp-glass-blur);
+  box-shadow:
+    inset 0 1px 0 var(--sp-glass-rim),
+    0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bottom-bar {
+    background: var(--sp-glass-fill-strong);
+  }
 }
 
 .font-size-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .font-label {
-  color: #888888;
+  color: var(--sp-label-3);
   font-size: 11px;
+  font-weight: 600;
   user-select: none;
-  line-height: 1;
-  width: 20px;
+  min-width: 22px;
   text-align: center;
 }
 
 .control-button {
   background: transparent;
   border: none;
-  color: #aaaaaa;
-  font-size: 13px;
-  font-weight: bold;
+  color: var(--sp-label-2);
   padding: 0;
-  cursor: default;
-  border-radius: 3px;
-  transition: all 0.2s;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 7px;
+  cursor: default;
+  transition:
+    background-color var(--sp-fast) var(--sp-ease),
+    color var(--sp-fast) var(--sp-ease),
+    transform var(--sp-fast) var(--sp-ease);
 }
 
-.control-button:hover {
-  background-color: #555555;
-  color: #ffffff;
+@media (hover: hover) and (pointer: fine) {
+  .control-button:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: var(--sp-label);
+  }
+}
+.control-button:active {
+  transform: scale(0.94);
 }
 
-.font-btn {
-  width: 20px;
-  height: 20px;
-}
-
-.clear-button {
-  font-size: 10px;
-  font-weight: normal;
-  padding: 2px 8px;
-  height: 20px;
-}
-
-.clear-button:hover {
-  color: #ff6666;
+/* Clear-all is destructive → red on hover, but low prominence at rest */
+@media (hover: hover) and (pointer: fine) {
+  .clear-button:hover {
+    background-color: var(--sp-danger-soft);
+    color: var(--sp-danger);
+  }
 }
 
 .spacer {
   flex: 1;
 }
 
-.lock-button {
-  width: 24px;
-  height: 20px;
-}
-
+/* Lock is a persistent toggle; its "on" (locked) state is distinct from hover */
 .lock-button.locked {
-  color: #ffaa00;
+  color: var(--sp-warning);
+  background-color: rgba(255, 159, 10, 0.16);
 }
-
-.lock-button.locked:hover {
-  color: #ffcc00;
+@media (hover: hover) and (pointer: fine) {
+  .lock-button.locked:hover {
+    color: var(--sp-warning);
+    background-color: rgba(255, 159, 10, 0.26);
+  }
 }

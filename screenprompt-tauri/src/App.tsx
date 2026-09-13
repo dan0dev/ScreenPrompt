@@ -17,7 +17,7 @@ import './styles/App.css';
 
 const appWindow = getCurrentWindow();
 const NUDGE_PX = 20;
-const DEFAULT_FONT_SIZE = 14;
+const DEFAULT_FONT_SIZE = 18;
 
 function App() {
   const { config, setConfig, loading } = useConfig();
@@ -345,23 +345,16 @@ function App() {
     return null;
   }
 
-  return (
-    <div
-      className="app"
-      style={{
-        backgroundColor: config.bgColor,
-        opacity: config.opacity,
-      }}
-    >
-      <TitleBar
-        onSettingsClick={toggleSettings}
-        checked={updater.checked}
-        updateAvailable={updater.updateAvailable}
-        updateVersion={updater.updateVersion}
-        appVersion={updater.appVersion}
-        onUpdateClick={handleUpdateClick}
-      />
+  // Opacity is applied as element opacity on the whole overlay: the window is
+  // uniformly opaque at the OS level (capture-exclusion uses LWA_ALPHA), so
+  // real see-through isn't available — this dims the overlay, matching the
+  // historical behavior. Settings always renders fully opaque for legibility.
+  const appStyle = showSettings
+    ? undefined
+    : { backgroundColor: config.bgColor, opacity: config.opacity };
 
+  return (
+    <div className={`app${showSettings ? ' settings-open' : ''}`} style={appStyle}>
       {showSettings ? (
         <Settings
           config={config}
@@ -373,15 +366,26 @@ function App() {
           onUpdateInstall={handleUpdateClick}
         />
       ) : (
-        <TextEditor config={config} text={config.text} onTextChange={updateText} />
-      )}
+        <>
+          <TitleBar
+            onSettingsClick={toggleSettings}
+            checked={updater.checked}
+            updateAvailable={updater.updateAvailable}
+            updateVersion={updater.updateVersion}
+            appVersion={updater.appVersion}
+            onUpdateClick={handleUpdateClick}
+          />
 
-      <BottomBar
-        config={config}
-        setConfig={setConfig}
-        isLocked={isLocked}
-        onToggleLock={toggleLock}
-      />
+          <TextEditor config={config} text={config.text} onTextChange={updateText} />
+
+          <BottomBar
+            config={config}
+            setConfig={setConfig}
+            isLocked={isLocked}
+            onToggleLock={toggleLock}
+          />
+        </>
+      )}
     </div>
   );
 }
