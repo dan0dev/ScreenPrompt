@@ -125,6 +125,11 @@ screenprompt/
 └── LICENSE                # MIT License
 ```
 
+## License
+
+By contributing to ScreenPrompt, you agree that your contributions are licensed under the
+[MIT License](LICENSE), the same license that covers the project.
+
 ## Questions?
 
 If you have questions, feel free to open an issue with the "question" label.
