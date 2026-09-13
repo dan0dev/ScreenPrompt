@@ -6,6 +6,12 @@ Thank you for your interest in contributing to ScreenPrompt! This document provi
 
 By participating in this project, you agree to maintain a respectful and inclusive environment for everyone.
 
+## Project Scope
+
+ScreenPrompt is a teleprompter and notes overlay for presentations, streams, recordings, and calls.
+Pull requests that add AI answer generation, exam or interview assistance, or ways to evade
+proctoring software are out of scope and will be declined.
+
 ## How to Contribute
 
 ### Reporting Bugs
