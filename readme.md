@@ -11,6 +11,7 @@ ScreenPrompt creates a transparent overlay on your screen that **you can see, bu
 ![Windows](https://img.shields.io/badge/Windows-10%2B-blue)
 ![Tauri](https://img.shields.io/badge/Tauri-2-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
+[![Downloads](https://img.shields.io/github/downloads/dan0dev/ScreenPrompt/total.svg)](https://tooomm.github.io/github-release-stats/?username=dan0dev&repository=ScreenPrompt)
 
 ![ScreenPrompt Demo](https://github.com/dan0dev/ScreenPrompt/blob/main/hero-video-main.gif)
 

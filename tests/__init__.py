@@ -1,1 +1,0 @@
-# ScreenPrompt Test Suite

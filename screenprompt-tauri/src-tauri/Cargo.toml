@@ -1,6 +1,6 @@
 [package]
 name = "screenprompt"
-version = "1.1.0"
+version = "1.1.1"
 description = "Transparent overlay excluded from screen capture"
 authors = ["ScreenPrompt Contributors"]
 license = "MIT"
