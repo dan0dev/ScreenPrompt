@@ -1,6 +1,7 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type { CSSProperties } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, LogicalPosition, LogicalSize } from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
@@ -17,7 +18,20 @@ import './styles/App.css';
 
 const appWindow = getCurrentWindow();
 const NUDGE_PX = 20;
-const DEFAULT_FONT_SIZE = 14;
+const DEFAULT_FONT_SIZE = 18;
+
+// Convert a #RRGGBB hex + 0..1 alpha into an rgba() string.
+// Used so background translucency (the opacity setting) is applied to the
+// background only, leaving the reading text fully opaque and crisp.
+function hexToRgba(hex: string, alpha: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return `rgba(28, 28, 30, ${alpha})`;
+  const int = parseInt(m[1], 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 function App() {
   const { config, setConfig, loading } = useConfig();
@@ -345,23 +359,12 @@ function App() {
     return null;
   }
 
-  return (
-    <div
-      className="app"
-      style={{
-        backgroundColor: config.bgColor,
-        opacity: config.opacity,
-      }}
-    >
-      <TitleBar
-        onSettingsClick={toggleSettings}
-        checked={updater.checked}
-        updateAvailable={updater.updateAvailable}
-        updateVersion={updater.updateVersion}
-        appVersion={updater.appVersion}
-        onUpdateClick={handleUpdateClick}
-      />
+  const appStyle = {
+    '--sp-app-bg': hexToRgba(config.bgColor, config.opacity),
+  } as CSSProperties;
 
+  return (
+    <div className={`app${showSettings ? ' settings-open' : ''}`} style={appStyle}>
       {showSettings ? (
         <Settings
           config={config}
@@ -373,15 +376,26 @@ function App() {
           onUpdateInstall={handleUpdateClick}
         />
       ) : (
-        <TextEditor config={config} text={config.text} onTextChange={updateText} />
-      )}
+        <>
+          <TextEditor config={config} text={config.text} onTextChange={updateText} />
 
-      <BottomBar
-        config={config}
-        setConfig={setConfig}
-        isLocked={isLocked}
-        onToggleLock={toggleLock}
-      />
+          <TitleBar
+            onSettingsClick={toggleSettings}
+            checked={updater.checked}
+            updateAvailable={updater.updateAvailable}
+            updateVersion={updater.updateVersion}
+            appVersion={updater.appVersion}
+            onUpdateClick={handleUpdateClick}
+          />
+
+          <BottomBar
+            config={config}
+            setConfig={setConfig}
+            isLocked={isLocked}
+            onToggleLock={toggleLock}
+          />
+        </>
+      )}
     </div>
   );
 }

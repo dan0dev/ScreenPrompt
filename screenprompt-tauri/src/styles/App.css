@@ -1,38 +1,35 @@
 /* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  cursor: default !important;
-}
-
-body {
-  margin: 0;
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
-    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 .app {
+  position: relative;
   width: 100vw;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  border-radius: 0;
   overflow: hidden;
+  border-radius: var(--sp-radius-window);
+  /*
+   * Background translucency lives HERE (driven by the opacity setting), so the
+   * reading text painted on top stays fully opaque and crisp. --sp-app-bg is set
+   * inline from React as rgba(bgColor, opacity).
+   */
+  background: var(--sp-app-bg, rgba(30, 30, 34, 0.85));
+  color: var(--sp-label);
+  cursor: default;
+}
+
+/* When settings is open the shell is a solid, readable surface, not translucent */
+.app.settings-open {
+  background: var(--sp-elevated-0);
 }
 
 .app.loading {
-  display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #1e1e1e;
+  background: var(--sp-elevated-0);
 }
 
 .loading-spinner {
-  color: #ffffff;
-  font-size: 16px;
+  color: var(--sp-label-2);
+  font-size: 13px;
 }

@@ -32,10 +32,10 @@ export const DEFAULT_CONFIG: Config = {
   width: 400,
   height: 200,
   opacity: 0.85,
-  fontFamily: 'Consolas, "Courier New", monospace',
-  fontSize: 14,
+  fontFamily: '"Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif',
+  fontSize: 18,
   fontColor: '#FFFFFF',
-  bgColor: '#2d2d2d',
+  bgColor: '#1C1C1E',
   text: '',
   firstRunShown: false,
   locked: false,
@@ -45,35 +45,37 @@ export const DEFAULT_CONFIG: Config = {
 
 export const OPACITY_LEVELS = [1.0, 0.85, 0.70, 0.50];
 
+// Text colors — Apple system-color hues (dark-mode variants) plus neutrals
 export const TEXT_COLORS = [
   '#FFFFFF', // white
-  '#E0E0E0', // light gray
-  '#FFFF00', // yellow
-  '#00FF00', // green
-  '#00FFFF', // cyan
-  '#87CEEB', // sky blue
-  '#FFA500', // orange
-  '#FF69B4', // pink
+  '#C7C7CC', // light gray (secondary-label feel)
+  '#FFD60A', // systemYellow
+  '#30D158', // systemGreen
+  '#64D2FF', // systemTeal
+  '#0A84FF', // systemBlue
+  '#FF9F0A', // systemOrange
+  '#FF375F', // systemPink
 ];
 
+// Background colors — refined dark grays plus subtly tinted darks
 export const BG_COLORS = [
-  '#1E1E1E', // near black
-  '#2D2D2D', // dark gray
-  '#1A1A2E', // dark blue
-  '#1E3A2E', // dark green
-  '#2E1A1A', // dark red
-  '#2E1A2E', // dark purple
-  '#2D2D1A', // dark olive
-  '#1A2D2D', // dark teal
+  '#1C1C1E', // near black (systemGray6 dark)
+  '#2C2C2E', // dark gray
+  '#000000', // pure black
+  '#16222E', // dark blue
+  '#14261C', // dark green
+  '#2A1730', // dark purple
+  '#2E1D14', // dark amber
+  '#0F2529', // dark teal
 ];
 
 export const FONT_FAMILIES = [
-  'Consolas, "Courier New", monospace',
-  '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+  '"Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif',
   'Arial, Helvetica, sans-serif',
-  '"Courier New", Courier, monospace',
   'Calibri, sans-serif',
   'Verdana, Geneva, Tahoma, sans-serif',
+  'Consolas, "Courier New", monospace',
+  '"Courier New", Courier, monospace',
   '"Times New Roman", Times, serif',
   'Georgia, serif',
 ];

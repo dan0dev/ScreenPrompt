@@ -1,98 +1,153 @@
 /* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
 
+/*
+ * The title bar is the floating "navigation layer": Liquid-Glass styling,
+ * revealed on hover so the reading content leads (Deference). It doubles as the
+ * window drag handle.
+ */
 .title-bar {
-  height: 28px;
-  background-color: #333333;
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  z-index: 3;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0 0 8px;
+  gap: 8px;
+  padding: 0 6px 0 10px;
   user-select: none;
-  flex-shrink: 0;
+
+  border-radius: var(--sp-radius-bar);
+  background: var(--sp-glass-fill);
+  backdrop-filter: var(--sp-glass-blur);
+  -webkit-backdrop-filter: var(--sp-glass-blur);
+  /* highlight rim + soft float shadow = the glass "thickness" */
+  box-shadow:
+    inset 0 1px 0 var(--sp-glass-rim),
+    0 0 0 0.5px rgba(0, 0, 0, 0.4),
+    var(--sp-shadow-float);
+  color: var(--sp-label);
+
+  /* Resting state: receded */
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition:
+    opacity var(--sp-fast) var(--sp-ease),
+    transform var(--sp-fast) var(--sp-ease);
+}
+
+/* Fallback when backdrop-filter is unsupported: lean on a stronger fill */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .title-bar {
+    background: var(--sp-glass-fill-strong);
+  }
+}
+
+/* Reveal the chrome only for real pointers, or when something inside has focus */
+@media (hover: hover) and (pointer: fine) {
+  .app:hover .title-bar {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+.app:focus-within .title-bar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .title-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  min-width: 0;
 }
 
 .title-icon {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
   pointer-events: none;
 }
 
 .title {
-  color: #ffffff;
+  color: var(--sp-label);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .title-bar-buttons {
   display: flex;
+  align-items: center;
   gap: 2px;
 }
 
+/* Icon buttons: visually compact, but a 28px box keeps the tap area comfortable */
 .title-bar-button {
   background: transparent;
   border: none;
-  color: #ffffff;
-  font-size: 14px;
-  padding: 2px 8px;
-  cursor: default;
-  border-radius: 3px;
-  transition: background-color 0.2s;
-  height: 24px;
+  color: var(--sp-label-2);
+  padding: 0;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  border-radius: 7px;
+  cursor: default;
+  transition:
+    background-color var(--sp-fast) var(--sp-ease),
+    color var(--sp-fast) var(--sp-ease);
 }
 
-.title-bar-button:hover {
-  background-color: #555555;
+@media (hover: hover) and (pointer: fine) {
+  .title-bar-button:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: var(--sp-label);
+  }
+  .title-bar-button.close:hover {
+    background-color: var(--sp-danger);
+    color: #fff;
+  }
+}
+.title-bar-button:active {
+  transform: scale(0.94);
 }
 
-.title-bar-button.close {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  text-align: center;
-  line-height: 28px;
-  border-radius: 0;
-}
-
-.title-bar-button.close:hover {
-  background-color: #ff4444;
-}
-
-.title-bar-button.settings {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border-radius: 0;
-}
-
+/* Update pill: a genuine call to action, so it carries the accent tint */
 .title-bar-button.update-badge {
-  background-color: #2e7d32;
-  color: #ffffff;
-  font-size: 10px;
+  width: auto;
+  height: 22px;
+  padding: 0 10px;
+  background-color: var(--sp-accent);
+  color: #fff;
+  font-size: 11px;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 3px;
+  border-radius: var(--sp-radius-pill);
   white-space: nowrap;
 }
-
-.title-bar-button.update-badge:hover {
-  background-color: #388e3c;
+@media (hover: hover) and (pointer: fine) {
+  .title-bar-button.update-badge:hover {
+    background-color: var(--sp-accent-hover);
+    color: #fff;
+  }
 }
 
 .version-badge {
-  color: #888888;
-  font-size: 10px;
-  padding: 2px 6px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  gap: 4px;
+  color: var(--sp-label-3);
+  font-size: 11px;
+  padding: 0 4px;
   white-space: nowrap;
+}
+.version-badge .ok-dot {
+  color: var(--sp-success);
 }
