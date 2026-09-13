@@ -9,16 +9,17 @@
   overflow: hidden;
   border-radius: var(--sp-radius-window);
   /*
-   * Background translucency lives HERE (driven by the opacity setting), so the
-   * reading text painted on top stays fully opaque and crisp. --sp-app-bg is set
-   * inline from React as rgba(bgColor, opacity).
+   * Background color and opacity are set inline from React (backgroundColor +
+   * opacity). Opacity is element-level: the window is uniformly opaque at the
+   * OS level (capture-exclusion), so this dims the whole overlay rather than
+   * revealing the desktop. This fallback covers the brief pre-render frame.
    */
-  background: var(--sp-app-bg, rgba(30, 30, 34, 0.85));
+  background: var(--sp-elevated-0);
   color: var(--sp-label);
   cursor: default;
 }
 
-/* When settings is open the shell is a solid, readable surface, not translucent */
+/* Settings is a solid, fully-opaque surface (no inline style applied) */
 .app.settings-open {
   background: var(--sp-elevated-0);
 }

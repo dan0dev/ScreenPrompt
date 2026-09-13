@@ -1,12 +1,8 @@
 /* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
 
-/* Bottom bar: the second half of the floating control layer (font size, clear, lock). */
+/* Always-visible bottom bar (font size, clear, lock). In-flow, glass control strip. */
 .bottom-bar {
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
-  right: 6px;
-  z-index: 3;
+  flex-shrink: 0;
   height: 32px;
   display: flex;
   align-items: center;
@@ -14,40 +10,18 @@
   padding: 0 8px;
   user-select: none;
 
-  border-radius: var(--sp-radius-bar);
   background: var(--sp-glass-fill);
   backdrop-filter: var(--sp-glass-blur);
   -webkit-backdrop-filter: var(--sp-glass-blur);
   box-shadow:
     inset 0 1px 0 var(--sp-glass-rim),
-    0 0 0 0.5px rgba(0, 0, 0, 0.4),
-    var(--sp-shadow-float);
-
-  opacity: 0;
-  transform: translateY(6px);
-  pointer-events: none;
-  transition:
-    opacity var(--sp-fast) var(--sp-ease),
-    transform var(--sp-fast) var(--sp-ease);
+    0 -1px 0 rgba(0, 0, 0, 0.35);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .bottom-bar {
     background: var(--sp-glass-fill-strong);
   }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .app:hover .bottom-bar {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-}
-.app:focus-within .bottom-bar {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
 }
 
 .font-size-controls {

@@ -1,16 +1,12 @@
 /* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
 
 /*
- * The title bar is the floating "navigation layer": Liquid-Glass styling,
- * revealed on hover so the reading content leads (Deference). It doubles as the
- * window drag handle.
+ * Always-visible title bar. A translucent "glass" control strip at the top of
+ * the overlay that doubles as the window drag handle. In-flow (it reserves its
+ * own space) so it never covers the reading text.
  */
 .title-bar {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
-  z-index: 3;
+  flex-shrink: 0;
   height: 34px;
   display: flex;
   align-items: center;
@@ -19,24 +15,13 @@
   padding: 0 6px 0 10px;
   user-select: none;
 
-  border-radius: var(--sp-radius-bar);
   background: var(--sp-glass-fill);
   backdrop-filter: var(--sp-glass-blur);
   -webkit-backdrop-filter: var(--sp-glass-blur);
-  /* highlight rim + soft float shadow = the glass "thickness" */
   box-shadow:
     inset 0 1px 0 var(--sp-glass-rim),
-    0 0 0 0.5px rgba(0, 0, 0, 0.4),
-    var(--sp-shadow-float);
+    0 1px 0 rgba(0, 0, 0, 0.35);
   color: var(--sp-label);
-
-  /* Resting state: receded */
-  opacity: 0;
-  transform: translateY(-6px);
-  pointer-events: none;
-  transition:
-    opacity var(--sp-fast) var(--sp-ease),
-    transform var(--sp-fast) var(--sp-ease);
 }
 
 /* Fallback when backdrop-filter is unsupported: lean on a stronger fill */
@@ -44,20 +29,6 @@
   .title-bar {
     background: var(--sp-glass-fill-strong);
   }
-}
-
-/* Reveal the chrome only for real pointers, or when something inside has focus */
-@media (hover: hover) and (pointer: fine) {
-  .app:hover .title-bar {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-}
-.app:focus-within .title-bar {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
 }
 
 .title-left {
@@ -103,7 +74,8 @@
   cursor: default;
   transition:
     background-color var(--sp-fast) var(--sp-ease),
-    color var(--sp-fast) var(--sp-ease);
+    color var(--sp-fast) var(--sp-ease),
+    transform var(--sp-fast) var(--sp-ease);
 }
 
 @media (hover: hover) and (pointer: fine) {

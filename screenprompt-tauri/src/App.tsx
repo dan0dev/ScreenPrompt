@@ -1,7 +1,6 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { CSSProperties } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, LogicalPosition, LogicalSize } from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
@@ -19,19 +18,6 @@ import './styles/App.css';
 const appWindow = getCurrentWindow();
 const NUDGE_PX = 20;
 const DEFAULT_FONT_SIZE = 18;
-
-// Convert a #RRGGBB hex + 0..1 alpha into an rgba() string.
-// Used so background translucency (the opacity setting) is applied to the
-// background only, leaving the reading text fully opaque and crisp.
-function hexToRgba(hex: string, alpha: number): string {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return `rgba(28, 28, 30, ${alpha})`;
-  const int = parseInt(m[1], 16);
-  const r = (int >> 16) & 255;
-  const g = (int >> 8) & 255;
-  const b = int & 255;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
 
 function App() {
   const { config, setConfig, loading } = useConfig();
@@ -359,9 +345,13 @@ function App() {
     return null;
   }
 
-  const appStyle = {
-    '--sp-app-bg': hexToRgba(config.bgColor, config.opacity),
-  } as CSSProperties;
+  // Opacity is applied as element opacity on the whole overlay: the window is
+  // uniformly opaque at the OS level (capture-exclusion uses LWA_ALPHA), so
+  // real see-through isn't available — this dims the overlay, matching the
+  // historical behavior. Settings always renders fully opaque for legibility.
+  const appStyle = showSettings
+    ? undefined
+    : { backgroundColor: config.bgColor, opacity: config.opacity };
 
   return (
     <div className={`app${showSettings ? ' settings-open' : ''}`} style={appStyle}>
@@ -377,8 +367,6 @@ function App() {
         />
       ) : (
         <>
-          <TextEditor config={config} text={config.text} onTextChange={updateText} />
-
           <TitleBar
             onSettingsClick={toggleSettings}
             checked={updater.checked}
@@ -387,6 +375,8 @@ function App() {
             appVersion={updater.appVersion}
             onUpdateClick={handleUpdateClick}
           />
+
+          <TextEditor config={config} text={config.text} onTextChange={updateText} />
 
           <BottomBar
             config={config}
