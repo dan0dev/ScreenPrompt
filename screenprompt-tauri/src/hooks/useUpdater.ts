@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { getVersion } from '@tauri-apps/api/app';
 import { tempDir, join } from '@tauri-apps/api/path';
 import { writeFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 import { exit } from '@tauri-apps/plugin-process';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { checkForUpdates } from '../utils/updateChecker';
-
-const APP_VERSION = '1.1.0';
 
 interface UpdaterState {
   checked: boolean; // true once the update check has completed
@@ -27,12 +26,22 @@ export function useUpdater(autoCheck: boolean) {
     downloading: false,
   });
 
+  // The running version comes from tauri.conf.json at build time, so it can't
+  // drift from the installer's version the way a hardcoded constant did (#35).
+  const [appVersion, setAppVersion] = useState('');
+
+  useEffect(() => {
+    getVersion()
+      .then(setAppVersion)
+      .catch((error) => console.error('Failed to read app version:', error));
+  }, []);
+
   // Check for updates and auto-prompt the user
   useEffect(() => {
-    if (!autoCheck) return;
+    if (!autoCheck || !appVersion) return;
 
     const checkAndPrompt = async () => {
-      const info = await checkForUpdates(APP_VERSION);
+      const info = await checkForUpdates(appVersion);
 
       if (!info.updateAvailable || !info.downloadUrl) {
         setState((s) => ({ ...s, checked: true }));
@@ -59,7 +68,7 @@ export function useUpdater(autoCheck: boolean) {
     };
 
     checkAndPrompt();
-  }, [autoCheck]);
+  }, [autoCheck, appVersion]);
 
   const doDownloadAndInstall = async (url: string, version: string) => {
     setState((s) => ({ ...s, downloading: true }));
@@ -95,6 +104,6 @@ export function useUpdater(autoCheck: boolean) {
   return {
     ...state,
     downloadAndInstall,
-    appVersion: APP_VERSION,
+    appVersion,
   };
 }
