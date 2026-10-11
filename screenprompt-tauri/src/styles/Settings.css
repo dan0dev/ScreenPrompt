@@ -1,279 +1,402 @@
 /* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
 
+/*
+ * Settings is the "elevated" surface. Following Apple's grouped-list model:
+ * separation between the page, the section cards, and the controls inside them
+ * comes from the background-color ladder (--sp-elevated-0/1/2), not borders or
+ * shadows. Section headers are quiet uppercase captions, like iOS Settings.
+ */
 .settings {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #2a2a2a;
-  padding: 15px;
-  overflow-y: auto;
+  min-height: 0;
+  background: var(--sp-elevated-0);
+  color: var(--sp-label);
 }
 
 .settings-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  padding: 14px 16px 10px;
+  flex-shrink: 0;
 }
 
 .settings-header h2 {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 600;
+  color: var(--sp-label);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .close-button {
   background: transparent;
   border: none;
-  color: #888888;
-  font-size: 20px;
+  color: var(--sp-label-2);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
   cursor: default;
-  padding: 4px 8px;
-  transition: color 0.2s;
+  transition:
+    background-color var(--sp-fast) var(--sp-ease),
+    color var(--sp-fast) var(--sp-ease);
 }
-
-.close-button:hover {
-  color: #ffffff;
+@media (hover: hover) and (pointer: fine) {
+  .close-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--sp-label);
+  }
 }
 
 .settings-content {
   flex: 1;
   overflow-y: auto;
-}
-
-.settings-section {
-  background-color: #333333;
-  padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-
-.settings-section label {
+  padding: 0 16px 4px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #ffffff;
-  font-size: 13px;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.opacity-value {
-  color: #ffffff;
-  font-weight: 500;
-  min-width: 40px;
-  text-align: right;
-}
-
-.opacity-slider {
-  width: 100%;
-  height: 4px;
-  border-radius: 2px;
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-  background: #555555;
-}
-
-.opacity-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ffffff;
-  cursor: default;
-}
-
-.opacity-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ffffff;
-  cursor: default;
-  border: none;
-}
-
-.font-controls {
+/* A grouped section: a header caption + a card */
+.settings-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.font-row {
+.section-title {
+  color: var(--sp-label-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding-left: 4px;
+}
+
+.section-card {
+  background: var(--sp-elevated-1);
+  border-radius: var(--sp-radius-card);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
+}
+.field-row .field-label {
+  color: var(--sp-label);
+  font-size: 13px;
+}
+.field-row .field-value {
+  color: var(--sp-label-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 
-.font-label {
-  color: #cccccc;
-  font-size: 12px;
-  min-width: 50px;
+/* --- Opacity slider --- */
+.opacity-slider {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--sp-radius-pill);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--sp-elevated-2);
+  cursor: default;
 }
-
-.font-select {
-  flex: 1;
-  background-color: #555555;
-  color: #ffffff;
+.opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+.opacity-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
   border: none;
-  padding: 4px 8px;
-  border-radius: 3px;
-  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   cursor: default;
 }
 
-.font-size-input {
-  background-color: #555555;
-  color: #ffffff;
+/* --- Font controls --- */
+.control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.control-field .field-label {
+  color: var(--sp-label-2);
+  font-size: 12px;
+}
+
+.select-input,
+.number-input {
+  background: var(--sp-elevated-2);
+  color: var(--sp-label);
   border: none;
-  padding: 4px 8px;
-  border-radius: 3px;
-  width: 50px;
-  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: var(--sp-radius-control);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: default;
+  transition: background-color var(--sp-fast) var(--sp-ease);
 }
-
-.font-unit {
-  color: #cccccc;
-  font-size: 12px;
+.select-input {
+  flex: 1;
 }
-
-.color-palette {
+@media (hover: hover) and (pointer: fine) {
+  .select-input:hover,
+  .number-input:hover {
+    background: var(--sp-elevated-2-hover);
+  }
+}
+.number-input {
+  width: 62px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.field-inline {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+.field-suffix {
+  color: var(--sp-label-3);
+  font-size: 12px;
+}
 
-.current-color {
+/* --- Color swatches --- */
+.swatch-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.swatch-preview {
   width: 30px;
-  height: 22px;
-  border-radius: 3px;
-  border: 1px solid #555555;
+  height: 30px;
+  border-radius: var(--sp-radius-control);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
 }
-
-.color-swatches {
+.swatch-grid {
   display: flex;
-  gap: 4px;
+  gap: 7px;
   flex-wrap: wrap;
 }
-
-.color-swatch {
-  width: 22px;
-  height: 22px;
-  border: 1px solid #555555;
-  border-radius: 3px;
-  cursor: default;
-  transition: transform 0.1s;
-}
-
-.color-swatch:hover {
-  transform: scale(1.1);
-  border-color: #ffffff;
-}
-
-.settings-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #444444;
-}
-
-.button {
-  padding: 6px 16px;
+.swatch {
+  width: 24px;
+  height: 24px;
   border: none;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 6px;
   cursor: default;
-  transition: background-color 0.2s;
+  padding: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  transition: transform var(--sp-fast) var(--sp-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .swatch:hover {
+    transform: scale(1.12);
+  }
+}
+/* Selected is a persistent state — an accent ring, distinct from hover */
+.swatch.selected {
+  box-shadow:
+    0 0 0 2px var(--sp-elevated-1),
+    0 0 0 4px var(--sp-accent);
 }
 
-.cancel-button {
-  background-color: #444444;
-  color: #ffffff;
-}
-
-.cancel-button:hover {
-  background-color: #555555;
-}
-
-.save-button {
-  background-color: #4a7a4a;
-  color: #ffffff;
-}
-
-.save-button:hover {
-  background-color: #5a8a5a;
-}
-
-.updates-row {
+/* --- Toggle switch (label already describes the "on" state) --- */
+.toggle {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: default;
+}
+.toggle .toggle-text {
+  color: var(--sp-label);
+  font-size: 13px;
+}
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-track {
+  position: relative;
+  width: 42px;
+  height: 25px;
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-elevated-2);
+  flex-shrink: 0;
+  transition: background-color var(--sp-fast) var(--sp-ease);
+}
+.toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform var(--sp-fast) var(--sp-ease);
+}
+.toggle input:checked + .toggle-track {
+  background: var(--sp-success);
+}
+.toggle input:checked + .toggle-track::after {
+  transform: translateX(17px);
+}
+.toggle input:focus-visible + .toggle-track {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 2px;
 }
 
-.checkbox-label {
+/* --- Segmented control (keyboard layout) --- */
+/* A muted track with a raised selected pill — separation via elevation, not accent fill */
+.segmented {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #cccccc;
+  gap: 2px;
+  padding: 2px;
+  background: var(--sp-elevated-2);
+  border-radius: var(--sp-radius-control);
+}
+.segment {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--sp-label-2);
   font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 6px 8px;
+  border-radius: 6px;
   cursor: default;
+  transition:
+    background-color var(--sp-fast) var(--sp-ease),
+    color var(--sp-fast) var(--sp-ease);
+}
+.segment.selected {
+  background: var(--sp-elevated-2-hover);
+  color: var(--sp-label);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+@media (hover: hover) and (pointer: fine) {
+  .segment:not(.selected):hover {
+    color: var(--sp-label);
+  }
 }
 
-.checkbox-label input[type="checkbox"] {
-  cursor: default;
-  accent-color: #4a7a4a;
-}
-
+/* --- Version row + footer --- */
 .settings-version-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 0 0;
-  margin-top: 6px;
-  border-top: 1px solid #444444;
+  padding: 12px 16px 0;
+  margin: 6px 16px 0;
+  border-top: 1px solid var(--sp-separator);
+  flex-shrink: 0;
 }
-
 .version-label {
-  color: #888888;
+  color: var(--sp-label-2);
   font-size: 11px;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
-
 .version-up-to-date {
-  color: #5a9a5a;
+  color: var(--sp-success);
   font-size: 11px;
 }
-
 .version-update-link {
   background: transparent;
   border: none;
-  color: #4caf50;
+  color: var(--sp-accent);
   font-size: 11px;
   cursor: default;
   padding: 0;
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.version-update-link:hover {
-  color: #66bb6a;
+.settings-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 16px;
+  flex-shrink: 0;
 }
-
-.docs-link {
-  background: transparent;
-  border: none;
-  color: #6cb6ff;
-  font-size: 12px;
-  cursor: default;
-  text-decoration: underline;
-  padding: 0;
-}
-
-.docs-link:hover {
-  color: #8ecaff;
-}
-
 .footer-spacer {
   flex: 1;
+}
+
+/* Tertiary/plain links: muted, utility navigation (not the accent) */
+.link-button {
+  background: transparent;
+  border: none;
+  color: var(--sp-label-2);
+  font-size: 12px;
+  cursor: default;
+  padding: 6px 4px;
+  border-radius: 6px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .link-button:hover {
+    color: var(--sp-label);
+  }
+}
+
+/* Buttons by emphasis. One filled primary (Save); Cancel is plain. */
+.button {
+  border: none;
+  border-radius: var(--sp-radius-control);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 8px 16px;
+  cursor: default;
+  transition:
+    filter var(--sp-fast) var(--sp-ease),
+    background-color var(--sp-fast) var(--sp-ease),
+    transform 80ms var(--sp-ease);
+}
+.button:active {
+  transform: scale(0.98);
+}
+
+.cancel-button {
+  background: transparent;
+  color: var(--sp-label);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cancel-button:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.save-button {
+  background: var(--sp-accent);
+  color: #fff;
+}
+@media (hover: hover) and (pointer: fine) {
+  .save-button:hover {
+    filter: brightness(1.08);
+  }
 }
