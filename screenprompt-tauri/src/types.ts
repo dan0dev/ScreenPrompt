@@ -27,6 +27,9 @@ export interface Config {
 
   // Last version whose "what's new" was shown (or skipped on a fresh install)
   lastSeenVersion: string;
+
+  // Whether the one-time locked-mode tip (LockTip) has been shown
+  lockTipShown: boolean;
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -45,6 +48,7 @@ export const DEFAULT_CONFIG: Config = {
   autoCheckUpdates: true,
   keyboardLayout: 'auto',
   lastSeenVersion: '',
+  lockTipShown: false,
 };
 
 export const OPACITY_LEVELS = [1.0, 0.85, 0.70, 0.50];

@@ -5,13 +5,17 @@ import { invoke } from '@tauri-apps/api/core';
 const REPO_URL = 'https://github.com/dan0dev/ScreenPrompt';
 const FEATURE_REQUEST_URL = `${REPO_URL}/issues/new?template=feature_request.md`;
 
-// "What's new", shown once after updating to a version listed here. Bundled with
-// the app, so it works offline. Keep it to a few lines and one ask; items may
-// contain <a href="https://…"> links. Versions without an entry show nothing.
+// "What's new", shown once after updating to a version listed here (App's restore
+// step compares config.lastSeenVersion with the running version). Bundled with the
+// app, so it works offline. Keep it to a few lines and one ask; items may contain
+// <a href="https://…"> links. Versions without an entry show nothing, so add one
+// here for every release that should announce itself (see CONTRIBUTING.md).
 const RELEASE_NOTES: Record<string, string[]> = {
   '1.1.3': [
-    'Locked mode has a way out: press Esc or click the lock icon. Thanks '
+    'Locked mode has a way out: press Esc or Ctrl+click the lock icon. Thanks '
       + '<a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> for reporting it.',
+    'While locked, scrolling over the overlay moves your notes. Hold Ctrl or Shift to '
+      + 'scroll or zoom the app behind instead.',
     'Copy, paste, clear and nudge shortcuts now only work while ScreenPrompt is focused, '
       + 'so they no longer override those keys in your other apps.',
     'Your notes, window position and lock state are remembered, and notes save as you type.',
@@ -34,7 +38,7 @@ export async function showWhatsNew(version: string): Promise<void> {
     title: "What's new in ScreenPrompt",
     heading: `What's new in v${version}`,
     content,
-    footer: `<a href="${REPO_URL}">GitHub</a>`,
+    footer: '',
     button: 'Got it',
   });
 }

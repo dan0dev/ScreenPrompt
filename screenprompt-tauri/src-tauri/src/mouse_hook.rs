@@ -1,6 +1,13 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
-// Low-level mouse hook for locked (click-through) mode: forwards scroll to the
-// overlay and turns a click on the lock button into an unlock.
+// Low-level mouse hook, installed only while the overlay is locked (click-through).
+//
+// - Ctrl+click on the lock button unlocks (emits "emergency-unlock"). Every other
+//   click, including a plain click on the lock button, passes through to the app
+//   behind, so the overlay never blocks a button underneath it.
+// - A plain mouse wheel over the overlay scrolls the notes (emits "locked-scroll"
+//   with the wheel delta). With Ctrl, Shift or Alt held it passes through, so zoom
+//   and horizontal scrolling still reach the app behind.
+// - Nothing is intercepted while the overlay is hidden.
 
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicIsize, AtomicU32, Ordering};
 use std::sync::Mutex;
@@ -8,6 +15,9 @@ use std::sync::OnceLock;
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::ClientToScreen;
+use windows::Win32::UI::Input::KeyboardAndMouse::{
+    GetAsyncKeyState, VIRTUAL_KEY, VK_CONTROL, VK_MENU, VK_SHIFT,
+};
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, GetMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
     GetWindowRect, IsWindowVisible, MSG, MSLLHOOKSTRUCT, WH_MOUSE_LL, WM_LBUTTONDOWN,
@@ -39,12 +49,17 @@ fn get_app_handle_store() -> &'static Mutex<Option<AppHandle>> {
     APP_HANDLE.get_or_init(|| Mutex::new(None))
 }
 
-/// Record where the lock button is, so clicks on it unlock while click-through is on
+/// Record where the lock button is, so Ctrl+click on it unlocks while click-through is on.
+/// Bounds are physical pixels relative to the window's client area (sent by BottomBar).
 pub fn set_unlock_zone(x: i32, y: i32, width: i32, height: i32) {
     UNLOCK_X.store(x, Ordering::Relaxed);
     UNLOCK_Y.store(y, Ordering::Relaxed);
     UNLOCK_W.store(width, Ordering::Relaxed);
     UNLOCK_H.store(height, Ordering::Relaxed);
+}
+
+fn key_held(key: VIRTUAL_KEY) -> bool {
+    unsafe { GetAsyncKeyState(key.0 as i32) as u16 & 0x8000 != 0 }
 }
 
 unsafe fn cursor_in_unlock_zone(hwnd: HWND, cursor: &POINT) -> bool {
@@ -68,11 +83,13 @@ unsafe extern "system" fn mouse_hook_proc(
     w_param: WPARAM,
     l_param: LPARAM,
 ) -> LRESULT {
-    if n_code >= 0 && w_param.0 == WM_LBUTTONUP as usize && SWALLOW_UP.swap(false, Ordering::Relaxed) {
+    let is_up = w_param.0 == WM_LBUTTONUP as usize;
+    if n_code >= 0 && is_up && SWALLOW_UP.swap(false, Ordering::Relaxed) {
         return LRESULT(1);
     }
 
-    if n_code >= 0 && w_param.0 == WM_LBUTTONDOWN as usize {
+    // Ctrl+click on the lock button: unlock, and keep the click from the app behind
+    if n_code >= 0 && w_param.0 == WM_LBUTTONDOWN as usize && key_held(VK_CONTROL) {
         let hwnd_val = WINDOW_HANDLE.load(Ordering::Relaxed);
         if hwnd_val != 0 {
             let hwnd = HWND(hwnd_val as *mut core::ffi::c_void);
@@ -89,7 +106,10 @@ unsafe extern "system" fn mouse_hook_proc(
         }
     }
 
-    if n_code >= 0 && w_param.0 == WM_MOUSEWHEEL as usize {
+    // Plain wheel over the overlay scrolls the notes; with a modifier it's left for
+    // the app behind (Ctrl+wheel zoom, Shift+wheel horizontal scroll)
+    let modifier_held = || key_held(VK_CONTROL) || key_held(VK_SHIFT) || key_held(VK_MENU);
+    if n_code >= 0 && w_param.0 == WM_MOUSEWHEEL as usize && !modifier_held() {
         let hwnd_val = WINDOW_HANDLE.load(Ordering::Relaxed);
         // Skip while hidden, or scrolling over the overlay's old spot would be eaten
         if hwnd_val != 0 && IsWindowVisible(HWND(hwnd_val as *mut core::ffi::c_void)).as_bool() {

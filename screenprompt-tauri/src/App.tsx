@@ -22,6 +22,7 @@ import TitleBar from './components/TitleBar';
 import TextEditor from './components/TextEditor';
 import Settings from './components/Settings';
 import BottomBar from './components/BottomBar';
+import LockTip from './components/LockTip';
 import './styles/App.css';
 
 const appWindow = getCurrentWindow();
@@ -30,6 +31,7 @@ const DEFAULT_FONT_SIZE = 18;
 const TEXT_SAVE_DELAY_MS = 400;
 const GEOMETRY_SAVE_DELAY_MS = 400;
 const CLOSE_SAVE_TIMEOUT_MS = 500;
+const LOCK_TIP_MS = 8000;
 // Windows parks minimized windows here; never persist it as a real position
 const MINIMIZED_COORD = -32000;
 
@@ -54,6 +56,7 @@ function App() {
   const [opacityIndex, setOpacityIndex] = useState(1); // default 0.85 is index 1
   const quickEditRef = useRef(false);
   const restoredRef = useRef(false);
+  const [showLockTip, setShowLockTip] = useState(false);
 
   // Text being edited. null until the user types, so the saved text shows until then.
   const [draftText, setDraftText] = useState<string | null>(null);
@@ -127,16 +130,27 @@ function App() {
     }
   }, []);
 
-  // Toggle click-through mode
+  // Toggle click-through mode. The first time ever, explain locked mode (LockTip).
   const toggleLock = useCallback(async () => {
     try {
       const newLocked = !isLocked;
       await applyLock(newLocked);
       await setConfig({ locked: newLocked });
+      if (newLocked && !config.lockTipShown) {
+        setShowLockTip(true);
+        await setConfig({ lockTipShown: true });
+      }
     } catch (error) {
       console.error('Failed to toggle lock:', error);
     }
-  }, [isLocked, applyLock, setConfig]);
+  }, [isLocked, applyLock, setConfig, config.lockTipShown]);
+
+  // The tip can't be clicked away while locked, so it times out (or goes on unlock)
+  useEffect(() => {
+    if (!showLockTip) return;
+    const timer = window.setTimeout(() => setShowLockTip(false), LOCK_TIP_MS);
+    return () => window.clearTimeout(timer);
+  }, [showLockTip]);
 
   // Emergency unlock - always unlocks. No isLocked guard: if React state and the
   // window ever disagree, bailing out here would leave the user with no way back.
@@ -520,6 +534,8 @@ function App() {
           />
 
           <TextEditor config={config} text={text} onTextChange={updateText} />
+
+          {showLockTip && isLocked && <LockTip />}
 
           <BottomBar
             config={config}

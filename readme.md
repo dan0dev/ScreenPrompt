@@ -57,9 +57,18 @@ Requires Windows 10 (build 2004+) or Windows 11.
 |---|---|
 | `Ctrl+Shift+H` | Show / hide |
 | `Ctrl+Shift+L` | Lock (click-through) |
-| `Esc` | Unlock (or click the lock icon) |
+| `Esc` | Unlock (or Ctrl+click the lock icon) |
 | `Ctrl+Shift+E` | Edit text |
 | `Ctrl+Shift+F1` | Panic close, works even when locked |
+
+## Locked mode
+
+Lock the overlay (`Ctrl+Shift+L` or the lock icon) when you're presenting, and it gets out of your way:
+
+- **Clicks go through** to the app below, everywhere on the overlay, including the lock icon.
+- **Scrolling over it moves your notes.** Hold `Ctrl` or `Shift` to scroll or zoom the app behind instead.
+- **To unlock**, press `Esc` or `Ctrl`+click the lock icon. The bottom bar shows this while locked.
+- **To edit quickly**, press `Ctrl+Shift+E`: it unlocks until you click away, then locks again.
 
 <details>
 <summary><b>All shortcuts</b></summary>
