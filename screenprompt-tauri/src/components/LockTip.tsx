@@ -11,7 +11,7 @@ function LockTip() {
   return (
     <div className="lock-tip" role="status">
       <strong>Locked: clicks go through to the app below.</strong>
-      <span>Scroll here to move your notes; hold Ctrl or Shift to scroll the app behind.</span>
+      <span>Scrolling works on the app behind too. Ctrl+scroll here moves your notes.</span>
       <span>Unlock: press Esc, or Ctrl+click the lock icon.</span>
     </div>
   );

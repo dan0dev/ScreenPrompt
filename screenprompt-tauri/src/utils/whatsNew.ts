@@ -14,8 +14,8 @@ const RELEASE_NOTES: Record<string, string[]> = {
   '1.1.3': [
     'Locked mode has a way out: press Esc or Ctrl+click the lock icon. Thanks '
       + '<a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> for reporting it.',
-    'While locked, scrolling over the overlay moves your notes. Hold Ctrl or Shift to '
-      + 'scroll or zoom the app behind instead.',
+    'While locked, clicks and scrolling go through to the app behind. Hold Ctrl and '
+      + 'scroll over the overlay to move your notes.',
     'Copy, paste, clear and nudge shortcuts now only work while ScreenPrompt is focused, '
       + 'so they no longer override those keys in your other apps.',
     'Your notes, window position and lock state are remembered, and notes save as you type.',

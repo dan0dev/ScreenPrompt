@@ -18,8 +18,9 @@ const LINES_PER_NOTCH = 3; // Windows default
 function TextEditor({ config, text, onTextChange }: TextEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // While locked the window ignores the mouse, so the Rust mouse hook catches the
-  // wheel over the overlay and sends its delta here
+  // While locked the window ignores the mouse, so the Rust mouse hook catches
+  // Ctrl+wheel over the overlay and sends its delta here (a plain wheel goes to the
+  // app behind)
   useEffect(() => {
     const unlisten = listen<number>('locked-scroll', ({ payload: delta }) => {
       const el = textareaRef.current;
