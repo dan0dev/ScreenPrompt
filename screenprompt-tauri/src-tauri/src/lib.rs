@@ -63,6 +63,12 @@ fn uninstall_scroll_hook() -> Result<(), String> {
 
 #[tauri::command]
 #[cfg(windows)]
+fn set_unlock_zone(x: i32, y: i32, width: i32, height: i32) {
+    mouse_hook::set_unlock_zone(x, y, width, height)
+}
+
+#[tauri::command]
+#[cfg(windows)]
 fn install_keyboard_hook(app_handle: tauri::AppHandle) -> Result<(), String> {
     keyboard_hook::install_hook(app_handle)
 }
@@ -158,6 +164,7 @@ pub fn run() {
             get_screen_size,
             install_scroll_hook,
             uninstall_scroll_hook,
+            set_unlock_zone,
             install_keyboard_hook,
             uninstall_keyboard_hook,
             launch_update_installer,

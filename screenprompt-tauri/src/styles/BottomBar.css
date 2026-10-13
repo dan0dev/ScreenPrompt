@@ -75,6 +75,24 @@
   }
 }
 
+/* Shown in place of the (unclickable) controls while locked */
+.lock-hint {
+  color: var(--sp-label-2);
+  font-size: 11px;
+  font-weight: 500;
+  padding-left: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+@media (max-width: 240px) {
+  .lock-hint-prefix {
+    display: none;
+  }
+}
+
 .spacer {
   flex: 1;
 }

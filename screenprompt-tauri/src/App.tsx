@@ -100,9 +100,9 @@ function App() {
     }
   }, [isLocked, setConfig]);
 
-  // Emergency unlock - always unlocks
+  // Emergency unlock - always unlocks. No isLocked guard: if React state and the
+  // window ever disagree, bailing out here would leave the user with no way back.
   const emergencyUnlock = useCallback(async () => {
-    if (!isLocked) return;
     try {
       await invoke('set_click_through', { window: appWindow, enabled: false });
       setIsLocked(false);
@@ -112,7 +112,7 @@ function App() {
     } catch (error) {
       console.error('Emergency unlock failed:', error);
     }
-  }, [isLocked, setConfig]);
+  }, [setConfig]);
 
   // Quick edit: unlock, focus, auto-relock on blur
   const quickEdit = useCallback(async () => {

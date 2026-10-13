@@ -39,6 +39,14 @@ async function tryRegister(shortcut: string, handler: () => void): Promise<boole
   }
 }
 
+// Registration passes run one at a time. When the layout resolves (e.g. to 'hu')
+// the effect re-runs while the first pass is still registering; overlapping passes
+// left some keys bound to the dead first pass, so they silently did nothing.
+let registrationQueue: Promise<unknown> = Promise.resolve();
+function enqueue(task: () => Promise<unknown>) {
+  registrationQueue = registrationQueue.then(task, task);
+}
+
 // Position preset key bindings per layout.
 // Hungarian: Ctrl+Alt = AltGr on HU keyboards, so use Ctrl+Shift+1-9.
 // English: Ctrl+Alt+1-9 (no AltGr conflict).
@@ -58,6 +66,8 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string) {
     const h = () => handlersRef.current;
 
     const registerAll = async () => {
+      if (!mounted) return; // Superseded before its turn came
+
       // Window controls
       await tryRegister('CmdOrCtrl+Shift+H', () => { if (mounted) h().toggleVisibility(); });
       await tryRegister('CmdOrCtrl+Shift+L', () => { if (mounted) h().toggleLock(); });
@@ -98,12 +108,12 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string) {
       await tryRegister('CmdOrCtrl+Shift+Delete', () => { if (mounted) h().clearText(); });
     };
 
-    registerAll();
+    enqueue(registerAll);
 
     return () => {
       mounted = false;
-      unregisterAll().catch((e) =>
-        console.error('Failed to unregister hotkeys:', e),
+      enqueue(() =>
+        unregisterAll().catch((e) => console.error('Failed to unregister hotkeys:', e)),
       );
     };
   }, [layout]);
