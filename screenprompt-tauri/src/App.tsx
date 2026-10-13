@@ -10,12 +10,14 @@ import {
   PhysicalPosition,
 } from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
+import { getVersion } from '@tauri-apps/api/app';
 import { message } from '@tauri-apps/plugin-dialog';
 import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { useConfig } from './hooks/useConfig';
 import { useUpdater } from './hooks/useUpdater';
 import { useGlobalHotkeys } from './hooks/useGlobalHotkeys';
 import { OPACITY_LEVELS, DEFAULT_CONFIG } from './types';
+import { hasReleaseNotes, showWhatsNew } from './utils/whatsNew';
 import TitleBar from './components/TitleBar';
 import TextEditor from './components/TextEditor';
 import Settings from './components/Settings';
@@ -221,6 +223,21 @@ function App() {
         console.error('Failed to restore window geometry:', error);
       }
 
+      // "What's new" once per version after an update, before the overlay appears:
+      // the overlay (and a saved lock) only comes up once it's dismissed. Fresh
+      // installs get the first-run notice instead, so just record the version.
+      try {
+        const version = await getVersion();
+        if (config.lastSeenVersion !== version) {
+          if (config.firstRunShown && hasReleaseNotes(version)) {
+            await showWhatsNew(version);
+          }
+          await setConfig({ lastSeenVersion: version });
+        }
+      } catch (error) {
+        console.error("Failed to show what's new:", error);
+      }
+
       await appWindow.show();
 
       if (config.locked) {
@@ -229,7 +246,7 @@ function App() {
     };
 
     restore();
-  }, [loading, config, applyLock]);
+  }, [loading, config, applyLock, setConfig]);
 
   // Persist position and size after the user (or a preset/nudge) moves or resizes
   useEffect(() => {

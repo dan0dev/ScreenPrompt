@@ -9,7 +9,7 @@ use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::ClientToScreen;
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, GetMessageW, PostMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
+    CallNextHookEx, GetMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
     GetWindowRect, IsWindowVisible, MSG, MSLLHOOKSTRUCT, WH_MOUSE_LL, WM_LBUTTONDOWN,
     WM_LBUTTONUP, WM_MOUSEWHEEL, PostThreadMessageW, WM_QUIT,
 };
@@ -99,13 +99,15 @@ unsafe extern "system" fn mouse_hook_proc(
 
             let mut rect = RECT::default();
             if GetWindowRect(hwnd, &mut rect).is_ok() && cursor_in_rect(&cursor, &rect) {
-                // Forward the scroll event to the webview
-                let hi_word = (mouse_struct.mouseData >> 16) as i16;
-                let w = WPARAM((hi_word as u16 as usize) << 16);
-                let l = LPARAM(
-                    ((cursor.y & 0xFFFF) << 16 | (cursor.x & 0xFFFF)) as isize,
-                );
-                let _ = PostMessageW(hwnd, WM_MOUSEWHEEL, w, l);
+                // Hand the wheel delta (120 per notch) to the frontend, which scrolls
+                // the notes. Posting WM_MOUSEWHEEL to the window doesn't work: the
+                // text lives in the WebView2 child, which never sees it.
+                let delta = (mouse_struct.mouseData >> 16) as i16;
+                if let Ok(guard) = get_app_handle_store().lock() {
+                    if let Some(ref handle) = *guard {
+                        let _ = handle.emit("locked-scroll", delta);
+                    }
+                }
                 return LRESULT(1); // Consume the event
             }
         }

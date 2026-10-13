@@ -1,6 +1,8 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
 #[cfg(windows)]
+mod dialog;
+#[cfg(windows)]
 mod windows_api;
 #[cfg(windows)]
 mod mouse_hook;
@@ -69,6 +71,25 @@ fn install_keyboard_hook(app_handle: tauri::AppHandle) -> Result<(), String> {
 #[cfg(windows)]
 fn uninstall_keyboard_hook() -> Result<(), String> {
     keyboard_hook::uninstall_hook()
+}
+
+#[tauri::command]
+#[cfg(windows)]
+async fn show_info_dialog(
+    window: WebviewWindow,
+    title: String,
+    heading: String,
+    content: String,
+    footer: String,
+    button: String,
+) -> Result<(), String> {
+    let owner = window.hwnd().map_err(|e| format!("Failed to get HWND: {}", e))?.0 as isize;
+    // The dialog runs its own modal loop; keep it off the main thread
+    tauri::async_runtime::spawn_blocking(move || {
+        dialog::show_info(owner, &title, &heading, &content, &footer, &button)
+    })
+    .await
+    .map_err(|e| format!("Dialog thread failed: {}", e))?
 }
 
 #[tauri::command]
@@ -160,6 +181,7 @@ pub fn run() {
             install_keyboard_hook,
             uninstall_keyboard_hook,
             launch_update_installer,
+            show_info_dialog,
             detect_keyboard_layout,
         ])
         .run(tauri::generate_context!())

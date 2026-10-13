@@ -24,6 +24,9 @@ export interface Config {
 
   // Keyboard layout: 'auto' | 'hu' | 'en'
   keyboardLayout: string;
+
+  // Last version whose "what's new" was shown (or skipped on a fresh install)
+  lastSeenVersion: string;
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -41,6 +44,7 @@ export const DEFAULT_CONFIG: Config = {
   locked: false,
   autoCheckUpdates: true,
   keyboardLayout: 'auto',
+  lastSeenVersion: '',
 };
 
 export const OPACITY_LEVELS = [1.0, 0.85, 0.70, 0.50];
