@@ -2,9 +2,16 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow, LogicalPosition, LogicalSize } from '@tauri-apps/api/window';
+import {
+  availableMonitors,
+  currentMonitor,
+  getCurrentWindow,
+  LogicalSize,
+  PhysicalPosition,
+} from '@tauri-apps/api/window';
 import { listen } from '@tauri-apps/api/event';
 import { message } from '@tauri-apps/plugin-dialog';
+import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { useConfig } from './hooks/useConfig';
 import { useUpdater } from './hooks/useUpdater';
 import { useGlobalHotkeys } from './hooks/useGlobalHotkeys';
@@ -18,6 +25,24 @@ import './styles/App.css';
 const appWindow = getCurrentWindow();
 const NUDGE_PX = 20;
 const DEFAULT_FONT_SIZE = 18;
+const TEXT_SAVE_DELAY_MS = 400;
+const GEOMETRY_SAVE_DELAY_MS = 400;
+const CLOSE_SAVE_TIMEOUT_MS = 500;
+// Windows parks minimized windows here; never persist it as a real position
+const MINIMIZED_COORD = -32000;
+
+// True if the point lies on any connected monitor (a saved position can point at
+// a monitor that has since been unplugged)
+async function isOnAnyMonitor(x: number, y: number): Promise<boolean> {
+  const monitors = await availableMonitors();
+  return monitors.some(
+    (m) =>
+      x >= m.position.x &&
+      x < m.position.x + m.size.width &&
+      y >= m.position.y &&
+      y < m.position.y + m.size.height,
+  );
+}
 
 function App() {
   const { config, setConfig, loading } = useConfig();
@@ -26,6 +51,12 @@ function App() {
   const [isVisible, setIsVisible] = useState(true);
   const [opacityIndex, setOpacityIndex] = useState(1); // default 0.85 is index 1
   const quickEditRef = useRef(false);
+  const restoredRef = useRef(false);
+
+  // Text being edited. null until the user types, so the saved text shows until then.
+  const [draftText, setDraftText] = useState<string | null>(null);
+  const draftRef = useRef<string | null>(null);
+  const text = draftText ?? config.text;
 
   const [resolvedLayout, setResolvedLayout] = useState('en');
   const updater = useUpdater(config.autoCheckUpdates);
@@ -71,63 +102,62 @@ function App() {
     if (!loading) resolve();
   }, [config.keyboardLayout, loading]);
 
+  // Switch click-through mode and the hooks that go with it (scroll forwarding,
+  // lock-button click, Esc). Does not persist; callers decide that.
+  const applyLock = useCallback(async (locked: boolean) => {
+    await invoke('set_click_through', { window: appWindow, enabled: locked });
+    setIsLocked(locked);
+
+    if (locked) {
+      await invoke('install_scroll_hook', { window: appWindow }).catch((e: unknown) =>
+        console.error('Scroll hook install failed:', e),
+      );
+      await invoke('install_keyboard_hook').catch((e: unknown) =>
+        console.error('Keyboard hook install failed:', e),
+      );
+    } else {
+      await invoke('uninstall_scroll_hook').catch((e: unknown) =>
+        console.error('Scroll hook uninstall failed:', e),
+      );
+      await invoke('uninstall_keyboard_hook').catch((e: unknown) =>
+        console.error('Keyboard hook uninstall failed:', e),
+      );
+    }
+  }, []);
+
   // Toggle click-through mode
   const toggleLock = useCallback(async () => {
     try {
       const newLocked = !isLocked;
-      await invoke('set_click_through', { window: appWindow, enabled: newLocked });
-      setIsLocked(newLocked);
+      await applyLock(newLocked);
       await setConfig({ locked: newLocked });
-
-      // Install/uninstall scroll + keyboard hooks
-      if (newLocked) {
-        await invoke('install_scroll_hook', { window: appWindow }).catch((e: unknown) =>
-          console.error('Scroll hook install failed:', e),
-        );
-        await invoke('install_keyboard_hook').catch((e: unknown) =>
-          console.error('Keyboard hook install failed:', e),
-        );
-      } else {
-        await invoke('uninstall_scroll_hook').catch((e: unknown) =>
-          console.error('Scroll hook uninstall failed:', e),
-        );
-        await invoke('uninstall_keyboard_hook').catch((e: unknown) =>
-          console.error('Keyboard hook uninstall failed:', e),
-        );
-      }
     } catch (error) {
       console.error('Failed to toggle lock:', error);
     }
-  }, [isLocked, setConfig]);
+  }, [isLocked, applyLock, setConfig]);
 
   // Emergency unlock - always unlocks. No isLocked guard: if React state and the
   // window ever disagree, bailing out here would leave the user with no way back.
   const emergencyUnlock = useCallback(async () => {
     try {
-      await invoke('set_click_through', { window: appWindow, enabled: false });
-      setIsLocked(false);
+      await applyLock(false);
       await setConfig({ locked: false });
-      await invoke('uninstall_scroll_hook').catch(() => {});
-      await invoke('uninstall_keyboard_hook').catch(() => {});
     } catch (error) {
       console.error('Emergency unlock failed:', error);
     }
-  }, [setConfig]);
+  }, [applyLock, setConfig]);
 
   // Quick edit: unlock, focus, auto-relock on blur
   const quickEdit = useCallback(async () => {
     if (!isLocked) return;
     try {
-      await invoke('set_click_through', { window: appWindow, enabled: false });
-      setIsLocked(false);
-      await invoke('uninstall_scroll_hook').catch(() => {});
-      await invoke('uninstall_keyboard_hook').catch(() => {});
+      await applyLock(false);
       quickEditRef.current = true;
       await appWindow.setFocus();
     } catch (error) {
       console.error('Quick edit failed:', error);
     }
-  }, [isLocked]);
+  }, [isLocked, applyLock]);
 
   // Listen for Escape key (from keyboard hook) to emergency unlock
   useEffect(() => {
@@ -140,21 +170,120 @@ function App() {
     };
   }, [emergencyUnlock]);
 
+  // Windows doesn't run our own keyboard hook for keys typed into the overlay
+  // itself, so when the locked overlay has focus (e.g. right after locking it, or
+  // a restored lock), Esc arrives here instead
+  useEffect(() => {
+    if (!isLocked) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') emergencyUnlock();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isLocked, emergencyUnlock]);
+
   // Listen for window blur to re-lock after quick edit
   useEffect(() => {
     const unlisten = appWindow.onFocusChanged(async ({ payload: focused }) => {
       if (!focused && quickEditRef.current) {
         quickEditRef.current = false;
         try {
-          await invoke('set_click_through', { window: appWindow, enabled: true });
-          setIsLocked(true);
+          await applyLock(true);
           await setConfig({ locked: true });
-          await invoke('install_scroll_hook', { window: appWindow }).catch(() => {});
-          await invoke('install_keyboard_hook').catch(() => {});
         } catch (error) {
           console.error('Quick edit re-lock failed:', error);
         }
       }
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [applyLock, setConfig]);
+
+  // Restore saved size, position and lock state once, then show the window.
+  // Position is stored in physical px (unambiguous across monitors), size in
+  // logical px (keeps the same visual size at any display scaling).
+  useEffect(() => {
+    if (loading || restoredRef.current) return;
+    restoredRef.current = true;
+
+    const restore = async () => {
+      try {
+        await appWindow.setSize(new LogicalSize(config.width, config.height));
+        // Probe a point inside the title bar, so a window hanging partly off-screen still counts
+        if (await isOnAnyMonitor(config.x + 40, config.y + 10)) {
+          await appWindow.setPosition(new PhysicalPosition(config.x, config.y));
+        } else {
+          await appWindow.center();
+        }
+      } catch (error) {
+        console.error('Failed to restore window geometry:', error);
+      }
+
+      await appWindow.show();
+
+      if (config.locked) {
+        await applyLock(true).catch((e: unknown) => console.error('Failed to restore lock:', e));
+      }
+    };
+
+    restore();
+  }, [loading, config, applyLock]);
+
+  // Persist position and size after the user (or a preset/nudge) moves or resizes
+  useEffect(() => {
+    let timer: number | undefined;
+
+    const scheduleSave = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(async () => {
+        try {
+          const [pos, size, scale] = await Promise.all([
+            appWindow.outerPosition(),
+            appWindow.innerSize(),
+            appWindow.scaleFactor(),
+          ]);
+          if (pos.x <= MINIMIZED_COORD || pos.y <= MINIMIZED_COORD) return;
+          const logical = size.toLogical(scale);
+          await setConfig({
+            x: pos.x,
+            y: pos.y,
+            width: Math.round(logical.width),
+            height: Math.round(logical.height),
+          });
+        } catch (error) {
+          console.error('Failed to save window geometry:', error);
+        }
+      }, GEOMETRY_SAVE_DELAY_MS);
+    };
+
+    const unlistenMoved = appWindow.onMoved(scheduleSave);
+    const unlistenResized = appWindow.onResized(scheduleSave);
+
+    return () => {
+      window.clearTimeout(timer);
+      unlistenMoved.then((fn) => fn());
+      unlistenResized.then((fn) => fn());
+    };
+  }, [setConfig]);
+
+  // Save typed text shortly after typing stops
+  useEffect(() => {
+    if (draftText === null) return;
+    const timer = window.setTimeout(() => setConfig({ text: draftText }), TEXT_SAVE_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [draftText, setConfig]);
+
+  // Flush unsaved text before any close (X button, quit, panic), so the last
+  // keystrokes aren't lost to the save delay. Capped so closing never hangs.
+  useEffect(() => {
+    const unlisten = appWindow.onCloseRequested(async () => {
+      if (draftRef.current === null) return;
+      await Promise.race([
+        setConfig({ text: draftRef.current }),
+        new Promise((resolve) => window.setTimeout(resolve, CLOSE_SAVE_TIMEOUT_MS)),
+      ]);
     });
 
     return () => {
@@ -201,14 +330,15 @@ function App() {
     await setConfig({ opacity: OPACITY_LEVELS[nextIndex] });
   }, [opacityIndex, setConfig]);
 
-  // Position presets (3x3 grid: Num1=bottom-left ... Num9=top-right)
+  // Position presets (3x3 grid: Num1=bottom-left ... Num9=top-right).
+  // Works in physical px against the current monitor's work area, so it lands
+  // correctly at any display scaling, on any monitor, and clear of the taskbar.
   const positionPreset = useCallback(async (index: number) => {
     try {
-      const [screenW, screenH] = await invoke<[number, number]>('get_screen_size', {
-        window: appWindow,
-      });
-      const w = config.width;
-      const h = config.height;
+      const monitor = await currentMonitor();
+      if (!monitor) return;
+      const area = monitor.workArea;
+      const size = await appWindow.outerSize();
 
       // Map numpad positions:
       // 7=TL 8=TC 9=TR
@@ -217,52 +347,47 @@ function App() {
       const col = ((index - 1) % 3); // 0=left, 1=center, 2=right
       const row = 2 - Math.floor((index - 1) / 3); // 0=top, 1=mid, 2=bottom
 
-      const x = col === 0 ? 0 : col === 1 ? (screenW - w) / 2 : screenW - w;
-      const y = row === 0 ? 0 : row === 1 ? (screenH - h) / 2 : screenH - h;
+      const freeW = area.size.width - size.width;
+      const freeH = area.size.height - size.height;
+      const x = area.position.x + (col === 0 ? 0 : col === 1 ? freeW / 2 : freeW);
+      const y = area.position.y + (row === 0 ? 0 : row === 1 ? freeH / 2 : freeH);
 
-      await appWindow.setPosition(new LogicalPosition(Math.round(x), Math.round(y)));
-      await setConfig({ x: Math.round(x), y: Math.round(y) });
+      await appWindow.setPosition(new PhysicalPosition(Math.round(x), Math.round(y)));
     } catch (error) {
       console.error('Position preset failed:', error);
     }
-  }, [config.width, config.height, setConfig]);
+  }, []);
 
-  // Nudge window
+  // Nudge window (NUDGE_PX logical px, scaled to the display)
   const nudge = useCallback(async (direction: 'up' | 'down' | 'left' | 'right') => {
     try {
-      const pos = await appWindow.outerPosition();
+      const [pos, scale] = await Promise.all([appWindow.outerPosition(), appWindow.scaleFactor()]);
+      const step = Math.round(NUDGE_PX * scale);
       let x = pos.x;
       let y = pos.y;
 
       switch (direction) {
-        case 'up': y -= NUDGE_PX; break;
-        case 'down': y += NUDGE_PX; break;
-        case 'left': x -= NUDGE_PX; break;
-        case 'right': x += NUDGE_PX; break;
+        case 'up': y -= step; break;
+        case 'down': y += step; break;
+        case 'left': x -= step; break;
+        case 'right': x += step; break;
       }
 
-      await appWindow.setPosition(new LogicalPosition(x, y));
-      await setConfig({ x, y });
+      await appWindow.setPosition(new PhysicalPosition(x, y));
     } catch (error) {
       console.error('Nudge failed:', error);
     }
-  }, [setConfig]);
+  }, []);
 
   // Reset window geometry
   const resetGeometry = useCallback(async () => {
     try {
       await appWindow.setSize(new LogicalSize(DEFAULT_CONFIG.width, DEFAULT_CONFIG.height));
-      await appWindow.setPosition(new LogicalPosition(DEFAULT_CONFIG.x, DEFAULT_CONFIG.y));
-      await setConfig({
-        x: DEFAULT_CONFIG.x,
-        y: DEFAULT_CONFIG.y,
-        width: DEFAULT_CONFIG.width,
-        height: DEFAULT_CONFIG.height,
-      });
+      await appWindow.setPosition(new PhysicalPosition(DEFAULT_CONFIG.x, DEFAULT_CONFIG.y));
     } catch (error) {
       console.error('Reset geometry failed:', error);
     }
-  }, [setConfig]);
+  }, []);
 
   // Quit
   const quit = useCallback(async () => {
@@ -278,29 +403,36 @@ function App() {
     await appWindow.close();
   }, []);
 
-  // Copy all text
+  // Copy all text. The clipboard goes through the native plugin: the web clipboard
+  // API makes WebView2 pop a permission prompt.
   const copyAll = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(config.text);
+      await writeText(text);
     } catch (error) {
       console.error('Copy failed:', error);
     }
-  }, [config.text]);
+  }, [text]);
+
+  // Replace all text and save it right away (not a typing burst, so no delay)
+  const replaceText = useCallback(async (newText: string) => {
+    draftRef.current = newText;
+    setDraftText(newText);
+    await setConfig({ text: newText });
+  }, [setConfig]);
 
   // Paste and replace all text
   const pasteReplace = useCallback(async () => {
     try {
-      const text = await navigator.clipboard.readText();
-      await setConfig({ text });
+      await replaceText(await readText());
     } catch (error) {
       console.error('Paste failed:', error);
     }
-  }, [setConfig]);
+  }, [replaceText]);
 
   // Clear text
   const clearText = useCallback(async () => {
-    await setConfig({ text: '' });
-  }, [setConfig]);
+    await replaceText('');
+  }, [replaceText]);
 
   // Register global hotkeys
   useGlobalHotkeys({
@@ -323,9 +455,10 @@ function App() {
     clearText,
   }, resolvedLayout);
 
-  // Update text in config
-  const updateText = async (text: string) => {
-    await setConfig({ text });
+  // Track text as it's typed (saved after a short pause, or on close)
+  const updateText = (newText: string) => {
+    draftRef.current = newText;
+    setDraftText(newText);
   };
 
   // Handle update badge click (user dismissed the auto-popup earlier)
@@ -333,13 +466,6 @@ function App() {
     if (!updater.updateAvailable) return;
     await updater.downloadAndInstall();
   };
-
-  // Show window once content is ready
-  useEffect(() => {
-    if (!loading) {
-      appWindow.show();
-    }
-  }, [loading]);
 
   if (loading) {
     return null;
@@ -376,13 +502,14 @@ function App() {
             onUpdateClick={handleUpdateClick}
           />
 
-          <TextEditor config={config} text={config.text} onTextChange={updateText} />
+          <TextEditor config={config} text={text} onTextChange={updateText} />
 
           <BottomBar
             config={config}
             setConfig={setConfig}
             isLocked={isLocked}
             onToggleLock={toggleLock}
+            onClearText={clearText}
           />
         </>
       )}

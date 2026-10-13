@@ -21,7 +21,9 @@ fn show_ethical_notice() -> String {
      - Breaking terms of service of any platform\n\
      - Any illegal activities\n\n\
      You are solely responsible for how you use this software.\n\n\
-     This software runs 100% locally. No data collection, no telemetry.\n\n\
+     Your notes never leave this computer. No data collection, no telemetry.\n\
+     The only network request is the update check against GitHub releases,\n\
+     which you can turn off in Settings.\n\n\
      By clicking OK, you acknowledge that you understand and agree to use\n\
      this software responsibly and ethically."
         .to_string()
@@ -37,16 +39,6 @@ fn apply_capture_exclusion(window: WebviewWindow) -> Result<(), String> {
 #[cfg(windows)]
 fn set_click_through(window: WebviewWindow, enabled: bool) -> Result<(), String> {
     windows_api::set_click_through(window, enabled)
-}
-
-#[tauri::command]
-fn get_screen_size(window: WebviewWindow) -> Result<(u32, u32), String> {
-    if let Some(monitor) = window.current_monitor().map_err(|e| e.to_string())? {
-        let size = monitor.size();
-        Ok((size.width, size.height))
-    } else {
-        Err("No monitor found".to_string())
-    }
 }
 
 #[tauri::command]
@@ -128,6 +120,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(
             tauri_plugin_store::Builder::default()
@@ -161,7 +154,6 @@ pub fn run() {
             check_windows_version,
             apply_capture_exclusion,
             set_click_through,
-            get_screen_size,
             install_scroll_hook,
             uninstall_scroll_hook,
             set_unlock_zone,

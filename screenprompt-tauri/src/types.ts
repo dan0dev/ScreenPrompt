@@ -1,7 +1,7 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
 export interface Config {
-  // Window position and size
+  // Window position (physical px) and size (logical px)
   x: number;
   y: number;
   width: number;

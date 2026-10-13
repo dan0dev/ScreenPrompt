@@ -1,6 +1,6 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { load } from '@tauri-apps/plugin-store';
 import type { Config } from '../types';
 import { DEFAULT_CONFIG } from '../types';
@@ -38,11 +38,11 @@ export function useConfig() {
     loadConfig();
   }, []);
 
-  // Save config to store
-  const setConfig = async (updates: Partial<Config>) => {
+  // Save config to store. Stable and merges into the latest state, so callers in
+  // long-lived listeners (window move/resize) can't overwrite newer changes.
+  const setConfig = useCallback(async (updates: Partial<Config>) => {
     try {
-      const newConfig = { ...config, ...updates };
-      setConfigState(newConfig);
+      setConfigState((prev) => ({ ...prev, ...updates }));
 
       const store = await load(STORE_FILE);
       for (const [key, value] of Object.entries(updates)) {
@@ -52,7 +52,7 @@ export function useConfig() {
     } catch (error) {
       console.error('Failed to save config:', error);
     }
-  };
+  }, []);
 
   return { config, setConfig, loading };
 }

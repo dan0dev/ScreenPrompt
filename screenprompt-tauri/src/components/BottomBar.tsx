@@ -10,6 +10,7 @@ interface BottomBarProps {
   setConfig: (updates: Partial<Config>) => Promise<void>;
   isLocked: boolean;
   onToggleLock: () => void;
+  onClearText: () => void;
 }
 
 const ICON = {
@@ -43,7 +44,7 @@ const ClearIcon = () => (
   </svg>
 );
 
-function BottomBar({ config, setConfig, isLocked, onToggleLock }: BottomBarProps) {
+function BottomBar({ config, setConfig, isLocked, onToggleLock, onClearText }: BottomBarProps) {
   const lockButtonRef = useRef<HTMLButtonElement>(null);
 
   // While locked the window ignores the mouse, so the Rust mouse hook watches for
@@ -79,10 +80,6 @@ function BottomBar({ config, setConfig, isLocked, onToggleLock }: BottomBarProps
     setConfig({ fontSize: newSize });
   };
 
-  const clearText = () => {
-    setConfig({ text: '' });
-  };
-
   return (
     <div className="bottom-bar">
       {isLocked ? (
@@ -106,7 +103,7 @@ function BottomBar({ config, setConfig, isLocked, onToggleLock }: BottomBarProps
             </button>
           </div>
 
-          <button className="control-button clear-button" onClick={clearText} title="Clear all text" aria-label="Clear all text">
+          <button className="control-button clear-button" onClick={onClearText} title="Clear all text" aria-label="Clear all text">
             <ClearIcon />
           </button>
         </>

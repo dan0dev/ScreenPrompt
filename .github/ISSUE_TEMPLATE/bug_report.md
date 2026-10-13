@@ -31,8 +31,9 @@ If applicable, add screenshots to help explain your problem.
 ## Environment
 
 - **Windows Version**: [e.g., Windows 11 23H2, Windows 10 Build 19045]
-- **Python Version**: [e.g., 3.12.0]
-- **ScreenPrompt Version**: [e.g., commit hash or release version]
+- **ScreenPrompt Version**: [shown in Settings, e.g., v1.1.2]
+- **Display scaling**: [e.g., 100%, 125%, 150%]
+- **Keyboard layout**: [e.g., English (US), Hungarian]
 
 ## Screen Capture Software (if relevant)
 
