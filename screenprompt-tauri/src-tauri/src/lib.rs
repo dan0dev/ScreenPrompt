@@ -1,6 +1,8 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
 #[cfg(windows)]
+mod dialog;
+#[cfg(windows)]
 mod windows_api;
 #[cfg(windows)]
 mod mouse_hook;
@@ -21,7 +23,9 @@ fn show_ethical_notice() -> String {
      - Breaking terms of service of any platform\n\
      - Any illegal activities\n\n\
      You are solely responsible for how you use this software.\n\n\
-     This software runs 100% locally. No data collection, no telemetry.\n\n\
+     Your notes never leave this computer. No data collection, no telemetry.\n\
+     The only network request is the update check against GitHub releases,\n\
+     which you can turn off in Settings.\n\n\
      By clicking OK, you acknowledge that you understand and agree to use\n\
      this software responsibly and ethically."
         .to_string()
@@ -40,16 +44,6 @@ fn set_click_through(window: WebviewWindow, enabled: bool) -> Result<(), String>
 }
 
 #[tauri::command]
-fn get_screen_size(window: WebviewWindow) -> Result<(u32, u32), String> {
-    if let Some(monitor) = window.current_monitor().map_err(|e| e.to_string())? {
-        let size = monitor.size();
-        Ok((size.width, size.height))
-    } else {
-        Err("No monitor found".to_string())
-    }
-}
-
-#[tauri::command]
 #[cfg(windows)]
 fn install_scroll_hook(window: WebviewWindow) -> Result<(), String> {
     mouse_hook::install_hook(window)
@@ -63,6 +57,12 @@ fn uninstall_scroll_hook() -> Result<(), String> {
 
 #[tauri::command]
 #[cfg(windows)]
+fn set_unlock_zone(x: i32, y: i32, width: i32, height: i32) {
+    mouse_hook::set_unlock_zone(x, y, width, height)
+}
+
+#[tauri::command]
+#[cfg(windows)]
 fn install_keyboard_hook(app_handle: tauri::AppHandle) -> Result<(), String> {
     keyboard_hook::install_hook(app_handle)
 }
@@ -71,6 +71,25 @@ fn install_keyboard_hook(app_handle: tauri::AppHandle) -> Result<(), String> {
 #[cfg(windows)]
 fn uninstall_keyboard_hook() -> Result<(), String> {
     keyboard_hook::uninstall_hook()
+}
+
+#[tauri::command]
+#[cfg(windows)]
+async fn show_info_dialog(
+    window: WebviewWindow,
+    title: String,
+    heading: String,
+    content: String,
+    footer: String,
+    button: String,
+) -> Result<(), String> {
+    let owner = window.hwnd().map_err(|e| format!("Failed to get HWND: {}", e))?.0 as isize;
+    // The dialog runs its own modal loop; keep it off the main thread
+    tauri::async_runtime::spawn_blocking(move || {
+        dialog::show_info(owner, &title, &heading, &content, &footer, &button)
+    })
+    .await
+    .map_err(|e| format!("Dialog thread failed: {}", e))?
 }
 
 #[tauri::command]
@@ -122,6 +141,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(
             tauri_plugin_store::Builder::default()
@@ -155,12 +175,13 @@ pub fn run() {
             check_windows_version,
             apply_capture_exclusion,
             set_click_through,
-            get_screen_size,
             install_scroll_hook,
             uninstall_scroll_hook,
+            set_unlock_zone,
             install_keyboard_hook,
             uninstall_keyboard_hook,
             launch_update_installer,
+            show_info_dialog,
             detect_keyboard_layout,
         ])
         .run(tauri::generate_context!())

@@ -1,6 +1,7 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import type { Config } from '../types';
 import '../styles/TextEditor.css';
 
@@ -11,22 +12,26 @@ interface TextEditorProps {
 }
 
 const PLACEHOLDER_TEXT = 'Enter your prompt here...';
+const WHEEL_DELTA = 120; // one wheel notch
+const LINES_PER_NOTCH = 3; // Windows default
 
 function TextEditor({ config, text, onTextChange }: TextEditorProps) {
-  const [localText, setLocalText] = useState(text);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // While locked the window ignores the mouse, so the Rust mouse hook catches the
+  // wheel over the overlay and sends its delta here
   useEffect(() => {
-    setLocalText(text);
-  }, [text]);
+    const unlisten = listen<number>('locked-scroll', ({ payload: delta }) => {
+      const el = textareaRef.current;
+      if (!el) return;
+      const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || config.fontSize * 1.6;
+      el.scrollBy({ top: (-delta / WHEEL_DELTA) * LINES_PER_NOTCH * lineHeight });
+    });
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setLocalText(e.target.value);
-  };
-
-  const handleBlur = () => {
-    onTextChange(localText);
-  };
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [config.fontSize]);
 
   return (
     <div className="text-editor">
@@ -39,9 +44,8 @@ function TextEditor({ config, text, onTextChange }: TextEditorProps) {
           color: config.fontColor,
           backgroundColor: config.bgColor,
         }}
-        value={localText}
-        onChange={handleChange}
-        onBlur={handleBlur}
+        value={text}
+        onChange={(e) => onTextChange(e.target.value)}
         placeholder={PLACEHOLDER_TEXT}
         spellCheck={false}
       />

@@ -23,6 +23,9 @@ export interface HotkeyHandlers {
   clearText: () => void;
 }
 
+// Global shortcuts are kept to what must work while the overlay is locked or
+// unfocused; everything else is overlay-only (see the keydown handler below).
+
 // Wrapper that isolates each registration so one failure doesn't block the rest.
 // Tauri 2 fires handlers on both Pressed and Released — we only act on Pressed.
 async function tryRegister(shortcut: string, handler: () => void): Promise<boolean> {
@@ -37,6 +40,14 @@ async function tryRegister(shortcut: string, handler: () => void): Promise<boole
     console.warn(`Failed to register hotkey "${shortcut}":`, error);
     return false;
   }
+}
+
+// Registration passes run one at a time. When the layout resolves (e.g. to 'hu')
+// the effect re-runs while the first pass is still registering; overlapping passes
+// left some keys bound to the dead first pass, so they silently did nothing.
+let registrationQueue: Promise<unknown> = Promise.resolve();
+function enqueue(task: () => Promise<unknown>) {
+  registrationQueue = registrationQueue.then(task, task);
 }
 
 // Position preset key bindings per layout.
@@ -58,17 +69,14 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string) {
     const h = () => handlersRef.current;
 
     const registerAll = async () => {
+      if (!mounted) return; // Superseded before its turn came
+
       // Window controls
       await tryRegister('CmdOrCtrl+Shift+H', () => { if (mounted) h().toggleVisibility(); });
       await tryRegister('CmdOrCtrl+Shift+L', () => { if (mounted) h().toggleLock(); });
       await tryRegister('CmdOrCtrl+Shift+E', () => { if (mounted) h().quickEdit(); });
 
       // Emergency unlock via bare Escape is handled by a low-level keyboard hook in Rust
-
-      // Font size
-      await tryRegister('CmdOrCtrl+Shift+PageUp', () => { if (mounted) h().increaseFontSize(); });
-      await tryRegister('CmdOrCtrl+Shift+PageDown', () => { if (mounted) h().decreaseFontSize(); });
-      await tryRegister('CmdOrCtrl+Shift+Home', () => { if (mounted) h().resetFontSize(); });
 
       // Opacity
       await tryRegister('CmdOrCtrl+Shift+O', () => { if (mounted) h().cycleOpacity(); });
@@ -80,31 +88,49 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string) {
         await tryRegister(presetKeys[i], () => { if (mounted) h().positionPreset(index); });
       }
 
-      // Nudge window
-      await tryRegister('CmdOrCtrl+Shift+ArrowUp', () => { if (mounted) h().nudge('up'); });
-      await tryRegister('CmdOrCtrl+Shift+ArrowDown', () => { if (mounted) h().nudge('down'); });
-      await tryRegister('CmdOrCtrl+Shift+ArrowLeft', () => { if (mounted) h().nudge('left'); });
-      await tryRegister('CmdOrCtrl+Shift+ArrowRight', () => { if (mounted) h().nudge('right'); });
-
       // App controls
-      await tryRegister('CmdOrCtrl+Shift+S', () => { if (mounted) h().toggleSettings(); });
-      await tryRegister('CmdOrCtrl+Shift+R', () => { if (mounted) h().resetGeometry(); });
       await tryRegister('CmdOrCtrl+Shift+Q', () => { if (mounted) h().quit(); });
       await tryRegister('CmdOrCtrl+Shift+F1', () => { if (mounted) h().panic(); });
-
-      // Text operations
-      await tryRegister('CmdOrCtrl+Shift+C', () => { if (mounted) h().copyAll(); });
-      await tryRegister('CmdOrCtrl+Shift+V', () => { if (mounted) h().pasteReplace(); });
-      await tryRegister('CmdOrCtrl+Shift+Delete', () => { if (mounted) h().clearText(); });
     };
 
-    registerAll();
+    enqueue(registerAll);
 
     return () => {
       mounted = false;
-      unregisterAll().catch((e) =>
-        console.error('Failed to unregister hotkeys:', e),
+      enqueue(() =>
+        unregisterAll().catch((e) => console.error('Failed to unregister hotkeys:', e)),
       );
     };
   }, [layout]);
+
+  // Overlay-only shortcuts: these combos mean something in most other apps, so
+  // they only act while the overlay has focus instead of being taken system-wide.
+  useEffect(() => {
+    const h = () => handlersRef.current;
+    const actions: Record<string, () => void> = {
+      PageUp: () => h().increaseFontSize(),
+      PageDown: () => h().decreaseFontSize(),
+      Home: () => h().resetFontSize(),
+      ArrowUp: () => h().nudge('up'),
+      ArrowDown: () => h().nudge('down'),
+      ArrowLeft: () => h().nudge('left'),
+      ArrowRight: () => h().nudge('right'),
+      KeyS: () => h().toggleSettings(),
+      KeyR: () => h().resetGeometry(),
+      KeyC: () => h().copyAll(),
+      KeyV: () => h().pasteReplace(),
+      Delete: () => h().clearText(),
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.ctrlKey || !e.shiftKey || e.altKey) return;
+      const action = actions[e.code];
+      if (!action) return;
+      e.preventDefault();
+      action();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 }

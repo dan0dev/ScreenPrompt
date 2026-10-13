@@ -41,7 +41,7 @@ Hidden from Zoom, Teams, OBS, and Snipping Tool.
 - **Always on top**: adjustable transparency and click-through lock
 - **Keyboard-first**: every action has a shortcut
 - **Make it yours**: font, size, colors, and position presets
-- **100% local**: no network, no telemetry, no data collection
+- **Private**: your notes never leave your PC; no telemetry, no data collection. The only network request is an update check against GitHub releases, which you can turn off in Settings
 
 ## Quick start
 
@@ -57,26 +57,35 @@ Requires Windows 10 (build 2004+) or Windows 11.
 |---|---|
 | `Ctrl+Shift+H` | Show / hide |
 | `Ctrl+Shift+L` | Lock (click-through) |
-| `Esc` | Unlock |
+| `Esc` | Unlock (or click the lock icon) |
 | `Ctrl+Shift+E` | Edit text |
 | `Ctrl+Shift+F1` | Panic close, works even when locked |
 
 <details>
 <summary><b>All shortcuts</b></summary>
 
+These work anywhere, even while the overlay is locked or another app has focus:
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+Shift+O` | Cycle opacity |
+| `Ctrl+Shift+Q` | Quit |
+
+These work while the overlay is focused (click it, or press `Ctrl+Shift+E` when locked), so they
+don't override the same keys in your other apps:
+
 | Shortcut | Action |
 |---|---|
 | `Ctrl+Shift+PageUp` / `PageDown` | Font size up / down |
 | `Ctrl+Shift+Home` | Reset font size |
-| `Ctrl+Shift+O` | Cycle opacity |
 | `Ctrl+Shift+S` | Settings |
-| `Ctrl+Shift+Q` | Quit |
 | `Ctrl+Shift+C` | Copy all text |
 | `Ctrl+Shift+V` | Paste and replace all |
 | `Ctrl+Shift+Delete` | Clear all text |
 | `Ctrl+Shift+Arrows` | Nudge window 20px |
+| `Ctrl+Shift+R` | Reset size and position |
 
-**Position presets** (layout is auto-detected, or set it in Settings)
+**Position presets** work anywhere (layout is auto-detected, or set it in Settings)
 
 | Position | QWERTY | QWERTZ |
 |---|---|---|
