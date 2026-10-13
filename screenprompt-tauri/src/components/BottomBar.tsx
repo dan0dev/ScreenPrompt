@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import type { Config } from '../types';
 import '../styles/BottomBar.css';
 
@@ -65,9 +66,14 @@ function BottomBar({ config, setConfig, isLocked, onToggleLock, onClearText }: B
     };
 
     reportZone();
-    // Resizing or moving to a monitor with different scaling shifts the button
+    // Resizing shifts the button; moving to a monitor with different scaling changes
+    // devicePixelRatio, which doesn't reliably fire a DOM resize, so watch both
     window.addEventListener('resize', reportZone);
-    return () => window.removeEventListener('resize', reportZone);
+    const unlistenScale = getCurrentWindow().onScaleChanged(reportZone);
+    return () => {
+      window.removeEventListener('resize', reportZone);
+      unlistenScale.then((fn) => fn());
+    };
   }, [isLocked]);
 
   const increaseFontSize = () => {
