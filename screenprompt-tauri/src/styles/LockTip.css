@@ -1,0 +1,37 @@
+/* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
+
+/* First-lock tip: a floating glass card over the notes, so it reads as chrome */
+.lock-tip {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 40px; /* just above the bottom bar */
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: var(--sp-radius-card);
+  background: var(--sp-glass-fill-strong);
+  backdrop-filter: var(--sp-glass-blur);
+  -webkit-backdrop-filter: var(--sp-glass-blur);
+  box-shadow:
+    inset 0 1px 0 var(--sp-glass-rim),
+    var(--sp-shadow-float);
+  color: var(--sp-label-2);
+  font-size: 11.5px;
+  line-height: 1.35;
+  pointer-events: none;
+  animation: lock-tip-in var(--sp-fast) var(--sp-ease);
+}
+
+.lock-tip strong {
+  color: var(--sp-label);
+  font-weight: 600;
+}
+
+@keyframes lock-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}

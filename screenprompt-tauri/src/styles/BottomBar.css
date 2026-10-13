@@ -87,9 +87,16 @@
   min-width: 0;
 }
 
-@media (max-width: 240px) {
-  .lock-hint-prefix {
+/* Shorter wording when the window is narrow */
+.lock-hint-narrow {
+  display: none;
+}
+@media (max-width: 300px) {
+  .lock-hint-wide {
     display: none;
+  }
+  .lock-hint-narrow {
+    display: inline;
   }
 }
 

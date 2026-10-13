@@ -116,20 +116,48 @@ Test capture exclusion with:
 screenprompt/
 ├── screenprompt-tauri/
 │   ├── src/               # React/TypeScript frontend
-│   │   ├── components/    # UI components (overlay, settings, etc.)
-│   │   ├── hooks/         # React hooks
-│   │   └── utils/         # Frontend utilities
+│   │   ├── components/    # UI components (overlay, settings, lock tip, etc.)
+│   │   ├── hooks/         # React hooks (config, global shortcuts, updater)
+│   │   └── utils/         # Update checker, "what's new" release notes
 │   └── src-tauri/
 │       └── src/           # Rust backend
-│           ├── main.rs        # App entry point
-│           ├── lib.rs         # Tauri app wiring
-│           ├── windows_api.rs # Capture-exclusion / window styling
-│           ├── keyboard_hook.rs
-│           └── mouse_hook.rs
+│           ├── main.rs          # App entry point
+│           ├── lib.rs           # Tauri app wiring and commands
+│           ├── windows_api.rs   # Capture exclusion / click-through
+│           ├── dialog.rs        # Native task dialog, excluded from capture
+│           ├── keyboard_hook.rs # Esc to unlock while locked
+│           └── mouse_hook.rs    # Ctrl+click unlock and scrolling while locked
 ├── readme.md              # User documentation
 ├── CONTRIBUTING.md        # This file
 └── LICENSE                # MIT License
 ```
+
+### How locked mode works
+
+Locking makes the whole window click-through (`windows_api.rs`), so the overlay itself
+receives no mouse input. Two low-level hooks, installed only while locked, handle the rest:
+
+- `mouse_hook.rs`: a **Ctrl**+click on the lock icon unlocks; every other click passes
+  through. A plain wheel over the overlay scrolls the notes (`TextEditor` listens for
+  `locked-scroll`); with Ctrl, Shift or Alt held it passes through to the app behind.
+  `BottomBar` reports the lock icon's position in physical pixels.
+- `keyboard_hook.rs`: **Esc** anywhere unlocks. Windows doesn't run this hook for keys
+  typed into ScreenPrompt's own window, so `App` also handles Esc while the overlay has
+  focus.
+
+Global shortcuts (`useGlobalHotkeys.ts`) are limited to what must work while locked or
+unfocused; everything else is a plain keydown handler that only acts while the overlay
+is focused, so common shortcuts keep working in other apps.
+
+## Releasing
+
+1. Bump the version in `package.json`, `package-lock.json` (2 places), `src-tauri/Cargo.toml`,
+   `src-tauri/Cargo.lock` and `src-tauri/tauri.conf.json`.
+2. Add the release's entry to `src/utils/whatsNew.ts`, keyed by the new version. Without one,
+   updating users see no "what's new" dialog.
+3. Build with `npm run tauri build` and upload `ScreenPrompt_<version>_x64-setup.exe` to the
+   GitHub release. The in-app updater looks for an asset ending in `-setup.exe` on the latest
+   release, so keep that name.
 
 ## License
 

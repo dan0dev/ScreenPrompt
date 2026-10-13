@@ -49,7 +49,7 @@ function BottomBar({ config, setConfig, isLocked, onToggleLock, onClearText }: B
   const lockButtonRef = useRef<HTMLButtonElement>(null);
 
   // While locked the window ignores the mouse, so the Rust mouse hook watches for
-  // clicks on the lock button instead. Tell it where the button is, in physical px.
+  // Ctrl+click on the lock button instead. Tell it where the button is, in physical px.
   useEffect(() => {
     if (!isLocked) return;
 
@@ -89,8 +89,11 @@ function BottomBar({ config, setConfig, isLocked, onToggleLock, onClearText }: B
   return (
     <div className="bottom-bar">
       {isLocked ? (
-        <span className="lock-hint">
-          <span className="lock-hint-prefix">Locked · </span>Esc to unlock
+        // The only way to learn how to unlock while locked: a locked window gets no
+        // hover, so a tooltip would never show
+        <span className="lock-hint" role="status">
+          <span className="lock-hint-wide">Locked · Esc or Ctrl+click to unlock</span>
+          <span className="lock-hint-narrow">Esc / Ctrl+click to unlock</span>
         </span>
       ) : (
         <>
@@ -121,7 +124,7 @@ function BottomBar({ config, setConfig, isLocked, onToggleLock, onClearText }: B
         ref={lockButtonRef}
         className={`control-button lock-button ${isLocked ? 'locked' : ''}`}
         onClick={onToggleLock}
-        title={isLocked ? 'Unlock (Esc)' : 'Lock (click-through enabled)'}
+        title={isLocked ? 'Unlock: Esc, or Ctrl+click here' : 'Lock (click-through enabled)'}
         aria-label={isLocked ? 'Unlock click-through' : 'Lock click-through'}
         aria-pressed={isLocked}
       >
