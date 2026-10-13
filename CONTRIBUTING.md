@@ -138,8 +138,9 @@ Locking makes the whole window click-through (`windows_api.rs`), so the overlay 
 receives no mouse input. Two low-level hooks, installed only while locked, handle the rest:
 
 - `mouse_hook.rs`: a **Ctrl**+click on the lock icon unlocks; every other click passes
-  through. A plain wheel over the overlay scrolls the notes (`TextEditor` listens for
-  `locked-scroll`); with Ctrl, Shift or Alt held it passes through to the app behind.
+  through. **Ctrl**+wheel over the overlay scrolls the notes (`TextEditor` listens for
+  `locked-scroll`) and is swallowed so the app behind doesn't zoom; any other wheel
+  passes through, so the content under the overlay scrolls normally.
   `BottomBar` reports the lock icon's position in physical pixels.
 - `keyboard_hook.rs`: **Esc** anywhere unlocks. Windows doesn't run this hook for keys
   typed into ScreenPrompt's own window, so `App` also handles Esc while the overlay has

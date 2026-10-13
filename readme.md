@@ -65,8 +65,8 @@ Requires Windows 10 (build 2004+) or Windows 11.
 
 Lock the overlay (`Ctrl+Shift+L` or the lock icon) when you're presenting, and it gets out of your way:
 
-- **Clicks go through** to the app below, everywhere on the overlay, including the lock icon.
-- **Scrolling over it moves your notes.** Hold `Ctrl` or `Shift` to scroll or zoom the app behind instead.
+- **Clicks and scrolling go through** to the app below, everywhere on the overlay, including the lock icon.
+- **To scroll your notes**, hold `Ctrl` and scroll over the overlay.
 - **To unlock**, press `Esc` or `Ctrl`+click the lock icon. The bottom bar shows this while locked.
 - **To edit quickly**, press `Ctrl+Shift+E`: it unlocks until you click away, then locks again.
 

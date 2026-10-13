@@ -4,9 +4,9 @@
 // - Ctrl+click on the lock button unlocks (emits "emergency-unlock"). Every other
 //   click, including a plain click on the lock button, passes through to the app
 //   behind, so the overlay never blocks a button underneath it.
-// - A plain mouse wheel over the overlay scrolls the notes (emits "locked-scroll"
-//   with the wheel delta). With Ctrl, Shift or Alt held it passes through, so zoom
-//   and horizontal scrolling still reach the app behind.
+// - The mouse wheel passes through to the app behind, like clicks. Ctrl+wheel over
+//   the overlay scrolls the notes instead (emits "locked-scroll" with the wheel
+//   delta) and is swallowed, so the app behind doesn't zoom.
 // - Nothing is intercepted while the overlay is hidden.
 
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicIsize, AtomicU32, Ordering};
@@ -15,9 +15,7 @@ use std::sync::OnceLock;
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::ClientToScreen;
-use windows::Win32::UI::Input::KeyboardAndMouse::{
-    GetAsyncKeyState, VIRTUAL_KEY, VK_CONTROL, VK_MENU, VK_SHIFT,
-};
+use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VIRTUAL_KEY, VK_CONTROL};
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, GetMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
     GetWindowRect, IsWindowVisible, MSG, MSLLHOOKSTRUCT, WH_MOUSE_LL, WM_LBUTTONDOWN,
@@ -106,10 +104,9 @@ unsafe extern "system" fn mouse_hook_proc(
         }
     }
 
-    // Plain wheel over the overlay scrolls the notes; with a modifier it's left for
-    // the app behind (Ctrl+wheel zoom, Shift+wheel horizontal scroll)
-    let modifier_held = || key_held(VK_CONTROL) || key_held(VK_SHIFT) || key_held(VK_MENU);
-    if n_code >= 0 && w_param.0 == WM_MOUSEWHEEL as usize && !modifier_held() {
+    // Ctrl+wheel over the overlay scrolls the notes; any other wheel is left for the
+    // app behind, so the content under a locked overlay scrolls normally
+    if n_code >= 0 && w_param.0 == WM_MOUSEWHEEL as usize && key_held(VK_CONTROL) {
         let hwnd_val = WINDOW_HANDLE.load(Ordering::Relaxed);
         // Skip while hidden, or scrolling over the overlay's old spot would be eaten
         if hwnd_val != 0 && IsWindowVisible(HWND(hwnd_val as *mut core::ffi::c_void)).as_bool() {
