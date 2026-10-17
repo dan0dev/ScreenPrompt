@@ -11,6 +11,11 @@ const FEATURE_REQUEST_URL = `${REPO_URL}/issues/new?template=feature_request.md`
 // <a href="https://…"> links. Versions without an entry show nothing, so add one
 // here for every release that should announce itself (see CONTRIBUTING.md).
 const RELEASE_NOTES: Record<string, string[]> = {
+  '1.1.4': [
+    'Updates now install in one click: ScreenPrompt updates in place, shows a short '
+      + 'progress bar and reopens itself. No more uninstalling first.',
+    'Smaller download: the installer is about a third smaller.',
+  ],
   '1.1.3': [
     'Locked mode has a way out: press Esc or Ctrl+click the lock icon. Thanks '
       + '<a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> for reporting it.',
