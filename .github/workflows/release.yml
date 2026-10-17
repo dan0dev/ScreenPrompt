@@ -8,7 +8,8 @@
 #      the signature intact, then sign the installer ("installer" artifact configuration)
 # The artifact configurations live in .signpath/artifact-configurations/.
 #
-# Signing is skipped (and the installer is labelled UNSIGNED) until the repository variable
+# Pull requests that touch the build run the same steps without signing, as a check. Signing only
+# happens on a manual run (run it on main), and only once the repository variable
 # SIGNPATH_ORGANIZATION_ID and the SIGNPATH_API_TOKEN secret exist. Optional variables:
 # SIGNPATH_PROJECT_SLUG (default "ScreenPrompt") and SIGNPATH_SIGNING_POLICY_SLUG (default
 # "release-signing").
@@ -20,22 +21,31 @@ name: Release build
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+      - .signpath/**
+      - screenprompt-tauri/package.json
+      - screenprompt-tauri/package-lock.json
+      - screenprompt-tauri/src-tauri/Cargo.toml
+      - screenprompt-tauri/src-tauri/Cargo.lock
+      - screenprompt-tauri/src-tauri/tauri.conf.json
+      - screenprompt-tauri/src-tauri/rust-toolchain.toml
 
 permissions:
   actions: read
   contents: read
 
 concurrency:
-  group: release-build
+  group: release-build-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   build:
     runs-on: windows-latest
-    environment: release
     timeout-minutes: 180
     env:
-      SIGN: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+      SIGN: ${{ github.event_name == 'workflow_dispatch' && vars.SIGNPATH_ORGANIZATION_ID != '' }}
       RELEASE_DIR: screenprompt-tauri/src-tauri/target/release
     defaults:
       run:
