@@ -114,9 +114,14 @@ fn detect_keyboard_layout() -> String {
     }
 }
 
+/// Runs the downloaded installer as an in-place update: `/UPDATE` installs over the current
+/// version instead of uninstalling it first, `/P` shows only a progress bar, and `/R` starts
+/// ScreenPrompt again when it's done. The installer closes the running app itself if it is still
+/// open. These switches come from Tauri's NSIS installer template.
 #[tauri::command]
 fn launch_update_installer(path: String) -> Result<(), String> {
     std::process::Command::new(&path)
+        .args(["/P", "/UPDATE", "/R"])
         .spawn()
         .map_err(|e| format!("Failed to launch installer: {}", e))?;
     Ok(())
