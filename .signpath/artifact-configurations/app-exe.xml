@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SignPath artifact configuration "app-exe": signs screenprompt.exe before it is bundled into
+  the installer. The release workflow uploads the exe as a ZIP artifact, so the root is a
+  <zip-file>. The metadata attributes make SignPath refuse a file whose product name or version
+  doesn't match the version the workflow passes in.
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file path="screenprompt.exe" product-name="ScreenPrompt" product-version="${version}">
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>
