@@ -42,7 +42,8 @@ proctoring software are out of scope and will be declined.
 
 ## Development Setup
 
-Requires [Node.js](https://nodejs.org/) 20+ and [Rust](https://rustup.rs/) 1.77+.
+Requires [Node.js](https://nodejs.org/) 20+ and [rustup](https://rustup.rs/). The Rust version
+is pinned in `src-tauri/rust-toolchain.toml`, and rustup installs it on the first build.
 
 1. Clone your fork:
    ```bash
@@ -156,9 +157,27 @@ is focused, so common shortcuts keep working in other apps.
    `src-tauri/Cargo.lock` and `src-tauri/tauri.conf.json`.
 2. Add the release's entry to `src/utils/whatsNew.ts`, keyed by the new version. Without one,
    updating users see no "what's new" dialog.
-3. Build with `npm run tauri build` and upload `ScreenPrompt_<version>_x64-setup.exe` to the
-   GitHub release. The in-app updater looks for an asset ending in `-setup.exe` on the latest
-   release, so keep that name.
+3. Merge to `main`, then run the **Release build** workflow
+   (`.github/workflows/release.yml`) on `main` from the Actions tab. It builds on a GitHub-hosted
+   runner and, once SignPath is set up, sends the app and then the installer to SignPath for
+   signing. Approve both signing requests in SignPath. The workflow only uploads workflow
+   artifacts and never touches GitHub releases.
+4. Download the `ScreenPrompt_<version>_x64-setup` artifact and upload
+   `ScreenPrompt_<version>_x64-setup.exe` to the GitHub release. The in-app updater looks for an
+   asset ending in `-setup.exe` on the latest release, so keep that name.
+5. End the release notes with this line, which SignPath requires on download pages:
+   `Code signing policy: https://github.com/dan0dev/ScreenPrompt#code-signing-policy`
+
+Every version number is released once. To fix a release, ship a new version instead of
+replacing the installer of an existing one: each signed installer has to match one commit and one
+approved signing request.
+
+Don't change `bundle.publisher` in `tauri.conf.json`. The NSIS installer stores the install
+location in the registry under `Software\<publisher>\ScreenPrompt`, so a new publisher would make
+updates lose track of existing installs. `screenprompt` is the value earlier releases used.
+
+SignPath's artifact configurations are kept in `.signpath/artifact-configurations/`. If you
+change them here, paste the same XML into the SignPath project, which is where they take effect.
 
 ## License
 

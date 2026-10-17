@@ -32,7 +32,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis"],
+    "publisher": "screenprompt",
+    "copyright": "Copyright (c) 2026 ScreenPrompt Contributors",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

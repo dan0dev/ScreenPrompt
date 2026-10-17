@@ -1,0 +1,5 @@
+# Pins the Rust version so release builds are reproducible from the tagged source.
+[toolchain]
+channel = "1.93.0"
+profile = "minimal"
+components = ["rustfmt", "clippy"]

@@ -35,6 +35,10 @@ Keep talking points, names, numbers, and scripts right where you're looking, so 
 
 Hidden from Zoom, Teams, OBS, and Snipping Tool.
 
+Made for calls, demos, streams, and presentations. It's not for cheating on exams or interviews,
+or for getting around proctoring software or any platform's rules, and features for that won't be
+added (see [Project scope](CONTRIBUTING.md#project-scope)).
+
 ## Features
 
 - **Capture-proof**: excluded from screen shares and recordings
@@ -107,7 +111,8 @@ don't override the same keys in your other apps:
 <details>
 <summary><b>Build from source</b></summary>
 
-Requires Node.js 20+ and Rust 1.77+.
+Requires Node.js 20+ and [rustup](https://rustup.rs/), which installs the pinned Rust version
+on the first build.
 
 ```bash
 git clone https://github.com/dan0dev/ScreenPrompt.git
@@ -120,8 +125,55 @@ The installer is written to `src-tauri/target/release/bundle/nsis/`.
 
 </details>
 
----
+## What ScreenPrompt does on your PC
 
-Made for calls, demos, streams, and presentations. Not for cheating on exams or breaking any platform's rules.
+ScreenPrompt uses a few Windows features that are worth knowing about. None of them records your
+input or sends it anywhere.
+
+- **Hidden from capture**: the overlay calls `SetWindowDisplayAffinity` with
+  `WDA_EXCLUDEFROMCAPTURE`, so Windows leaves it out of screen shares, recordings, and
+  screenshots.
+- **Click-through lock**: locking marks the window as transparent to the mouse, so clicks and
+  scrolling reach the app below.
+- **Keyboard and mouse hooks, only while locked**: a locked window gets no input of its own, so
+  ScreenPrompt installs two low-level hooks while it is locked and removes them when you unlock.
+  The keyboard hook only reacts to `Esc` (to unlock) and passes every key through. The mouse hook
+  only reacts to `Ctrl`+click on the lock icon and `Ctrl`+wheel over the overlay. Nothing is
+  logged, stored, or sent anywhere.
+- **Global shortcuts**: shortcuts that work anywhere, such as `Ctrl+Shift+H`, are registered with
+  Windows. The rest only work while the overlay is focused.
+- **Update check**: see [Privacy](#privacy).
+
+## Privacy
+
+Your notes and settings are stored only on your PC. ScreenPrompt has no telemetry, no analytics,
+and no accounts.
+
+This program will not transfer any information to other networked systems unless specifically
+requested by the user or the person installing or operating it, with these exceptions:
+
+- **Update check**: on startup, ScreenPrompt asks the GitHub Releases API
+  (`api.github.com`) for the latest version number. The request contains no notes, settings, or
+  personal data, but GitHub sees your IP address, as with any web request. If a newer version is
+  available, ScreenPrompt asks you before downloading it from GitHub. To turn the check off, open
+  Settings and clear **Check for updates on startup**. GitHub's handling of the request is covered
+  by the [GitHub Privacy Statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
+- **WebView2 during installation**: if your PC doesn't have Microsoft Edge WebView2 (Windows 11
+  and most Windows 10 PCs already do), the installer downloads it from Microsoft. This is covered
+  by the [Microsoft Privacy Statement](https://privacy.microsoft.com/privacystatement).
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
+[SignPath Foundation](https://signpath.org).
+
+- Committers and reviewers: [dan0dev](https://github.com/dan0dev)
+- Approvers: [dan0dev](https://github.com/dan0dev)
+- Privacy policy: see [Privacy](#privacy)
+
+Signed releases are built by [GitHub Actions](.github/workflows/release.yml) from the source code
+in this repository, and each one is approved by hand before it is signed.
+
+---
 
 [MIT License](LICENSE) · [Contributing](CONTRIBUTING.md)
