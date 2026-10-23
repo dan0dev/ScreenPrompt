@@ -69,6 +69,10 @@ function App() {
   const [autoScrolling, setAutoScrolling] = useState(false);
   // Speed to show in the badge after a change; null when hidden
   const [speedBadge, setSpeedBadge] = useState<number | null>(null);
+  // Development builds only: whether the window shows in screen capture. Never
+  // saved, so every launch starts hidden again.
+  const [captureVisible, setCaptureVisible] = useState(false);
+  const [captureNotice, setCaptureNotice] = useState(false);
 
   // Text being edited. null until the user types, so the saved text shows until then.
   const [draftText, setDraftText] = useState<string | null>(null);
@@ -363,6 +367,24 @@ function App() {
   const scrollSlower = useCallback(() => changeScrollSpeed(-1), [changeScrollSpeed]);
   const scrollFaster = useCallback(() => changeScrollSpeed(1), [changeScrollSpeed]);
 
+  const toggleCaptureVisible = useCallback(async () => {
+    if (!import.meta.env.DEV) return;
+    try {
+      await invoke('set_capture_visible', { window: appWindow, visible: !captureVisible });
+      setCaptureVisible(!captureVisible);
+      setCaptureNotice(true);
+    } catch (error) {
+      console.error('Failed to change capture visibility:', error);
+    }
+  }, [captureVisible]);
+
+  // Brief, so it's gone before the screenshot is taken
+  useEffect(() => {
+    if (!captureNotice) return;
+    const timer = window.setTimeout(() => setCaptureNotice(false), SPEED_BADGE_MS);
+    return () => window.clearTimeout(timer);
+  }, [captureNotice, captureVisible]);
+
   useEffect(() => {
     if (speedBadge === null) return;
     const timer = window.setTimeout(() => setSpeedBadge(null), SPEED_BADGE_MS);
@@ -552,6 +574,7 @@ function App() {
     scrollSlower,
     scrollFaster,
     toggleShortcuts,
+    toggleCaptureVisible,
   }, resolvedLayout, autoScrolling);
 
   // Track text as it's typed (saved after a short pause, or on close). Typing
@@ -618,6 +641,14 @@ function App() {
           />
 
           {speedBadge !== null && <SpeedBadge speed={speedBadge} />}
+
+          {captureNotice && (
+            // Same pill as the speed badge; development builds only
+            <div className="speed-badge" role="status" key={String(captureVisible)}>
+              <strong>{captureVisible ? 'Visible' : 'Hidden'}</strong>
+              <span>{captureVisible ? 'to screen capture (dev)' : 'from screen capture'}</span>
+            </div>
+          )}
 
           {undoable && (
             <UndoBar

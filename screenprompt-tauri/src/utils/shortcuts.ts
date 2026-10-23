@@ -21,8 +21,18 @@ export function positionModifier(layout: string): string {
   return layout === 'hu' ? 'Ctrl+Shift' : 'Ctrl+Alt';
 }
 
-export function shortcutGroups(layout: string): ShortcutGroup[] {
+// Defined behind import.meta.env.DEV, so release builds leave it out entirely
+const DEV_GROUP: ShortcutGroup | null = import.meta.env.DEV
+  ? {
+    title: 'Development build',
+    note: 'Only in npm run tauri dev, never in the installed app',
+    items: [{ keys: ['Ctrl+Shift+F12'], action: 'Show / hide in screenshots and screen shares' }],
+  }
+  : null;
+
+export function shortcutGroups(layout: string, dev: boolean = import.meta.env.DEV): ShortcutGroup[] {
   const pos = positionModifier(layout);
+  const devGroup = dev && DEV_GROUP ? [DEV_GROUP] : [];
   return [
     {
       title: 'Anywhere',
@@ -71,5 +81,6 @@ export function shortcutGroups(layout: string): ShortcutGroup[] {
         { keys: ['Ctrl+Wheel'], action: 'Scroll your notes while locked' },
       ],
     },
+    ...devGroup,
   ];
 }

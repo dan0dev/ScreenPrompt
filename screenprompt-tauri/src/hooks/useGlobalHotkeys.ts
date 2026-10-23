@@ -25,6 +25,8 @@ export interface HotkeyHandlers {
   scrollSlower: () => void;
   scrollFaster: () => void;
   toggleShortcuts: () => void;
+  // Development builds only: show / hide the window in screen capture
+  toggleCaptureVisible?: () => void;
 }
 
 // Auto-scroll speed keys (< and >, like video players). Registered only while
@@ -103,6 +105,12 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string, autoS
       // App controls
       await tryRegister('CmdOrCtrl+Shift+Q', () => { if (mounted) h().quit(); });
       await tryRegister('CmdOrCtrl+Shift+F1', () => { if (mounted) h().panic(); });
+
+      // Development builds only: screenshots of the app itself (release builds
+      // don't register it, and the Rust command refuses there too)
+      if (import.meta.env.DEV) {
+        await tryRegister('CmdOrCtrl+Shift+F12', () => { if (mounted) h().toggleCaptureVisible?.(); });
+      }
     };
 
     enqueue(registerAll);
