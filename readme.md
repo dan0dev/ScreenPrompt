@@ -119,8 +119,8 @@ don't override the same keys in your other apps:
 | `Ctrl+Shift+Home` | Reset font size |
 | `Ctrl+Shift+S` | Settings |
 | `Ctrl+Shift+C` | Copy all text |
-| `Ctrl+Shift+V` | Paste and replace all |
-| `Ctrl+Shift+Delete` | Clear all text |
+| `Ctrl+Shift+V` | Paste and replace all (undo with `Ctrl+Z` for a few seconds) |
+| `Ctrl+Shift+Delete` | Clear all text (undo with `Ctrl+Z` for a few seconds) |
 | `Ctrl+Shift+Arrows` | Nudge window 20px |
 | `Ctrl+Shift+R` | Reset size and position |
 

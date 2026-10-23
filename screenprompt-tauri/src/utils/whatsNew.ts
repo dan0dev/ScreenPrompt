@@ -20,6 +20,7 @@ const RELEASE_NOTES: Record<string, string[]> = {
       + '<a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> for the idea.',
     'Press Ctrl+B or Ctrl+I while typing, or use the T button in the bottom bar for every style. '
       + 'Prefer plain text? Turn off "Format text (Markdown)" in Settings.',
+    'Cleared or replaced your notes by accident? Undo (or Ctrl+Z) brings them back for a few seconds.',
     'From the next update on, updates install in one click: ScreenPrompt updates in place '
       + 'and reopens itself, with no uninstall step.',
     'Smaller download: the installer is about a third smaller.',

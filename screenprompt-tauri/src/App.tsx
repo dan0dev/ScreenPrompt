@@ -16,6 +16,7 @@ import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { useConfig } from './hooks/useConfig';
 import { useUpdater } from './hooks/useUpdater';
 import { useGlobalHotkeys } from './hooks/useGlobalHotkeys';
+import { useUndoableReplace } from './hooks/useUndoableReplace';
 import { OPACITY_LEVELS, DEFAULT_CONFIG } from './types';
 import { hasReleaseNotes, showWhatsNew } from './utils/whatsNew';
 import { clampScrollSpeed } from './utils/autoScroll';
@@ -25,6 +26,7 @@ import Settings from './components/Settings';
 import BottomBar from './components/BottomBar';
 import LockTip from './components/LockTip';
 import SpeedBadge from './components/SpeedBadge';
+import UndoBar from './components/UndoBar';
 import './styles/App.css';
 
 const appWindow = getCurrentWindow();
@@ -479,19 +481,41 @@ function App() {
     await setConfig({ text: newText });
   }, [setConfig]);
 
-  // Paste and replace all text
+  // Clear and Paste-replace swap out all the notes at once, so they can be undone
+  // for a few seconds (the textarea's own undo doesn't cover them)
+  const { undoable, replaceUndoably, undo, dismiss: dismissUndo } = useUndoableReplace(text, replaceText);
+
+  // Paste and replace all text. An empty clipboard (or an image on it) leaves the
+  // notes alone rather than wiping them.
   const pasteReplace = useCallback(async () => {
     try {
-      await replaceText(await readText());
+      const clipboard = await readText();
+      if (clipboard) await replaceUndoably(clipboard, 'replaced');
     } catch (error) {
       console.error('Paste failed:', error);
     }
-  }, [replaceText]);
+  }, [replaceUndoably]);
 
   // Clear text
   const clearText = useCallback(async () => {
-    await replaceText('');
-  }, [replaceText]);
+    await replaceUndoably('', 'cleared');
+  }, [replaceUndoably]);
+
+  // Ctrl+Z undoes the Clear / Paste-replace while that's on offer. Capture phase,
+  // so it beats the textarea's own undo (which knows nothing about it). Matched by
+  // the letter, not the key position: Z and Y swap places on QWERTZ layouts.
+  useEffect(() => {
+    if (!undoable) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        e.stopPropagation();
+        undo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [undoable, undo]);
 
   // Register global hotkeys
   useGlobalHotkeys({
@@ -517,10 +541,12 @@ function App() {
     scrollFaster,
   }, resolvedLayout, autoScrolling);
 
-  // Track text as it's typed (saved after a short pause, or on close)
+  // Track text as it's typed (saved after a short pause, or on close). Typing
+  // ends the chance to undo a Clear / Paste-replace: Ctrl+Z is the editor's again.
   const updateText = (newText: string) => {
     draftRef.current = newText;
     setDraftText(newText);
+    dismissUndo();
   };
 
   // Handle update badge click (user dismissed the auto-popup earlier)
@@ -575,6 +601,14 @@ function App() {
           />
 
           {speedBadge !== null && <SpeedBadge speed={speedBadge} />}
+
+          {undoable && (
+            <UndoBar
+              action={undoable.action}
+              onUndo={undo}
+              aboveFormatBar={config.markdown && config.showFormatBar && !isLocked}
+            />
+          )}
 
           {showLockTip && isLocked && <LockTip />}
 

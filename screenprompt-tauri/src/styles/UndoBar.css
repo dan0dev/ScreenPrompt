@@ -1,0 +1,63 @@
+/* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
+
+/* Undo bar after Clear / Paste-replace: a floating glass pill just above the
+   bottom bar (or the formatting toolbar), like the lock tip */
+.undo-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 20px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 4px 12px;
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-glass-fill-strong);
+  backdrop-filter: var(--sp-glass-blur);
+  -webkit-backdrop-filter: var(--sp-glass-blur);
+  box-shadow:
+    inset 0 1px 0 var(--sp-glass-rim),
+    var(--sp-shadow-float);
+  font-size: 12px;
+  white-space: nowrap;
+  animation: undo-bar-in var(--sp-fast) var(--sp-ease);
+}
+.undo-bar.above-format-bar {
+  bottom: 70px;
+}
+
+.undo-message {
+  color: var(--sp-label-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.undo-button {
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--sp-radius-pill);
+  padding: 4px 12px;
+  background: var(--sp-accent-soft);
+  color: var(--sp-accent-hover);
+  font: inherit;
+  font-weight: 600;
+  cursor: default;
+  transition: background-color var(--sp-fast) var(--sp-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .undo-button:hover {
+    background: rgba(10, 132, 255, 0.28);
+  }
+}
+.undo-button:active {
+  transform: scale(0.96);
+}
+
+@keyframes undo-bar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+}
