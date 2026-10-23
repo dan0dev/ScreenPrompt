@@ -7,6 +7,7 @@ import { message } from '@tauri-apps/plugin-dialog';
 import type { Config } from '../types';
 import { TEXT_COLORS, BG_COLORS, FONT_FAMILIES } from '../types';
 import { linesPerMinute, MAX_SCROLL_SPEED, MIN_SCROLL_SPEED } from '../utils/autoScroll';
+import { STORIES_URL } from '../utils/whatsNew';
 import ShortcutsPanel from './ShortcutsPanel';
 import '../styles/Settings.css';
 
@@ -125,6 +126,12 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
       </div>
 
       <div className="settings-content">
+        {/* One quiet line: Settings is opened on purpose, so this is seen without popping up anywhere */}
+        <button className="story-banner" onClick={() => open(STORIES_URL)}>
+          <span>How do you use ScreenPrompt?</span>
+          <span className="story-banner-link">Share your story →</span>
+        </button>
+
         {/* Appearance */}
         <section className="settings-section">
           <span className="section-title">Appearance</span>

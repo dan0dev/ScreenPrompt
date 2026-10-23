@@ -110,6 +110,17 @@ describe('Settings Markdown switch', () => {
   });
 });
 
+describe('Settings story link', () => {
+  it('opens the discussion and changes nothing else', async () => {
+    const { open } = await import('@tauri-apps/plugin-shell');
+    const { setConfig, onClose } = renderSettings();
+    fireEvent.click(screen.getByRole('button', { name: /Share your story/ }));
+    expect(open).toHaveBeenCalledWith('https://github.com/dan0dev/ScreenPrompt/discussions/51');
+    expect(setConfig).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
 describe("what's new in 1.2.0", () => {
   it('exists and is shown through the dialog', async () => {
     const { hasReleaseNotes, showWhatsNew } = await import('../utils/whatsNew');
@@ -120,6 +131,13 @@ describe("what's new in 1.2.0", () => {
     expect(args.heading).toBe("What's new in v1.2.0");
     expect(args.content).toMatch(/Markdown/);
     expect(args.content).toMatch(/Ctrl\+B/);
+  });
+
+  it('ends by asking for stories in the discussion', async () => {
+    const { showWhatsNew } = await import('../utils/whatsNew');
+    await showWhatsNew('1.2.0');
+    const { content } = invokeSpy.mock.calls[0][1] as { content: string };
+    expect(content).toMatch(/How do you use ScreenPrompt\? <a href="https:\/\/github\.com\/dan0dev\/ScreenPrompt\/discussions\/51">Share your story<\/a>$/);
   });
 
   it('only contains plain text and https links (the dialog renders HTML)', async () => {

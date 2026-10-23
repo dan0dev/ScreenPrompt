@@ -12,6 +12,8 @@
 <p align="center">
   <a href="../../releases/latest"><b>Download for Windows</b></a>
   &nbsp;·&nbsp;
+  <a href="../../discussions/51">Share your story</a>
+  &nbsp;·&nbsp;
   <a href="../../issues/new?template=feature_request.md">Request a feature</a>
   &nbsp;·&nbsp;
   <a href="../../issues/new?template=bug_report.md">Report a bug</a>
@@ -192,6 +194,12 @@ requested by the user or the person installing or operating it, with these excep
 - **WebView2 during installation**: if your PC doesn't have Microsoft Edge WebView2 (Windows 11
   and most Windows 10 PCs already do), the installer downloads it from Microsoft. This is covered
   by the [Microsoft Privacy Statement](https://privacy.microsoft.com/privacystatement).
+
+## Share your story
+
+How do you use ScreenPrompt? Tell us in [this discussion](../../discussions/51): what you use it
+for, how it feels, and what's missing. Many of the stories will appear on the upcoming
+ScreenPrompt website (only if you say it's OK).
 
 ## Code signing policy
 

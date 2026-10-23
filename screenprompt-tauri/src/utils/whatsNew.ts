@@ -3,12 +3,13 @@
 import { invoke } from '@tauri-apps/api/core';
 
 const REPO_URL = 'https://github.com/dan0dev/ScreenPrompt';
-const FEATURE_REQUEST_URL = `${REPO_URL}/issues/new?template=feature_request.md`;
+/** The "How do you use ScreenPrompt?" discussion: user stories for the website */
+export const STORIES_URL = `${REPO_URL}/discussions/51`;
 
 // "What's new", shown once after updating to a version listed here (App's restore
 // step compares config.lastSeenVersion with the running version). Bundled with the
 // app, so it works offline. Keep it to a few lines and one ask; items may contain
-// <a href="https://…"> links. Versions without an entry show nothing, so add one
+// <a href="https://…"> links. The one ask is the footer's. Versions without an entry show nothing, so add one
 // here for every release that should announce itself (see CONTRIBUTING.md).
 const RELEASE_NOTES: Record<string, string[]> = {
   '1.2.0': [
@@ -43,7 +44,7 @@ export async function showWhatsNew(version: string): Promise<void> {
   if (!items) return;
 
   const content = items.map((item) => `• ${item}`).join('\n\n')
-    + `\n\nGot an idea? <a href="${FEATURE_REQUEST_URL}">Request a feature</a>`;
+    + `\n\nHow do you use ScreenPrompt? <a href="${STORIES_URL}">Share your story</a>`;
 
   await invoke('show_info_dialog', {
     title: "What's new in ScreenPrompt",

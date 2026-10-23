@@ -61,6 +61,34 @@
   gap: 18px;
 }
 
+/* "Share your story" line at the top: a slim, tinted row, quieter than the cards */
+.story-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--sp-radius-control);
+  background: var(--sp-accent-soft);
+  color: var(--sp-label-2);
+  font-size: 12px;
+  text-align: left;
+  cursor: default;
+  flex-shrink: 0;
+}
+.story-banner-link {
+  color: var(--sp-accent);
+  font-weight: 600;
+}
+@media (hover: hover) and (pointer: fine) {
+  .story-banner:hover .story-banner-link {
+    color: var(--sp-accent-hover);
+  }
+}
+
 /* A grouped section: a header caption + a card */
 .settings-section {
   display: flex;
