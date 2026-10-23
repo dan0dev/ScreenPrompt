@@ -36,6 +36,8 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .title-icon {
@@ -51,6 +53,10 @@
   font-weight: 600;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  /* Shortens ("ScreenPr…") rather than sliding under the buttons */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .title-bar-buttons {

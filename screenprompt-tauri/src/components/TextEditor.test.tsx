@@ -80,6 +80,10 @@ const focusAt = (pos: number) =>
     view().focus();
     view().dispatch({ selection: { anchor: pos } });
   });
+// CodeMirror reports a focus change a moment after the focus event
+const settleFocus = () => act(async () => {
+  await new Promise((resolve) => setTimeout(resolve, 50));
+});
 const selectRange = (from: number, to: number) => act(() => view().dispatch({ selection: { anchor: from, head: to } }));
 const press = (key: string, mods: { ctrlKey?: boolean; shiftKey?: boolean } = {}) =>
   act(() => {
@@ -172,6 +176,19 @@ describe('format as you type', () => {
     expect(document.querySelector('.cm-md-strong')?.textContent).toBe('**hi**');
     type('\nnext');
     expect(document.querySelector('.cm-md-strong')?.textContent).toBe('hi');
+  });
+
+  it('draws tables, and shows their source while editing inside', async () => {
+    const table = '| Plan | Price |\n|------|-------|\n| Free | $0 |';
+    const notes = `Intro\n\n${table}\n\nAfter`;
+    render(<Harness text={notes} />);
+    expect([...document.querySelectorAll('.cm-md-table td')].map((c) => c.textContent)).toEqual(['Free', '$0']);
+    focusAt(notes.indexOf('Free'));
+    await settleFocus();
+    expect(document.querySelector('.cm-md-table')).toBeNull();
+    expect(view().contentDOM.textContent).toContain('| Free | $0 |');
+    focusAt(0); // back on the first line
+    expect(document.querySelector('.cm-md-table')).not.toBeNull();
   });
 
   it('ticks a task box on click', () => {
@@ -294,10 +311,11 @@ describe('with App', () => {
     expect(view().hasFocus).toBe(false);
   });
 
-  it('typing into the editor pauses auto-scroll', () => {
+  it('typing into the editor pauses auto-scroll', async () => {
     const stop = vi.fn();
     render(<Harness autoScroll onAutoScrollStop={stop} />);
     focusAt(0);
+    await settleFocus();
     expect(stop).toHaveBeenCalled();
   });
 });

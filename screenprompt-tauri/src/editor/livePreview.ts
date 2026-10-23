@@ -21,6 +21,19 @@ export const concealAllField = StateField.define<boolean>({
   },
 });
 
+/** Whether the editor has focus, as state (so state fields, like tables, can follow it) */
+const setFocused = StateEffect.define<boolean>();
+
+export const focusedField = StateField.define<boolean>({
+  create: () => false,
+  update(value, tr) {
+    for (const effect of tr.effects) if (effect.is(setFocused)) value = effect.value;
+    return value;
+  },
+});
+
+const trackFocus = EditorView.focusChangeEffect.of((_state, focusing) => setFocused.of(focusing));
+
 const hide = Decoration.replace({});
 const lineClass = (cls: string) => Decoration.line({ class: cls });
 const markClass = (cls: string) => Decoration.mark({ class: cls });
@@ -279,5 +292,5 @@ const toggleTaskOnClick = EditorView.domEventHandlers({
 });
 
 export function livePreview() {
-  return [concealAllField, previewPlugin, toggleTaskOnClick];
+  return [concealAllField, focusedField, trackFocus, previewPlugin, toggleTaskOnClick];
 }

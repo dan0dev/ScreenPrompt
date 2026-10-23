@@ -11,6 +11,7 @@ import { useAutoScroll } from '../hooks/useAutoScroll';
 import { scrollPixelsPerSecond } from '../utils/autoScroll';
 import { markdown } from '../editor/markdownLanguage';
 import { livePreview, setConcealAll } from '../editor/livePreview';
+import { tablePreview } from '../editor/tables';
 import { formatTransaction, linkAt, type FormatStyle } from '../editor/commands';
 import FormatBar from './FormatBar';
 import '../styles/TextEditor.css';
@@ -62,6 +63,7 @@ function markdownExtensions(on: boolean) {
   return [
     markdown(),
     livePreview(),
+    tablePreview(),
     linkClicks,
     // Above the default keymap, which uses Ctrl+I for "select parent syntax"
     Prec.high(keymap.of([

@@ -93,7 +93,8 @@ pause, and again to carry on. It works from any app, even while the overlay is l
 ## Formatting
 
 ScreenPrompt formats your notes as you type, using Markdown: `# Heading`, `**bold**`, `*italic*`,
-`~~strikethrough~~`, `- lists`, `1. numbered lists`, `- [ ] tasks`, `> quotes` and `` `code` ``. The
+`~~strikethrough~~`, `- lists`, `1. numbered lists`, `- [ ] tasks`, `> quotes`, `` `code` `` and
+`| tables |`. The
 markers (`**`, `#`...) only show on the line you're typing on, so your notes always read cleanly;
 while the overlay is locked they're hidden everywhere.
 
