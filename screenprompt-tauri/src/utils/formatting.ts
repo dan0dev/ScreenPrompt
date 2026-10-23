@@ -35,6 +35,9 @@ const MAX_HEADING_LEVEL = 3;
 
 const isWordChar = (ch: string | undefined) => ch !== undefined && /[\p{L}\p{N}_'’-]/u.test(ch);
 const isSpace = (ch: string | undefined) => ch !== undefined && /\s/.test(ch);
+// Start of the line holding pos. (text.lastIndexOf('\n', pos - 1) would still check
+// index 0 at pos 0, mistaking a leading empty line for the line before.)
+const lineStartOf = (text: string, pos: number) => text.slice(0, pos).lastIndexOf('\n') + 1;
 
 export function applyEditToString(text: string, edit: Edit): string {
   return text.slice(0, edit.start) + edit.insert + text.slice(edit.end);
@@ -95,7 +98,7 @@ export function toggleInline(text: string, selStart: number, selEnd: number, sty
     // at the line's list or heading marker shouldn't swallow it
     while (start < end && isSpace(text[start])) start++;
     while (end > start && isSpace(text[end - 1])) end--;
-    const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+    const lineStart = lineStartOf(text, start);
     if (/^[ \t]*$/.test(text.slice(lineStart, start))) {
       const marked = text.slice(start, end).match(BLOCK_MARKER);
       if (marked && marked[0].length < end - start) start += marked[0].length;
@@ -155,7 +158,7 @@ function toggleInlineLines(text: string, start: number, end: number, style: Inli
 export function toggleBlock(text: string, selStart: number, selEnd: number, style: BlockStyle): Edit {
   // A selection ending at the very start of a line doesn't include that line
   const effectiveEnd = selEnd > selStart && text[selEnd - 1] === '\n' ? selEnd - 1 : selEnd;
-  const start = text.lastIndexOf('\n', selStart - 1) + 1;
+  const start = lineStartOf(text, selStart);
   const lineEnd = text.indexOf('\n', effectiveEnd);
   const end = lineEnd === -1 ? text.length : lineEnd;
 

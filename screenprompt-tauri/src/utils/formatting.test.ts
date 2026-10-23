@@ -160,6 +160,11 @@ describe('toggleBlock edge cases', () => {
     expect(block('a\n|\nb', 'bullet')).toBe('a\n- |\nb');
   });
 
+  it('styles an empty first line, not the one after it, with the caret at the very start', () => {
+    expect(block('|\nTitle', 'heading')).toBe('# |\nTitle');
+    expect(block('|\nitem', 'bullet')).toBe('- |\nitem');
+  });
+
   it('handles the last line without a trailing newline', () => {
     expect(block('one\ntwo|', 'bullet')).toBe('one\n- two|');
   });
