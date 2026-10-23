@@ -30,6 +30,9 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@tauri-apps/cli": "^2.12.3",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",

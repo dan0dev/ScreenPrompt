@@ -106,3 +106,74 @@ describe('toggleBlock', () => {
     expect(block('[one\n]two', 'bullet')).toBe('[- one]\ntwo');
   });
 });
+
+describe('toggleInline edge cases', () => {
+  it('works at the very start and end of the notes', () => {
+    expect(inline('[hi]', 'bold')).toBe('**[hi]**');
+    expect(inline('|', 'bold')).toBe('**|**');
+  });
+
+  it('treats accented letters as part of the word', () => {
+    expect(inline('jó na|pot kívánok', 'bold')).toBe('jó **na|pot** kívánok');
+    expect(inline('sz|ép', 'italic')).toBe('*sz|ép*');
+  });
+
+  it('keeps a list or heading marker outside the markers', () => {
+    expect(inline('[- item]', 'bold')).toBe('- **[item]**');
+    expect(inline('[## Title]', 'italic')).toBe('## *[Title]*');
+  });
+
+  it('keeps list markers when styling several lines', () => {
+    expect(inline('[- one\n- two]', 'bold')).toBe('[- **one**\n- **two**]');
+    expect(inline('[- **one**\n- **two**]', 'bold')).toBe('[- one\n- two]');
+  });
+
+  it('only adds markers to lines that lack them', () => {
+    expect(inline('[**one**\ntwo]', 'bold')).toBe('[**one**\n**two**]');
+  });
+
+  it('unwraps code and strikethrough', () => {
+    expect(inline('`[x]`', 'code')).toBe('[x]');
+    expect(inline('a ~~b|c~~ d', 'strike')).toBe('a b|c d');
+  });
+
+  it('does not mistake a bullet for italic', () => {
+    expect(inline('* [item]', 'italic')).toBe('* *[item]*');
+  });
+});
+
+describe('toggleBlock edge cases', () => {
+  it('recognises "1)" numbering', () => {
+    expect(block('[1) a\n2) b]', 'numbered')).toBe('[a\nb]');
+  });
+
+  it('puts headings and lists inside quotes', () => {
+    expect(block('> Ti|tle', 'heading')).toBe('> # Ti|tle');
+    expect(block('[> a\n> b]', 'bullet')).toBe('[> - a\n> - b]');
+  });
+
+  it('quotes the unquoted lines of a mixed selection', () => {
+    expect(block('[> a\nb]', 'quote')).toBe('[> a\n> b]');
+  });
+
+  it('starts a list on an empty line', () => {
+    expect(block('a\n|\nb', 'bullet')).toBe('a\n- |\nb');
+  });
+
+  it('handles the last line without a trailing newline', () => {
+    expect(block('one\ntwo|', 'bullet')).toBe('one\n- two|');
+  });
+
+  it('keeps indentation when removing a nested bullet', () => {
+    expect(block('[  - a]', 'bullet')).toBe('[  a]');
+  });
+
+  it('makes every selected line a heading', () => {
+    expect(block('[a\nb]', 'heading')).toBe('[# a\n# b]');
+  });
+
+  it('keeps the caret on its character when a marker is removed before it', () => {
+    expect(block('- it|em', 'bullet')).toBe('it|em');
+    expect(block('|- item', 'bullet')).toBe('|item');
+  });
+});

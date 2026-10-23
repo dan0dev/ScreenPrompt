@@ -18,10 +18,11 @@ interface TextEditorProps {
   editRequest: number;
 }
 
-// Focus the editor once it's showing: at a caret position (null keeps the last
-// one), then optionally run a follow-up such as a formatting command
+// Focus the editor once it's showing: at a caret position, at the first paragraph
+// that was on screen ('visible'), or where it last was (null); then optionally run
+// a follow-up such as a formatting command
 interface FocusRequest {
-  caret: number | null;
+  caret: number | 'visible' | null;
   then?: (el: HTMLTextAreaElement) => void;
 }
 
@@ -56,11 +57,22 @@ function applyStyle(el: HTMLTextAreaElement, style: FormatStyle) {
   );
 }
 
-// Where in the source a click on the rendered notes landed, or null if it missed the text
+// The text position under a point. caretPositionFromPoint is the standard; older
+// WebView2 runtimes only have caretRangeFromPoint.
+function caretAtPoint(x: number, y: number): { node: Node; offset: number } | null {
+  if (document.caretPositionFromPoint) {
+    const pos = document.caretPositionFromPoint(x, y);
+    return pos && { node: pos.offsetNode, offset: pos.offset };
+  }
+  const range = document.caretRangeFromPoint?.(x, y);
+  return range && { node: range.startContainer, offset: range.startOffset };
+}
+
+// Where in the source a point on the rendered notes is, or null if it missed the text
 function sourceOffsetAtPoint(view: HTMLElement, text: string, x: number, y: number): number | null {
-  const pos = document.caretPositionFromPoint(x, y);
+  const pos = caretAtPoint(x, y);
   if (!pos) return null;
-  const node = pos.offsetNode;
+  const { node } = pos;
   const block = (node instanceof Element ? node : node.parentElement)?.closest<HTMLElement>('[data-src]');
   if (!block || !view.contains(block)) return null;
 
@@ -71,10 +83,46 @@ function sourceOffsetAtPoint(view: HTMLElement, text: string, x: number, y: numb
   const range = document.createRange();
   range.setStart(block, 0);
   range.setEnd(node, pos.offset);
-  return start + sourceOffsetFor(text.slice(start, end), range.toString());
+  const offset = start + sourceOffsetFor(text.slice(start, end), range.toString());
+  // At the very start of a line after a line break the rendered text has no
+  // newline to match (<br> has no text), so step past the source's one
+  return pos.offset === 0 && text[offset] === '\n' ? offset + 1 : offset;
 }
 
-function TextEditor({ config, text, onTextChange, isLocked, editRequest }: TextEditorProps) {
+// Source offset of the text at the top edge of the formatted view
+function topVisibleOffset(view: HTMLElement, text: string): number {
+  const rect = view.getBoundingClientRect();
+  const style = getComputedStyle(view);
+  const x = rect.left + (parseFloat(style.paddingLeft) || 0) + 1;
+  const y = rect.top + (parseFloat(style.paddingTop) || 0) + 1;
+  return sourceOffsetAtPoint(view, text, x, y) ?? firstVisibleOffset(view);
+}
+
+// Fallback: the first block at least partly visible. Blocks run top to bottom, so
+// binary search.
+function firstVisibleOffset(view: HTMLElement): number {
+  const blocks = view.querySelectorAll<HTMLElement>('[data-src]');
+  const top = view.getBoundingClientRect().top;
+  let lo = 0;
+  let hi = blocks.length - 1;
+  let found = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const bottom = blocks[mid].firstElementChild?.getBoundingClientRect().bottom ?? 0;
+    if (bottom > top) {
+      found = mid;
+      hi = mid - 1;
+    } else {
+      lo = mid + 1;
+    }
+  }
+  return found === -1 ? 0 : Number(blocks[found].dataset.src);
+}
+
+function TextEditor({ config, text: rawText, onTextChange, isLocked, editRequest }: TextEditorProps) {
+  // The textarea turns Windows line endings (from pasted text) into \n, so do the
+  // same here: positions in the formatted view must match positions in the editor
+  const text = rawText.replace(/\r\n?/g, '\n');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
@@ -82,6 +130,9 @@ function TextEditor({ config, text, onTextChange, isLocked, editRequest }: TextE
   const handledFocusRef = useRef<FocusRequest | null>(null);
   // How far down the notes are scrolled (0-1), carried across the editor/view switch
   const scrollRatioRef = useRef(0);
+  // Where the formatted view's visible text starts, so opening the editor without
+  // a click (Enter, quick edit) starts there instead of jumping to the top
+  const topVisibleRef = useRef(0);
 
   // Formatted notes show whenever you aren't typing: while locked, or once the
   // editor loses focus. The textarea stays mounted (hidden) so it keeps its
@@ -104,13 +155,17 @@ function TextEditor({ config, text, onTextChange, isLocked, editRequest }: TextE
   const [seenEditRequest, setSeenEditRequest] = useState(editRequest);
   if (editRequest !== seenEditRequest) {
     setSeenEditRequest(editRequest);
-    startEditing({ caret: null });
+    startEditing({ caret: 'visible' });
   }
 
   // Keep the same part of the notes in view when switching between the two
   useLayoutEffect(() => {
     const el = showRendered ? viewRef.current : textareaRef.current;
-    if (el) el.scrollTop = scrollRatioRef.current * (el.scrollHeight - el.clientHeight);
+    if (!el) return;
+    el.scrollTop = scrollRatioRef.current * (el.scrollHeight - el.clientHeight);
+    if (showRendered) topVisibleRef.current = topVisibleOffset(el, text);
+    // Only on switching: text changes while the view shows don't move the scroll
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showRendered]);
 
   useLayoutEffect(() => {
@@ -118,9 +173,11 @@ function TextEditor({ config, text, onTextChange, isLocked, editRequest }: TextE
     if (!el || !focusRequest || showRendered || handledFocusRef.current === focusRequest) return;
     handledFocusRef.current = focusRequest;
     el.focus({ preventScroll: true });
-    if (focusRequest.caret !== null) el.setSelectionRange(focusRequest.caret, focusRequest.caret);
+    // 'visible' only means something if the formatted view was what was showing
+    const caret = focusRequest.caret === 'visible' ? (config.markdown ? topVisibleRef.current : null) : focusRequest.caret;
+    if (caret !== null) el.setSelectionRange(caret, caret);
     focusRequest.then?.(el);
-  }, [focusRequest, showRendered]);
+  }, [focusRequest, showRendered, config.markdown]);
 
   // While locked the window ignores the mouse, so the Rust mouse hook catches
   // Ctrl+wheel over the overlay and sends its delta here (a plain wheel goes to the
@@ -142,6 +199,7 @@ function TextEditor({ config, text, onTextChange, isLocked, editRequest }: TextE
     const el = e.currentTarget;
     const max = el.scrollHeight - el.clientHeight;
     scrollRatioRef.current = max > 0 ? el.scrollTop / max : 0;
+    if (el === viewRef.current) topVisibleRef.current = topVisibleOffset(el, text);
   };
 
   const handleViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -209,7 +267,7 @@ function TextEditor({ config, text, onTextChange, isLocked, editRequest }: TextE
           style={textStyle}
           tabIndex={0}
           onClick={handleViewClick}
-          onKeyDown={(e) => e.key === 'Enter' && startEditing({ caret: null })}
+          onKeyDown={(e) => e.key === 'Enter' && startEditing({ caret: 'visible' })}
           onScroll={trackScroll}
           dangerouslySetInnerHTML={{ __html: html }}
         />
