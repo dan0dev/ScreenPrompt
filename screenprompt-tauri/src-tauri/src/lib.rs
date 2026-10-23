@@ -37,13 +37,20 @@ fn apply_capture_exclusion(window: WebviewWindow) -> Result<(), String> {
     windows_api::apply_capture_exclusion(window)
 }
 
-/// Development builds only, for screenshots of the app itself: release builds
-/// refuse, so the installed app can never be made to show up in a screen share
+/// Official releases are built by GitHub Actions, which sets GITHUB_ACTIONS=true;
+/// read at compile time (build.rs rebuilds when it changes)
+fn official_release() -> bool {
+    option_env!("GITHUB_ACTIONS") == Some("true")
+}
+
+/// Local builds only (dev, or built on your own PC), for screenshots of the app
+/// itself: the official release refuses, so the app users install can never be
+/// made to show up in a screen share
 #[tauri::command]
 #[cfg(windows)]
 fn set_capture_visible(window: WebviewWindow, visible: bool) -> Result<(), String> {
-    if !cfg!(debug_assertions) {
-        return Err("Only available in development builds".to_string());
+    if official_release() {
+        return Err("Not available in official releases".to_string());
     }
     windows_api::set_capture_visible(window, visible)
 }

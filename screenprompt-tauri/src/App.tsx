@@ -69,7 +69,7 @@ function App() {
   const [autoScrolling, setAutoScrolling] = useState(false);
   // Speed to show in the badge after a change; null when hidden
   const [speedBadge, setSpeedBadge] = useState<number | null>(null);
-  // Development builds only: whether the window shows in screen capture. Never
+  // Local builds only: whether the window shows in screen capture. Never
   // saved, so every launch starts hidden again.
   const [captureVisible, setCaptureVisible] = useState(false);
   const [captureNotice, setCaptureNotice] = useState(false);
@@ -368,7 +368,7 @@ function App() {
   const scrollFaster = useCallback(() => changeScrollSpeed(1), [changeScrollSpeed]);
 
   const toggleCaptureVisible = useCallback(async () => {
-    if (!import.meta.env.DEV) return;
+    if (!__LOCAL_BUILD__) return;
     try {
       await invoke('set_capture_visible', { window: appWindow, visible: !captureVisible });
       setCaptureVisible(!captureVisible);
@@ -643,10 +643,10 @@ function App() {
           {speedBadge !== null && <SpeedBadge speed={speedBadge} />}
 
           {captureNotice && (
-            // Same pill as the speed badge; development builds only
+            // Same pill as the speed badge; local builds only
             <div className="speed-badge" role="status" key={String(captureVisible)}>
               <strong>{captureVisible ? 'Visible' : 'Hidden'}</strong>
-              <span>{captureVisible ? 'to screen capture (dev)' : 'from screen capture'}</span>
+              <span>{captureVisible ? 'to screen capture (local build)' : 'from screen capture'}</span>
             </div>
           )}
 

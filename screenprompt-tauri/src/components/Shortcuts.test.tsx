@@ -45,8 +45,8 @@ describe.each(['en', 'hu'])('the cheat sheet matches the real shortcuts (%s layo
   it('lists every global shortcut the app registers', async () => {
     render(<Keys h={spyHandlers()} layout={layout} scrolling />);
     await waitFor(() => expect(registered.has('CmdOrCtrl+Shift+Comma')).toBe(true));
-    // Tests run as a development build, so the dev-only key is registered too
-    const anywhere = [...listed(layout, 'Anywhere'), ...listed(layout, 'Development build')];
+    // Tests run as a local build, so the local-only key is registered too
+    const anywhere = [...listed(layout, 'Anywhere'), ...listed(layout, 'Local build')];
     const presetModifier = layout === 'hu' ? 'Ctrl+Shift' : 'Ctrl+Alt';
 
     for (const key of registered) {
@@ -162,10 +162,10 @@ describe('from Settings', () => {
   });
 });
 
-describe('development-only shortcuts', () => {
-  it('are on the sheet only in development builds', () => {
-    expect(shortcutGroups('en', true).some((g) => g.title === 'Development build')).toBe(true);
-    expect(shortcutGroups('en', false).some((g) => g.title === 'Development build')).toBe(false);
+describe('local-build-only shortcuts', () => {
+  it('are on the sheet only in local builds', () => {
+    expect(shortcutGroups('en', true).some((g) => g.title === 'Local build')).toBe(true);
+    expect(shortcutGroups('en', false).some((g) => g.title === 'Local build')).toBe(false);
     const all = shortcutGroups('en', false).flatMap((g) => g.items.flatMap((i) => i.keys));
     expect(all).not.toContain('Ctrl+Shift+F12');
   });
