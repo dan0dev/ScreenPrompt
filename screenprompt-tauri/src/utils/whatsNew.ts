@@ -15,11 +15,13 @@ const RELEASE_NOTES: Record<string, string[]> = {
     'Auto-scroll: press Ctrl+Shift+Space (or ▶ in the bottom bar) and your notes scroll by '
       + 'themselves. Press it again to pause. Ctrl+Shift+, and Ctrl+Shift+. change the speed.',
     'Formatted notes: headings, bold, lists and more format as you type (Markdown), or use '
-      + 'Ctrl+B, Ctrl+I and the T button. Thanks <a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> '
-      + 'for the idea. Prefer plain text? Turn it off in Settings.',
+      + 'Ctrl+B, Ctrl+I and the T button. Ctrl+click opens a link. Thanks '
+      + '<a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> for the idea. '
+      + 'Prefer plain text? Turn it off in Settings.',
     'Press F1 to see every keyboard shortcut.',
     'Cleared or replaced your notes by accident? Undo (or Ctrl+Z) brings them back.',
-    'From the next update on, updates install in one click, and the download is a third smaller.',
+    'The title bar shows your version and whether you\'re up to date. From the next update on, '
+      + 'updates install in one click, and the download is a third smaller.',
   ],
   '1.1.3': [
     'Locked mode has a way out: press Esc or Ctrl+click the lock icon. Thanks '
