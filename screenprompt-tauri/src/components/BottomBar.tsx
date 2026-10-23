@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import type { Config } from '../types';
+import { linesPerMinute, MAX_SCROLL_SPEED, MIN_SCROLL_SPEED } from '../utils/autoScroll';
 import '../styles/BottomBar.css';
 
 interface BottomBarProps {
@@ -12,6 +13,9 @@ interface BottomBarProps {
   isLocked: boolean;
   onToggleLock: () => void;
   onClearText: () => void;
+  autoScrolling: boolean;
+  onToggleAutoScroll: () => void;
+  onScrollSpeed: (delta: number) => void;
 }
 
 const ICON = {
@@ -51,7 +55,43 @@ const FormatIcon = () => (
   </svg>
 );
 
-function BottomBar({ config, setConfig, isLocked, onToggleLock, onClearText }: BottomBarProps) {
+const PlayIcon = () => (
+  <svg {...ICON} fill="currentColor" strokeWidth={1.25}>
+    <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10-6.5a1 1 0 0 0 0-1.72l-10-6.5A1 1 0 0 0 8 5.5Z" />
+  </svg>
+);
+
+const PauseIcon = () => (
+  <svg {...ICON} fill="currentColor" stroke="none">
+    <rect x="6" y="5" width="4" height="14" rx="1" />
+    <rect x="14" y="5" width="4" height="14" rx="1" />
+  </svg>
+);
+
+const MinusIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12">
+    <line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12">
+    <line x1="2" y1="6" x2="10" y2="6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    <line x1="6" y1="2" x2="6" y2="10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+  </svg>
+);
+
+function BottomBar({
+  config,
+  setConfig,
+  isLocked,
+  onToggleLock,
+  onClearText,
+  autoScrolling,
+  onToggleAutoScroll,
+  onScrollSpeed,
+}: BottomBarProps) {
+  const speedTitle = `Scroll speed ${config.scrollSpeed} (${linesPerMinute(config.scrollSpeed)} lines/min)`;
   const lockButtonRef = useRef<HTMLButtonElement>(null);
 
   // While locked the window ignores the mouse, so the Rust mouse hook watches for
@@ -139,6 +179,47 @@ function BottomBar({ config, setConfig, isLocked, onToggleLock, onClearText }: B
       )}
 
       <div className="spacer" />
+
+      {isLocked ? (
+        // Locked: the buttons can't be clicked, so just show that it's running
+        autoScrolling && (
+          <span className="scroll-status" role="status" title={speedTitle}>
+            <PlayIcon />
+            {config.scrollSpeed}
+          </span>
+        )
+      ) : (
+        <div className="scroll-controls">
+          <button
+            className={`control-button scroll-toggle${autoScrolling ? ' active' : ''}`}
+            onClick={onToggleAutoScroll}
+            title={autoScrolling ? 'Pause auto-scroll (Ctrl+Shift+Space)' : 'Start auto-scroll (Ctrl+Shift+Space)'}
+            aria-label={autoScrolling ? 'Pause auto-scroll' : 'Start auto-scroll'}
+            aria-pressed={autoScrolling}
+          >
+            {autoScrolling ? <PauseIcon /> : <PlayIcon />}
+          </button>
+          <div className="scroll-speed" role="group" aria-label={speedTitle} title={speedTitle}>
+            <button
+              className="control-button font-btn"
+              onClick={() => onScrollSpeed(-1)}
+              disabled={config.scrollSpeed <= MIN_SCROLL_SPEED}
+              aria-label="Slower"
+            >
+              <MinusIcon />
+            </button>
+            <span className="speed-label">{config.scrollSpeed}</span>
+            <button
+              className="control-button font-btn"
+              onClick={() => onScrollSpeed(1)}
+              disabled={config.scrollSpeed >= MAX_SCROLL_SPEED}
+              aria-label="Faster"
+            >
+              <PlusIcon />
+            </button>
+          </div>
+        </div>
+      )}
 
       <button
         ref={lockButtonRef}

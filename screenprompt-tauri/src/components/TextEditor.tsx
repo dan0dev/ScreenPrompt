@@ -4,6 +4,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-shell';
 import type { Config } from '../types';
+import { useAutoScroll } from '../hooks/useAutoScroll';
+import { scrollPixelsPerSecond } from '../utils/autoScroll';
 import { renderMarkdown, sourceOffsetFor } from '../utils/markdown';
 import { toggleBlock, toggleInline, type BlockStyle, type Edit, type InlineStyle } from '../utils/formatting';
 import FormatBar, { type FormatStyle } from './FormatBar';
@@ -16,6 +18,9 @@ interface TextEditorProps {
   isLocked: boolean;
   // Bumped to switch to editing and focus the text (quick edit)
   editRequest: number;
+  // Auto-scroll is running; it stops itself at the end, or when typing starts
+  autoScroll: boolean;
+  onAutoScrollStop: () => void;
 }
 
 // Focus the editor once it's showing: at a caret position, at the first paragraph
@@ -119,7 +124,15 @@ function firstVisibleOffset(view: HTMLElement): number {
   return found === -1 ? 0 : Number(blocks[found].dataset.src);
 }
 
-function TextEditor({ config, text: rawText, onTextChange, isLocked, editRequest }: TextEditorProps) {
+function TextEditor({
+  config,
+  text: rawText,
+  onTextChange,
+  isLocked,
+  editRequest,
+  autoScroll,
+  onAutoScrollStop,
+}: TextEditorProps) {
   // The textarea turns Windows line endings (from pasted text) into \n, so do the
   // same here: positions in the formatted view must match positions in the editor
   const text = rawText.replace(/\r\n?/g, '\n');
@@ -178,6 +191,19 @@ function TextEditor({ config, text: rawText, onTextChange, isLocked, editRequest
     if (caret !== null) el.setSelectionRange(caret, caret);
     focusRequest.then?.(el);
   }, [focusRequest, showRendered, config.markdown]);
+
+  // Scrolls whichever is showing: the formatted view, or the plain editor
+  useAutoScroll(
+    autoScroll,
+    () => viewRef.current ?? textareaRef.current,
+    scrollPixelsPerSecond(config.scrollSpeed, config.fontSize),
+    onAutoScrollStop,
+  );
+
+  // Starting auto-scroll means presenting: leave the editor (back to formatted)
+  useEffect(() => {
+    if (autoScroll && document.activeElement === textareaRef.current) textareaRef.current?.blur();
+  }, [autoScroll]);
 
   // While locked the window ignores the mouse, so the Rust mouse hook catches
   // Ctrl+wheel over the overlay and sends its delta here (a plain wheel goes to the
@@ -252,7 +278,11 @@ function TextEditor({ config, text: rawText, onTextChange, isLocked, editRequest
         hidden={showRendered}
         value={text}
         onChange={(e) => onTextChange(e.target.value)}
-        onFocus={() => setEditing(true)}
+        onFocus={() => {
+          setEditing(true);
+          // Typing pauses auto-scroll
+          if (autoScroll) onAutoScrollStop();
+        }}
         onBlur={() => setEditing(false)}
         onKeyDown={handleKeyDown}
         onScroll={trackScroll}

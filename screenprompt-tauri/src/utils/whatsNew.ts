@@ -12,6 +12,9 @@ const FEATURE_REQUEST_URL = `${REPO_URL}/issues/new?template=feature_request.md`
 // here for every release that should announce itself (see CONTRIBUTING.md).
 const RELEASE_NOTES: Record<string, string[]> = {
   '1.2.0': [
+    'Auto-scroll: press Ctrl+Shift+Space (or ▶ in the bottom bar) and your notes scroll by '
+      + 'themselves. Press it again to pause or resume. While scrolling, Ctrl+Shift+, and '
+      + 'Ctrl+Shift+. change the speed.',
     'Formatted notes: write or paste Markdown and see headings, bold, lists and more. '
       + 'You see plain text while typing; click away or lock to see it formatted. Thanks '
       + '<a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> for the idea.',

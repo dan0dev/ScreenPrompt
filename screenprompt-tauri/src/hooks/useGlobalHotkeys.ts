@@ -1,7 +1,7 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
 import { useEffect, useRef } from 'react';
-import { register, unregisterAll } from '@tauri-apps/plugin-global-shortcut';
+import { register, unregister, unregisterAll } from '@tauri-apps/plugin-global-shortcut';
 
 export interface HotkeyHandlers {
   toggleVisibility: () => void;
@@ -21,7 +21,15 @@ export interface HotkeyHandlers {
   copyAll: () => void;
   pasteReplace: () => void;
   clearText: () => void;
+  toggleAutoScroll: () => void;
+  scrollSlower: () => void;
+  scrollFaster: () => void;
 }
+
+// Auto-scroll speed keys (< and >, like video players). Registered only while
+// auto-scroll runs, so the rest of the time they stay with other apps (Word uses
+// them for font size).
+const SCROLL_SPEED_KEYS = ['CmdOrCtrl+Shift+Comma', 'CmdOrCtrl+Shift+Period'] as const;
 
 // Global shortcuts are kept to what must work while the overlay is locked or
 // unfocused; everything else is overlay-only (see the keydown handler below).
@@ -60,7 +68,7 @@ function positionPresetKeys(layout: string): string[] {
   return Array.from({ length: 9 }, (_, i) => `CmdOrCtrl+Alt+${i + 1}`);
 }
 
-export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string) {
+export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string, autoScrolling: boolean) {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
@@ -80,6 +88,9 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string) {
 
       // Opacity
       await tryRegister('CmdOrCtrl+Shift+O', () => { if (mounted) h().cycleOpacity(); });
+
+      // Auto-scroll: start, pause, resume
+      await tryRegister('CmdOrCtrl+Shift+Space', () => { if (mounted) h().toggleAutoScroll(); });
 
       // Position presets (3x3 grid)
       const presetKeys = positionPresetKeys(layout);
@@ -102,6 +113,24 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string) {
       );
     };
   }, [layout]);
+
+  // Speed keys while auto-scrolling. Also re-runs after a layout pass, whose
+  // unregisterAll removes them; the queue keeps it after that pass.
+  useEffect(() => {
+    if (!autoScrolling) return;
+    let mounted = true;
+    const h = () => handlersRef.current;
+    const [slower, faster] = SCROLL_SPEED_KEYS;
+    enqueue(async () => {
+      if (!mounted) return;
+      await tryRegister(slower, () => { if (mounted) h().scrollSlower(); });
+      await tryRegister(faster, () => { if (mounted) h().scrollFaster(); });
+    });
+    return () => {
+      mounted = false;
+      enqueue(() => Promise.all(SCROLL_SPEED_KEYS.map((key) => unregister(key).catch(() => {}))));
+    };
+  }, [autoScrolling, layout]);
 
   // Overlay-only shortcuts: these combos mean something in most other apps, so
   // they only act while the overlay has focus instead of being taken system-wide.

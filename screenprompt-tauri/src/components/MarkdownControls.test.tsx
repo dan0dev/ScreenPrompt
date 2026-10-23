@@ -30,6 +30,9 @@ function renderBar(config: Partial<Config>, isLocked = false) {
       isLocked={isLocked}
       onToggleLock={() => {}}
       onClearText={() => {}}
+      autoScrolling={false}
+      onToggleAutoScroll={() => {}}
+      onScrollSpeed={() => {}}
     />,
   );
   return setConfig;

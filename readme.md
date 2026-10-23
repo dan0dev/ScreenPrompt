@@ -45,6 +45,7 @@ added (see [Project scope](CONTRIBUTING.md#project-scope)).
 - **Always on top**: adjustable transparency and click-through lock
 - **Keyboard-first**: every action has a shortcut
 - **Formatted notes**: paste or write Markdown and see headings, **bold** and lists while you present
+- **Auto-scroll**: your notes scroll by themselves at a speed you set, teleprompter style
 - **Make it yours**: font, size, colors, and position presets
 - **Private**: your notes never leave your PC; no telemetry, no data collection. The only network request is an update check against GitHub releases, which you can turn off in Settings
 
@@ -64,6 +65,7 @@ Requires Windows 10 (build 2004+) or Windows 11.
 | `Ctrl+Shift+L` | Lock (click-through) |
 | `Esc` | Unlock (or Ctrl+click the lock icon) |
 | `Ctrl+Shift+E` | Edit text |
+| `Ctrl+Shift+Space` | Start / pause / resume auto-scroll |
 | `Ctrl+Shift+F1` | Panic close, works even when locked |
 
 ## Locked mode
@@ -74,6 +76,18 @@ Lock the overlay (`Ctrl+Shift+L` or the lock icon) when you're presenting, and i
 - **To scroll your notes**, hold `Ctrl` and scroll over the overlay.
 - **To unlock**, press `Esc` or `Ctrl`+click the lock icon. The bottom bar shows this while locked.
 - **To edit quickly**, press `Ctrl+Shift+E`: it unlocks until you click away, then locks again.
+
+## Auto-scroll
+
+Press `Ctrl+Shift+Space` (or the ▶ button) and your notes scroll by themselves. Press it again to
+pause, and again to carry on. It works from any app, even while the overlay is locked.
+
+- **Speed**: `Ctrl+Shift+,` slower, `Ctrl+Shift+.` faster while it's scrolling, or the − / +
+  next to the ▶ button, or Settings. Speed is in lines per minute, so it's the same pace at any
+  font size.
+- **It stops** at the end of your notes; start it again to go back to the top.
+- **Typing pauses it**, and scrolling with the wheel (or `Ctrl`+wheel while locked) just moves
+  your place: it carries on from there.
 
 ## Formatting
 

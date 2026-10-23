@@ -28,14 +28,29 @@ interface HarnessProps {
   isLocked?: boolean;
   editRequest?: number;
   onChange?: (text: string) => void;
+  autoScroll?: boolean;
+  onAutoScrollStop?: () => void;
+  scrollSpeed?: number;
+  fontSize?: number;
 }
 
 // TextEditor with its text held in state, as App does
-function Harness({ text: initial = SAMPLE, markdown = true, showFormatBar = false, isLocked = false, editRequest = 0, onChange }: HarnessProps) {
+function Harness({
+  text: initial = SAMPLE,
+  markdown = true,
+  showFormatBar = false,
+  isLocked = false,
+  editRequest = 0,
+  onChange,
+  autoScroll = false,
+  onAutoScrollStop = () => {},
+  scrollSpeed = 4,
+  fontSize = 18,
+}: HarnessProps) {
   const [text, setText] = useState(initial);
   return (
     <TextEditor
-      config={{ ...DEFAULT_CONFIG, markdown, showFormatBar }}
+      config={{ ...DEFAULT_CONFIG, markdown, showFormatBar, scrollSpeed, fontSize }}
       text={text}
       onTextChange={(t) => {
         setText(t);
@@ -43,6 +58,8 @@ function Harness({ text: initial = SAMPLE, markdown = true, showFormatBar = fals
       }}
       isLocked={isLocked}
       editRequest={editRequest}
+      autoScroll={autoScroll}
+      onAutoScrollStop={onAutoScrollStop}
     />
   );
 }

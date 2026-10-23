@@ -1,0 +1,39 @@
+/* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
+
+/* Auto-scroll speed badge: a small glass pill near the top of the notes, so it
+   reads as chrome. Never takes clicks. */
+.speed-badge {
+  position: absolute;
+  top: 44px; /* just below the title bar */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--sp-radius-pill);
+  background: var(--sp-glass-fill-strong);
+  backdrop-filter: var(--sp-glass-blur);
+  -webkit-backdrop-filter: var(--sp-glass-blur);
+  box-shadow:
+    inset 0 1px 0 var(--sp-glass-rim),
+    var(--sp-shadow-float);
+  color: var(--sp-label-2);
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: speed-badge-in var(--sp-fast) var(--sp-ease);
+}
+
+.speed-badge strong {
+  color: var(--sp-label);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+@keyframes speed-badge-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -3px);
+  }
+}

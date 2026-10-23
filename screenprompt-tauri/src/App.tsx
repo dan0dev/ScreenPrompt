@@ -18,11 +18,13 @@ import { useUpdater } from './hooks/useUpdater';
 import { useGlobalHotkeys } from './hooks/useGlobalHotkeys';
 import { OPACITY_LEVELS, DEFAULT_CONFIG } from './types';
 import { hasReleaseNotes, showWhatsNew } from './utils/whatsNew';
+import { clampScrollSpeed } from './utils/autoScroll';
 import TitleBar from './components/TitleBar';
 import TextEditor from './components/TextEditor';
 import Settings from './components/Settings';
 import BottomBar from './components/BottomBar';
 import LockTip from './components/LockTip';
+import SpeedBadge from './components/SpeedBadge';
 import './styles/App.css';
 
 const appWindow = getCurrentWindow();
@@ -32,6 +34,7 @@ const TEXT_SAVE_DELAY_MS = 400;
 const GEOMETRY_SAVE_DELAY_MS = 400;
 const CLOSE_SAVE_TIMEOUT_MS = 500;
 const LOCK_TIP_MS = 8000;
+const SPEED_BADGE_MS = 1200;
 // Windows parks minimized windows here; never persist it as a real position
 const MINIMIZED_COORD = -32000;
 
@@ -59,6 +62,9 @@ function App() {
   const [editRequest, setEditRequest] = useState(0);
   const restoredRef = useRef(false);
   const [showLockTip, setShowLockTip] = useState(false);
+  const [autoScrolling, setAutoScrolling] = useState(false);
+  // Speed to show in the badge after a change; null when hidden
+  const [speedBadge, setSpeedBadge] = useState<number | null>(null);
 
   // Text being edited. null until the user types, so the saved text shows until then.
   const [draftText, setDraftText] = useState<string | null>(null);
@@ -325,10 +331,29 @@ function App() {
     };
   }, [setConfig]);
 
-  // Toggle settings panel
+  // Toggle settings panel (pauses auto-scroll: the notes aren't showing)
   const toggleSettings = useCallback(() => {
     setShowSettings((prev) => !prev);
+    setAutoScrolling(false);
   }, []);
+
+  // Auto-scroll: one key starts, pauses and resumes
+  const toggleAutoScroll = useCallback(() => setAutoScrolling((on) => !on), []);
+  const stopAutoScroll = useCallback(() => setAutoScrolling(false), []);
+
+  const changeScrollSpeed = useCallback(async (delta: number) => {
+    const speed = clampScrollSpeed(config.scrollSpeed + delta);
+    setSpeedBadge(speed);
+    await setConfig({ scrollSpeed: speed });
+  }, [config.scrollSpeed, setConfig]);
+  const scrollSlower = useCallback(() => changeScrollSpeed(-1), [changeScrollSpeed]);
+  const scrollFaster = useCallback(() => changeScrollSpeed(1), [changeScrollSpeed]);
+
+  useEffect(() => {
+    if (speedBadge === null) return;
+    const timer = window.setTimeout(() => setSpeedBadge(null), SPEED_BADGE_MS);
+    return () => window.clearTimeout(timer);
+  }, [speedBadge]);
 
   // Toggle visibility
   const toggleVisibility = useCallback(async () => {
@@ -487,7 +512,10 @@ function App() {
     copyAll,
     pasteReplace,
     clearText,
-  }, resolvedLayout);
+    toggleAutoScroll,
+    scrollSlower,
+    scrollFaster,
+  }, resolvedLayout, autoScrolling);
 
   // Track text as it's typed (saved after a short pause, or on close)
   const updateText = (newText: string) => {
@@ -542,7 +570,11 @@ function App() {
             onTextChange={updateText}
             isLocked={isLocked}
             editRequest={editRequest}
+            autoScroll={autoScrolling}
+            onAutoScrollStop={stopAutoScroll}
           />
+
+          {speedBadge !== null && <SpeedBadge speed={speedBadge} />}
 
           {showLockTip && isLocked && <LockTip />}
 
@@ -552,6 +584,9 @@ function App() {
             isLocked={isLocked}
             onToggleLock={toggleLock}
             onClearText={clearText}
+            autoScrolling={autoScrolling}
+            onToggleAutoScroll={toggleAutoScroll}
+            onScrollSpeed={changeScrollSpeed}
           />
         </>
       )}

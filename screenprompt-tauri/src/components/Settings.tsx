@@ -6,6 +6,7 @@ import { open } from '@tauri-apps/plugin-shell';
 import { message } from '@tauri-apps/plugin-dialog';
 import type { Config } from '../types';
 import { TEXT_COLORS, BG_COLORS, FONT_FAMILIES } from '../types';
+import { linesPerMinute, MAX_SCROLL_SPEED, MIN_SCROLL_SPEED } from '../utils/autoScroll';
 import '../styles/Settings.css';
 
 interface SettingsProps {
@@ -26,6 +27,7 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
   const [bgColor, setBgColor] = useState(config.bgColor);
   const [autoCheckUpdates, setAutoCheckUpdates] = useState(config.autoCheckUpdates);
   const [markdown, setMarkdown] = useState(config.markdown);
+  const [scrollSpeed, setScrollSpeed] = useState(config.scrollSpeed);
   const [keyboardLayout, setKeyboardLayout] = useState(config.keyboardLayout);
 
   const handleOpacityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,6 +70,7 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
       autoCheckUpdates,
       keyboardLayout,
       markdown,
+      scrollSpeed,
     });
     onClose();
   };
@@ -220,6 +223,25 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
               />
               <span className="toggle-track" aria-hidden="true" />
             </label>
+
+            <div className="control-field">
+              <div className="field-row">
+                <label className="field-label" htmlFor="scroll-speed">Auto-scroll speed</label>
+                <span className="field-value">
+                  {scrollSpeed} · {linesPerMinute(scrollSpeed)} lines/min
+                </span>
+              </div>
+              <input
+                id="scroll-speed"
+                type="range"
+                min={MIN_SCROLL_SPEED}
+                max={MAX_SCROLL_SPEED}
+                step="1"
+                value={scrollSpeed}
+                onChange={(e) => setScrollSpeed(parseInt(e.target.value, 10))}
+                className="opacity-slider"
+              />
+            </div>
 
             <label className="toggle" htmlFor="auto-updates">
               <span className="toggle-text">Check for updates on startup</span>
