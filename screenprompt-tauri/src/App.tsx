@@ -27,6 +27,7 @@ import BottomBar from './components/BottomBar';
 import LockTip from './components/LockTip';
 import SpeedBadge from './components/SpeedBadge';
 import UndoBar from './components/UndoBar';
+import ShortcutsPanel from './components/ShortcutsPanel';
 import './styles/App.css';
 
 const appWindow = getCurrentWindow();
@@ -56,6 +57,7 @@ async function isOnAnyMonitor(x: number, y: number): Promise<boolean> {
 function App() {
   const { config, setConfig, loading } = useConfig();
   const [showSettings, setShowSettings] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [opacityIndex, setOpacityIndex] = useState(1); // default 0.85 is index 1
@@ -336,8 +338,18 @@ function App() {
   // Toggle settings panel (pauses auto-scroll: the notes aren't showing)
   const toggleSettings = useCallback(() => {
     setShowSettings((prev) => !prev);
+    setShowShortcuts(false);
     setAutoScrolling(false);
   }, []);
+
+  // Shortcut list (F1). Settings has its own way in; F1 there does nothing, so
+  // it can't stack two copies. Locked, it couldn't be closed by mouse: skip it.
+  const toggleShortcuts = useCallback(() => {
+    if (showSettings || isLocked) return;
+    setShowShortcuts((prev) => !prev);
+    setAutoScrolling(false);
+  }, [showSettings, isLocked]);
+  const closeShortcuts = useCallback(() => setShowShortcuts(false), []);
 
   // Auto-scroll: one key starts, pauses and resumes
   const toggleAutoScroll = useCallback(() => setAutoScrolling((on) => !on), []);
@@ -539,6 +551,7 @@ function App() {
     toggleAutoScroll,
     scrollSlower,
     scrollFaster,
+    toggleShortcuts,
   }, resolvedLayout, autoScrolling);
 
   // Track text as it's typed (saved after a short pause, or on close). Typing
@@ -563,12 +576,13 @@ function App() {
   // uniformly opaque at the OS level (capture-exclusion uses LWA_ALPHA), so
   // real see-through isn't available — this dims the overlay, matching the
   // historical behavior. Settings always renders fully opaque for legibility.
-  const appStyle = showSettings
+  const panelOpen = showSettings || showShortcuts;
+  const appStyle = panelOpen
     ? undefined
     : { backgroundColor: config.bgColor, opacity: config.opacity };
 
   return (
-    <div className={`app${showSettings ? ' settings-open' : ''}`} style={appStyle}>
+    <div className={`app${panelOpen ? ' settings-open' : ''}`} style={appStyle}>
       {showSettings ? (
         <Settings
           config={config}
@@ -578,7 +592,10 @@ function App() {
           updateAvailable={updater.updateAvailable}
           updateVersion={updater.updateVersion}
           onUpdateInstall={handleUpdateClick}
+          layout={resolvedLayout}
         />
+      ) : showShortcuts ? (
+        <ShortcutsPanel layout={resolvedLayout} onClose={closeShortcuts} />
       ) : (
         <>
           <TitleBar

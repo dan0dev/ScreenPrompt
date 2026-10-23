@@ -66,6 +66,7 @@ Requires Windows 10 (build 2004+) or Windows 11.
 | `Esc` | Unlock (or Ctrl+click the lock icon) |
 | `Ctrl+Shift+E` | Edit text |
 | `Ctrl+Shift+Space` | Start / pause / resume auto-scroll |
+| `F1` | All shortcuts (while ScreenPrompt is focused) |
 | `Ctrl+Shift+F1` | Panic close, works even when locked |
 
 ## Locked mode

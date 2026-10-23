@@ -24,6 +24,7 @@ export interface HotkeyHandlers {
   toggleAutoScroll: () => void;
   scrollSlower: () => void;
   scrollFaster: () => void;
+  toggleShortcuts: () => void;
 }
 
 // Auto-scroll speed keys (< and >, like video players). Registered only while
@@ -152,6 +153,12 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string, autoS
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
+      // F1 on its own: the shortcut list (the usual help key)
+      if (e.code === 'F1' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        h().toggleShortcuts();
+        return;
+      }
       if (!e.ctrlKey || !e.shiftKey || e.altKey) return;
       const action = actions[e.code];
       if (!action) return;

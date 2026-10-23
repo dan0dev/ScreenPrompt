@@ -281,6 +281,7 @@ describe('Settings speed slider', () => {
         updateAvailable={false}
         updateVersion=""
         onUpdateInstall={() => {}}
+        layout="en"
       />,
     );
     const slider = screen.getByLabelText('Auto-scroll speed') as HTMLInputElement;
@@ -302,7 +303,7 @@ describe('auto-scroll hotkeys', () => {
       increaseFontSize: noop, decreaseFontSize: noop, resetFontSize: noop, cycleOpacity: noop,
       positionPreset: noop, nudge: noop, toggleSettings: noop, resetGeometry: noop, quit: noop,
       panic: noop, copyAll: noop, pasteReplace: noop, clearText: noop,
-      toggleAutoScroll: vi.fn(), scrollSlower: vi.fn(), scrollFaster: vi.fn(),
+      toggleAutoScroll: vi.fn(), scrollSlower: vi.fn(), scrollFaster: vi.fn(), toggleShortcuts: noop,
     };
   };
 

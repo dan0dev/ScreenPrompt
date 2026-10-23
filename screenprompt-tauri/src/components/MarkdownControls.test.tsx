@@ -81,6 +81,7 @@ function renderSettings(config: Partial<Config> = {}) {
       updateAvailable={false}
       updateVersion=""
       onUpdateInstall={() => {}}
+        layout="en"
     />,
   );
   return { setConfig, onClose, checkbox: screen.getByLabelText('Format text (Markdown)') as HTMLInputElement };

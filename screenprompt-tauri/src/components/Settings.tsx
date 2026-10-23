@@ -7,6 +7,7 @@ import { message } from '@tauri-apps/plugin-dialog';
 import type { Config } from '../types';
 import { TEXT_COLORS, BG_COLORS, FONT_FAMILIES } from '../types';
 import { linesPerMinute, MAX_SCROLL_SPEED, MIN_SCROLL_SPEED } from '../utils/autoScroll';
+import ShortcutsPanel from './ShortcutsPanel';
 import '../styles/Settings.css';
 
 interface SettingsProps {
@@ -17,9 +18,12 @@ interface SettingsProps {
   updateAvailable: boolean;
   updateVersion: string;
   onUpdateInstall: () => void;
+  // Resolved keyboard layout, for the shortcut list
+  layout: string;
 }
 
-function Settings({ config, setConfig, onClose, appVersion, updateAvailable, updateVersion, onUpdateInstall }: SettingsProps) {
+function Settings({ config, setConfig, onClose, appVersion, updateAvailable, updateVersion, onUpdateInstall, layout }: SettingsProps) {
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [opacity, setOpacity] = useState(config.opacity);
   const [fontFamily, setFontFamily] = useState(config.fontFamily);
   const [fontSize, setFontSize] = useState(config.fontSize);
@@ -96,6 +100,12 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
       console.error('Failed to show notice:', error);
     }
   };
+
+  // The shortcut list replaces the page while open; this component stays mounted,
+  // so unsaved changes are still here when it closes
+  if (showShortcuts) {
+    return <ShortcutsPanel layout={layout} onClose={() => setShowShortcuts(false)} />;
+  }
 
   const layouts = [
     { value: 'auto', label: 'Auto' },
@@ -287,6 +297,9 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
       <div className="settings-footer">
         <button className="link-button" onClick={handleDocsClick}>
           Docs &amp; Help
+        </button>
+        <button className="link-button" onClick={() => setShowShortcuts(true)}>
+          Shortcuts
         </button>
         <button className="link-button" onClick={handleShowNotice}>
           Notice

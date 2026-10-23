@@ -13,17 +13,13 @@ const FEATURE_REQUEST_URL = `${REPO_URL}/issues/new?template=feature_request.md`
 const RELEASE_NOTES: Record<string, string[]> = {
   '1.2.0': [
     'Auto-scroll: press Ctrl+Shift+Space (or ▶ in the bottom bar) and your notes scroll by '
-      + 'themselves. Press it again to pause or resume. While scrolling, Ctrl+Shift+, and '
-      + 'Ctrl+Shift+. change the speed.',
-    'Formatted notes: write or paste Markdown and see headings, bold, lists and more. '
-      + 'You see plain text while typing; click away or lock to see it formatted. Thanks '
-      + '<a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> for the idea.',
-    'Press Ctrl+B or Ctrl+I while typing, or use the T button in the bottom bar for every style. '
-      + 'Prefer plain text? Turn off "Format text (Markdown)" in Settings.',
-    'Cleared or replaced your notes by accident? Undo (or Ctrl+Z) brings them back for a few seconds.',
-    'From the next update on, updates install in one click: ScreenPrompt updates in place '
-      + 'and reopens itself, with no uninstall step.',
-    'Smaller download: the installer is about a third smaller.',
+      + 'themselves. Press it again to pause. Ctrl+Shift+, and Ctrl+Shift+. change the speed.',
+    'Formatted notes: write or paste Markdown for headings, bold and lists, or use Ctrl+B, '
+      + 'Ctrl+I and the T button. Thanks <a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> '
+      + 'for the idea. Prefer plain text? Turn it off in Settings.',
+    'Press F1 to see every keyboard shortcut.',
+    'Cleared or replaced your notes by accident? Undo (or Ctrl+Z) brings them back.',
+    'From the next update on, updates install in one click, and the download is a third smaller.',
   ],
   '1.1.3': [
     'Locked mode has a way out: press Esc or Ctrl+click the lock icon. Thanks '
