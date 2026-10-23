@@ -20,8 +20,7 @@ const RELEASE_NOTES: Record<string, string[]> = {
       + 'Prefer plain text? Turn it off in Settings.',
     'Press F1 to see every keyboard shortcut.',
     'Cleared or replaced your notes by accident? Undo (or Ctrl+Z) brings them back.',
-    'The title bar shows your version and whether you\'re up to date. From the next update on, '
-      + 'updates install in one click, and the download is a third smaller.',
+    'From the next update on, updates install in one click, and the download is a third smaller.',
   ],
   '1.1.3': [
     'Locked mode has a way out: press Esc or Ctrl+click the lock icon. Thanks '
