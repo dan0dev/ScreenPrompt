@@ -6,6 +6,9 @@ import { open } from '@tauri-apps/plugin-shell';
 import { message } from '@tauri-apps/plugin-dialog';
 import type { Config } from '../types';
 import { TEXT_COLORS, BG_COLORS, FONT_FAMILIES } from '../types';
+import { linesPerMinute, MAX_SCROLL_SPEED, MIN_SCROLL_SPEED } from '../utils/autoScroll';
+import { STORIES_URL } from '../utils/whatsNew';
+import ShortcutsPanel from './ShortcutsPanel';
 import '../styles/Settings.css';
 
 interface SettingsProps {
@@ -16,15 +19,20 @@ interface SettingsProps {
   updateAvailable: boolean;
   updateVersion: string;
   onUpdateInstall: () => void;
+  // Resolved keyboard layout, for the shortcut list
+  layout: string;
 }
 
-function Settings({ config, setConfig, onClose, appVersion, updateAvailable, updateVersion, onUpdateInstall }: SettingsProps) {
+function Settings({ config, setConfig, onClose, appVersion, updateAvailable, updateVersion, onUpdateInstall, layout }: SettingsProps) {
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [opacity, setOpacity] = useState(config.opacity);
   const [fontFamily, setFontFamily] = useState(config.fontFamily);
   const [fontSize, setFontSize] = useState(config.fontSize);
   const [fontColor, setFontColor] = useState(config.fontColor);
   const [bgColor, setBgColor] = useState(config.bgColor);
   const [autoCheckUpdates, setAutoCheckUpdates] = useState(config.autoCheckUpdates);
+  const [markdown, setMarkdown] = useState(config.markdown);
+  const [scrollSpeed, setScrollSpeed] = useState(config.scrollSpeed);
   const [keyboardLayout, setKeyboardLayout] = useState(config.keyboardLayout);
 
   const handleOpacityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,6 +74,8 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
       bgColor,
       autoCheckUpdates,
       keyboardLayout,
+      markdown,
+      scrollSpeed,
     });
     onClose();
   };
@@ -92,6 +102,12 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
     }
   };
 
+  // The shortcut list replaces the page while open; this component stays mounted,
+  // so unsaved changes are still here when it closes
+  if (showShortcuts) {
+    return <ShortcutsPanel layout={layout} onClose={() => setShowShortcuts(false)} />;
+  }
+
   const layouts = [
     { value: 'auto', label: 'Auto' },
     { value: 'en', label: 'English' },
@@ -110,6 +126,12 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
       </div>
 
       <div className="settings-content">
+        {/* One quiet line: Settings is opened on purpose, so this is seen without popping up anywhere */}
+        <button className="story-banner" onClick={() => open(STORIES_URL)}>
+          <span>How do you use ScreenPrompt?</span>
+          <span className="story-banner-link">Share your story →</span>
+        </button>
+
         {/* Appearance */}
         <section className="settings-section">
           <span className="section-title">Appearance</span>
@@ -208,6 +230,36 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
         <section className="settings-section">
           <span className="section-title">Behavior</span>
           <div className="section-card">
+            <label className="toggle" htmlFor="markdown">
+              <span className="toggle-text">Format text (Markdown)</span>
+              <input
+                id="markdown"
+                type="checkbox"
+                checked={markdown}
+                onChange={(e) => setMarkdown(e.target.checked)}
+              />
+              <span className="toggle-track" aria-hidden="true" />
+            </label>
+
+            <div className="control-field">
+              <div className="field-row">
+                <label className="field-label" htmlFor="scroll-speed">Auto-scroll speed</label>
+                <span className="field-value">
+                  {scrollSpeed} · {linesPerMinute(scrollSpeed)} lines/min
+                </span>
+              </div>
+              <input
+                id="scroll-speed"
+                type="range"
+                min={MIN_SCROLL_SPEED}
+                max={MAX_SCROLL_SPEED}
+                step="1"
+                value={scrollSpeed}
+                onChange={(e) => setScrollSpeed(parseInt(e.target.value, 10))}
+                className="opacity-slider"
+              />
+            </div>
+
             <label className="toggle" htmlFor="auto-updates">
               <span className="toggle-text">Check for updates on startup</span>
               <input
@@ -252,6 +304,9 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
       <div className="settings-footer">
         <button className="link-button" onClick={handleDocsClick}>
           Docs &amp; Help
+        </button>
+        <button className="link-button" onClick={() => setShowShortcuts(true)}>
+          Shortcuts
         </button>
         <button className="link-button" onClick={handleShowNotice}>
           Notice

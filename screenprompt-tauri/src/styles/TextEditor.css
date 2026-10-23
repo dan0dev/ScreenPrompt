@@ -3,41 +3,219 @@
 /* The reading/content layer: flat and fully opaque. No glass, no shadow here. */
 .text-editor {
   flex: 1;
+  min-height: 0;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-.text-area {
+/* CodeMirror, made to look like the plain notes area it replaced: the user's font,
+   size and colors (set on .editor-host), the same padding and line height */
+.editor-host {
   flex: 1;
-  border: none;
-  outline: none;
-  resize: none;
-  background: transparent; /* shows the translucent .app background beneath */
-  padding: 16px 18px;
-  line-height: 1.6;
-  overflow-y: auto;
-  overflow-x: hidden;
-  word-wrap: break-word;
-  cursor: text;
+  min-height: 0;
+  display: flex;
 }
 
-.text-area::-webkit-scrollbar {
-  width: 8px;
-}
-.text-area::-webkit-scrollbar-track {
+.editor-host .cm-editor {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  color: inherit;
   background: transparent;
 }
-.text-area::-webkit-scrollbar-thumb {
+.editor-host .cm-editor.cm-focused {
+  outline: none;
+}
+
+.editor-host .cm-scroller {
+  font-family: inherit;
+  line-height: 1.6;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.editor-host .cm-content {
+  padding: 16px 18px;
+  caret-color: currentColor;
+  /* Never wider than the window: wide content (a table) scrolls in its own box */
+  min-width: 0;
+  max-width: 100%;
+}
+.editor-host .cm-line {
+  padding: 0;
+}
+
+.editor-host .cm-placeholder {
+  color: var(--sp-label-3);
+}
+
+.editor-host .cm-scroller::-webkit-scrollbar {
+  width: 8px;
+}
+.editor-host .cm-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+.editor-host .cm-scroller::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.18);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-.text-area::-webkit-scrollbar-thumb:hover {
+.editor-host .cm-scroller::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
   background-clip: padding-box;
 }
 
-.text-area::placeholder {
-  color: var(--sp-label-3);
+/* Live preview (editor/livePreview.ts). Sizes are in em, so they follow the font
+   size setting; colors derive from the text color, so they suit any color the
+   user picks. */
+.cm-md-h1,
+.cm-md-h2,
+.cm-md-h3,
+.cm-md-h4,
+.cm-md-h5,
+.cm-md-h6 {
+  font-weight: 700;
+  line-height: 1.35;
+}
+.cm-md-h1 { font-size: 1.5em; }
+.cm-md-h2 { font-size: 1.3em; }
+.cm-md-h3 { font-size: 1.15em; }
+
+.cm-md-strong {
+  font-weight: 700;
+}
+.cm-md-em {
+  font-style: italic;
+}
+.cm-md-strike {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.cm-md-code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* Code blocks: a shaded band, one line at a time */
+.cm-md-codeblock {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  padding: 0 0.6em !important;
+}
+.cm-md-codeblock .cm-md-code {
+  background: none;
+  padding: 0;
+}
+/* The ``` lines: thin when hidden, faint text when shown for editing (the text
+   only, so the shaded band stays even) */
+.cm-md-fence {
+  font-size: 0.7em;
+  color: color-mix(in srgb, currentColor 60%, transparent);
+}
+
+.cm-md-quote {
+  border-left: 3px solid color-mix(in srgb, currentColor 35%, transparent);
+  padding-left: 0.8em !important;
+  opacity: 0.85;
+}
+
+.cm-md-link {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 50%, transparent);
+  text-underline-offset: 2px;
+}
+
+.cm-md-bullet {
+  display: inline-block;
+  min-width: 0.6em;
+  opacity: 0.8;
+}
+
+.cm-md-checkbox {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-right: 0.15em;
+  vertical-align: -0.08em;
+  border: 1.5px solid color-mix(in srgb, currentColor 60%, transparent);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.cm-md-checkbox.checked {
+  position: relative;
+  background: color-mix(in srgb, currentColor 75%, transparent);
+  border-color: transparent;
+}
+/* The tick, in the notes' background color (--editor-bg, set on .editor-host) */
+.cm-md-checkbox.checked::after {
+  content: '';
+  position: absolute;
+  left: 30%;
+  top: 8%;
+  width: 28%;
+  height: 58%;
+  border: solid var(--editor-bg, #000);
+  border-width: 0 0.13em 0.13em 0;
+  transform: rotate(45deg);
+}
+
+/* Horizontal rule: a thin line across the (hidden) --- */
+.cm-md-hr {
+  background: linear-gradient(color-mix(in srgb, currentColor 30%, transparent), color-mix(in srgb, currentColor 30%, transparent)) center / 100% 1px no-repeat;
+}
+
+/* Tables (editor/tables.ts). A wide table scrolls sideways inside its own box
+   rather than widening the notes. */
+.cm-md-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0.15em 0;
+}
+.cm-md-table {
+  border-collapse: collapse;
+  font-size: 0.95em;
+  line-height: 1.4;
+  /* Wrap between words only (the editor breaks anywhere): a squeezed table
+     scrolls instead of splitting words letter by letter */
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.cm-md-table th,
+.cm-md-table td {
+  padding: 0.25em 0.7em;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  text-align: left;
+  vertical-align: top;
+}
+.cm-md-table th {
+  font-weight: 700;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+.cm-md-table strong {
+  font-weight: 700;
+}
+.cm-md-table em {
+  font-style: italic;
+}
+.cm-md-table del {
+  opacity: 0.6;
+}
+.cm-md-table-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+.cm-md-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cm-md-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }

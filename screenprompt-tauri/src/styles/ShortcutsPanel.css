@@ -1,0 +1,84 @@
+/* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
+
+/* Shortcut cheat sheet: the Settings page layout, with rows of key caps. Keys sit
+   above the action on narrow windows and beside it on wider ones. */
+.shortcuts-panel .settings-content {
+  padding-bottom: 16px;
+}
+
+.shortcut-note {
+  margin-top: -4px;
+  padding-left: 4px;
+  color: var(--sp-label-3);
+  font-size: 11px;
+}
+
+.shortcut-list {
+  padding: 4px 14px;
+  gap: 0;
+}
+
+.shortcut-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+}
+.shortcut-row + .shortcut-row {
+  border-top: 1px solid var(--sp-separator);
+}
+
+@media (min-width: 380px) {
+  .shortcut-row {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .shortcut-keys {
+    flex: 0 0 46%;
+  }
+}
+
+.shortcut-keys {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.key-combo {
+  display: inline-flex;
+  flex-wrap: wrap; /* a long combo (Ctrl+Shift+PageDown) wraps in the narrowest window */
+  align-items: center;
+  gap: 2px;
+}
+
+.shortcut-keys kbd {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--sp-elevated-2);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+  color: var(--sp-label);
+  font-family: var(--sp-font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+}
+
+.key-plus,
+.key-or {
+  color: var(--sp-label-3);
+  font-size: 10px;
+}
+.key-or {
+  margin: 0 2px;
+}
+
+.shortcut-action {
+  color: var(--sp-label-2);
+  font-size: 12px;
+  line-height: 1.4;
+}

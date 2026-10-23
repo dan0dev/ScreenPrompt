@@ -16,13 +16,18 @@ import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { useConfig } from './hooks/useConfig';
 import { useUpdater } from './hooks/useUpdater';
 import { useGlobalHotkeys } from './hooks/useGlobalHotkeys';
+import { useUndoableReplace } from './hooks/useUndoableReplace';
 import { OPACITY_LEVELS, DEFAULT_CONFIG } from './types';
 import { hasReleaseNotes, showWhatsNew } from './utils/whatsNew';
+import { clampScrollSpeed } from './utils/autoScroll';
 import TitleBar from './components/TitleBar';
 import TextEditor from './components/TextEditor';
 import Settings from './components/Settings';
 import BottomBar from './components/BottomBar';
 import LockTip from './components/LockTip';
+import SpeedBadge from './components/SpeedBadge';
+import UndoBar from './components/UndoBar';
+import ShortcutsPanel from './components/ShortcutsPanel';
 import './styles/App.css';
 
 const appWindow = getCurrentWindow();
@@ -32,6 +37,7 @@ const TEXT_SAVE_DELAY_MS = 400;
 const GEOMETRY_SAVE_DELAY_MS = 400;
 const CLOSE_SAVE_TIMEOUT_MS = 500;
 const LOCK_TIP_MS = 8000;
+const SPEED_BADGE_MS = 1200;
 // Windows parks minimized windows here; never persist it as a real position
 const MINIMIZED_COORD = -32000;
 
@@ -51,12 +57,22 @@ async function isOnAnyMonitor(x: number, y: number): Promise<boolean> {
 function App() {
   const { config, setConfig, loading } = useConfig();
   const [showSettings, setShowSettings] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [opacityIndex, setOpacityIndex] = useState(1); // default 0.85 is index 1
   const quickEditRef = useRef(false);
+  // Bumped to make the editor switch to typing and take focus
+  const [editRequest, setEditRequest] = useState(0);
   const restoredRef = useRef(false);
   const [showLockTip, setShowLockTip] = useState(false);
+  const [autoScrolling, setAutoScrolling] = useState(false);
+  // Speed to show in the badge after a change; null when hidden
+  const [speedBadge, setSpeedBadge] = useState<number | null>(null);
+  // Local builds only: whether the window shows in screen capture. Never
+  // saved, so every launch starts hidden again.
+  const [captureVisible, setCaptureVisible] = useState(false);
+  const [captureNotice, setCaptureNotice] = useState(false);
 
   // Text being edited. null until the user types, so the saved text shows until then.
   const [draftText, setDraftText] = useState<string | null>(null);
@@ -170,6 +186,7 @@ function App() {
       await applyLock(false);
       quickEditRef.current = true;
       await appWindow.setFocus();
+      setEditRequest((n) => n + 1);
     } catch (error) {
       console.error('Quick edit failed:', error);
     }
@@ -322,10 +339,57 @@ function App() {
     };
   }, [setConfig]);
 
-  // Toggle settings panel
+  // Toggle settings panel (pauses auto-scroll: the notes aren't showing)
   const toggleSettings = useCallback(() => {
     setShowSettings((prev) => !prev);
+    setShowShortcuts(false);
+    setAutoScrolling(false);
   }, []);
+
+  // Shortcut list (F1). Settings has its own way in; F1 there does nothing, so
+  // it can't stack two copies. Locked, it couldn't be closed by mouse: skip it.
+  const toggleShortcuts = useCallback(() => {
+    if (showSettings || isLocked) return;
+    setShowShortcuts((prev) => !prev);
+    setAutoScrolling(false);
+  }, [showSettings, isLocked]);
+  const closeShortcuts = useCallback(() => setShowShortcuts(false), []);
+
+  // Auto-scroll: one key starts, pauses and resumes
+  const toggleAutoScroll = useCallback(() => setAutoScrolling((on) => !on), []);
+  const stopAutoScroll = useCallback(() => setAutoScrolling(false), []);
+
+  const changeScrollSpeed = useCallback(async (delta: number) => {
+    const speed = clampScrollSpeed(config.scrollSpeed + delta);
+    setSpeedBadge(speed);
+    await setConfig({ scrollSpeed: speed });
+  }, [config.scrollSpeed, setConfig]);
+  const scrollSlower = useCallback(() => changeScrollSpeed(-1), [changeScrollSpeed]);
+  const scrollFaster = useCallback(() => changeScrollSpeed(1), [changeScrollSpeed]);
+
+  const toggleCaptureVisible = useCallback(async () => {
+    if (!__LOCAL_BUILD__) return;
+    try {
+      await invoke('set_capture_visible', { window: appWindow, visible: !captureVisible });
+      setCaptureVisible(!captureVisible);
+      setCaptureNotice(true);
+    } catch (error) {
+      console.error('Failed to change capture visibility:', error);
+    }
+  }, [captureVisible]);
+
+  // Brief, so it's gone before the screenshot is taken
+  useEffect(() => {
+    if (!captureNotice) return;
+    const timer = window.setTimeout(() => setCaptureNotice(false), SPEED_BADGE_MS);
+    return () => window.clearTimeout(timer);
+  }, [captureNotice, captureVisible]);
+
+  useEffect(() => {
+    if (speedBadge === null) return;
+    const timer = window.setTimeout(() => setSpeedBadge(null), SPEED_BADGE_MS);
+    return () => window.clearTimeout(timer);
+  }, [speedBadge]);
 
   // Toggle visibility
   const toggleVisibility = useCallback(async () => {
@@ -451,19 +515,41 @@ function App() {
     await setConfig({ text: newText });
   }, [setConfig]);
 
-  // Paste and replace all text
+  // Clear and Paste-replace swap out all the notes at once, so they can be undone
+  // for a few seconds (the textarea's own undo doesn't cover them)
+  const { undoable, replaceUndoably, undo, dismiss: dismissUndo } = useUndoableReplace(text, replaceText);
+
+  // Paste and replace all text. An empty clipboard (or an image on it) leaves the
+  // notes alone rather than wiping them.
   const pasteReplace = useCallback(async () => {
     try {
-      await replaceText(await readText());
+      const clipboard = await readText();
+      if (clipboard) await replaceUndoably(clipboard, 'replaced');
     } catch (error) {
       console.error('Paste failed:', error);
     }
-  }, [replaceText]);
+  }, [replaceUndoably]);
 
   // Clear text
   const clearText = useCallback(async () => {
-    await replaceText('');
-  }, [replaceText]);
+    await replaceUndoably('', 'cleared');
+  }, [replaceUndoably]);
+
+  // Ctrl+Z undoes the Clear / Paste-replace while that's on offer. Capture phase,
+  // so it beats the textarea's own undo (which knows nothing about it). Matched by
+  // the letter, not the key position: Z and Y swap places on QWERTZ layouts.
+  useEffect(() => {
+    if (!undoable) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        e.stopPropagation();
+        undo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [undoable, undo]);
 
   // Register global hotkeys
   useGlobalHotkeys({
@@ -484,12 +570,19 @@ function App() {
     copyAll,
     pasteReplace,
     clearText,
-  }, resolvedLayout);
+    toggleAutoScroll,
+    scrollSlower,
+    scrollFaster,
+    toggleShortcuts,
+    toggleCaptureVisible,
+  }, resolvedLayout, autoScrolling);
 
-  // Track text as it's typed (saved after a short pause, or on close)
+  // Track text as it's typed (saved after a short pause, or on close). Typing
+  // ends the chance to undo a Clear / Paste-replace: Ctrl+Z is the editor's again.
   const updateText = (newText: string) => {
     draftRef.current = newText;
     setDraftText(newText);
+    dismissUndo();
   };
 
   // Handle update badge click (user dismissed the auto-popup earlier)
@@ -506,12 +599,13 @@ function App() {
   // uniformly opaque at the OS level (capture-exclusion uses LWA_ALPHA), so
   // real see-through isn't available — this dims the overlay, matching the
   // historical behavior. Settings always renders fully opaque for legibility.
-  const appStyle = showSettings
+  const panelOpen = showSettings || showShortcuts;
+  const appStyle = panelOpen
     ? undefined
     : { backgroundColor: config.bgColor, opacity: config.opacity };
 
   return (
-    <div className={`app${showSettings ? ' settings-open' : ''}`} style={appStyle}>
+    <div className={`app${panelOpen ? ' settings-open' : ''}`} style={appStyle}>
       {showSettings ? (
         <Settings
           config={config}
@@ -521,7 +615,10 @@ function App() {
           updateAvailable={updater.updateAvailable}
           updateVersion={updater.updateVersion}
           onUpdateInstall={handleUpdateClick}
+          layout={resolvedLayout}
         />
+      ) : showShortcuts ? (
+        <ShortcutsPanel layout={resolvedLayout} onClose={closeShortcuts} />
       ) : (
         <>
           <TitleBar
@@ -533,7 +630,33 @@ function App() {
             onUpdateClick={handleUpdateClick}
           />
 
-          <TextEditor config={config} text={text} onTextChange={updateText} />
+          <TextEditor
+            config={config}
+            text={text}
+            onTextChange={updateText}
+            isLocked={isLocked}
+            editRequest={editRequest}
+            autoScroll={autoScrolling}
+            onAutoScrollStop={stopAutoScroll}
+          />
+
+          {speedBadge !== null && <SpeedBadge speed={speedBadge} />}
+
+          {captureNotice && (
+            // Same pill as the speed badge; local builds only
+            <div className="speed-badge" role="status" key={String(captureVisible)}>
+              <strong>{captureVisible ? 'Visible' : 'Hidden'}</strong>
+              <span>{captureVisible ? 'to screen capture (local build)' : 'from screen capture'}</span>
+            </div>
+          )}
+
+          {undoable && (
+            <UndoBar
+              action={undoable.action}
+              onUndo={undo}
+              aboveFormatBar={config.markdown && config.showFormatBar && !isLocked}
+            />
+          )}
 
           {showLockTip && isLocked && <LockTip />}
 
@@ -543,6 +666,9 @@ function App() {
             isLocked={isLocked}
             onToggleLock={toggleLock}
             onClearText={clearText}
+            autoScrolling={autoScrolling}
+            onToggleAutoScroll={toggleAutoScroll}
+            onScrollSpeed={changeScrollSpeed}
           />
         </>
       )}

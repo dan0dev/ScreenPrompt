@@ -103,6 +103,15 @@ Before submitting a PR, verify:
 - [ ] Click-through mode works and can be unlocked
 - [ ] No errors in console output
 
+### Screenshots of ScreenPrompt itself
+
+The overlay is hidden from screen capture, so it can't screenshot itself. In a local build (`npm run
+tauri dev`, or one you build and install yourself; these show a DEV tag), `Ctrl+Shift+F12` makes it
+visible to capture until you press it again or restart. The official release, built by GitHub Actions,
+doesn't have the shortcut, and its Rust command refuses too (both check `GITHUB_ACTIONS` at build
+time). Running `tauri dev` next to the installed app? Close one: they share settings, notes and
+global shortcuts.
+
 ### Test with Screen Capture
 
 Test capture exclusion with:

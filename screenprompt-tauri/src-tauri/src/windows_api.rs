@@ -9,6 +9,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 // Windows 10 Display Affinity constants
+const WDA_NONE: u32 = 0x00000000;
 const WDA_EXCLUDEFROMCAPTURE: u32 = 0x00000011;
 
 // External Windows API functions
@@ -58,6 +59,18 @@ pub fn apply_capture_exclusion(window: WebviewWindow) -> Result<(), String> {
 
         Ok(())
     }
+}
+
+/// Show the window in screen capture again (visible = true), or hide it as at
+/// startup. Only reachable from local builds, never the official release; see lib.rs.
+pub fn set_capture_visible(window: WebviewWindow, visible: bool) -> Result<(), String> {
+    let hwnd_val = window.hwnd().map_err(|e| format!("Failed to get HWND: {}", e))?.0;
+    let hwnd = HWND(hwnd_val as *mut core::ffi::c_void);
+    let affinity = if visible { WDA_NONE } else { WDA_EXCLUDEFROMCAPTURE };
+    if unsafe { SetWindowDisplayAffinity(hwnd, affinity) } == 0 {
+        return Err("SetWindowDisplayAffinity failed".to_string());
+    }
+    Ok(())
 }
 
 /// Toggle click-through (mouse pass-through) mode

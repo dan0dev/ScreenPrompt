@@ -1,0 +1,61 @@
+/* MIT License - Copyright (c) 2026 ScreenPrompt Contributors */
+
+/* Formatting strip, opened from the bottom bar. Same glass as the bottom bar,
+   joined to it by a hairline. */
+.format-bar {
+  flex-shrink: 0;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  user-select: none;
+
+  background: var(--sp-glass-fill);
+  backdrop-filter: var(--sp-glass-blur);
+  -webkit-backdrop-filter: var(--sp-glass-blur);
+  box-shadow: inset 0 1px 0 var(--sp-glass-rim);
+  border-bottom: 1px solid var(--sp-separator);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .format-bar {
+    background: var(--sp-glass-fill-strong);
+  }
+}
+
+.format-button {
+  flex-shrink: 0;
+}
+
+/* Fit all eight buttons down to the 200px minimum window width */
+@media (max-width: 240px) {
+  .format-bar {
+    gap: 0;
+    padding: 0 4px;
+  }
+  .format-bar .format-button {
+    width: 22px;
+  }
+}
+
+.format-glyph {
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 600;
+}
+.format-bold {
+  font-weight: 800;
+}
+.format-italic {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 14px;
+}
+.format-strike {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}

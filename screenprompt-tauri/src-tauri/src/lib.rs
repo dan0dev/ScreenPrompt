@@ -37,6 +37,24 @@ fn apply_capture_exclusion(window: WebviewWindow) -> Result<(), String> {
     windows_api::apply_capture_exclusion(window)
 }
 
+/// Official releases are built by GitHub Actions, which sets GITHUB_ACTIONS=true;
+/// read at compile time (build.rs rebuilds when it changes)
+fn official_release() -> bool {
+    option_env!("GITHUB_ACTIONS") == Some("true")
+}
+
+/// Local builds only (dev, or built on your own PC), for screenshots of the app
+/// itself: the official release refuses, so the app users install can never be
+/// made to show up in a screen share
+#[tauri::command]
+#[cfg(windows)]
+fn set_capture_visible(window: WebviewWindow, visible: bool) -> Result<(), String> {
+    if official_release() {
+        return Err("Not available in official releases".to_string());
+    }
+    windows_api::set_capture_visible(window, visible)
+}
+
 #[tauri::command]
 #[cfg(windows)]
 fn set_click_through(window: WebviewWindow, enabled: bool) -> Result<(), String> {
@@ -179,6 +197,7 @@ pub fn run() {
             show_ethical_notice,
             check_windows_version,
             apply_capture_exclusion,
+            set_capture_visible,
             set_click_through,
             install_scroll_hook,
             uninstall_scroll_hook,

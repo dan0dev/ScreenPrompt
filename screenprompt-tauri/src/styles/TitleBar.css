@@ -36,6 +36,8 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .title-icon {
@@ -51,6 +53,10 @@
   font-weight: 600;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  /* Shortens ("ScreenPr…") rather than sliding under the buttons */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .title-bar-buttons {
@@ -122,4 +128,44 @@
 }
 .version-badge .ok-dot {
   color: var(--sp-success);
+}
+
+/* Version next to the name, and a DEV tag on builds that aren't official releases */
+.title-version {
+  color: var(--sp-label-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dev-tag {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 159, 10, 0.18);
+  color: var(--sp-warning);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* Short forms so the bar still fits narrow windows */
+.update-short {
+  display: none;
+}
+@media (max-width: 330px) {
+  .up-to-date-text {
+    display: none;
+  }
+  .update-long {
+    display: none;
+  }
+  .update-short {
+    display: inline;
+  }
+}
+@media (max-width: 250px) {
+  .title-version {
+    display: none;
+  }
 }

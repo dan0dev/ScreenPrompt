@@ -104,6 +104,18 @@
   flex: 1;
 }
 
+/* Formatting toolbar toggle: accent tint while the toolbar is open */
+.format-toggle.active {
+  color: var(--sp-accent);
+  background-color: var(--sp-accent-soft);
+}
+@media (hover: hover) and (pointer: fine) {
+  .format-toggle.active:hover {
+    color: var(--sp-accent-hover);
+    background-color: rgba(10, 132, 255, 0.26);
+  }
+}
+
 /* Lock is a persistent toggle; its "on" (locked) state is distinct from hover */
 .lock-button.locked {
   color: var(--sp-warning);
@@ -113,5 +125,75 @@
   .lock-button.locked:hover {
     color: var(--sp-warning);
     background-color: rgba(255, 159, 10, 0.26);
+  }
+}
+
+/* Auto-scroll: play/pause plus a speed stepper. Green while running, like the
+   lock's orange while locked. */
+.scroll-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.scroll-toggle.active {
+  color: var(--sp-success);
+  background-color: rgba(48, 209, 88, 0.16);
+}
+@media (hover: hover) and (pointer: fine) {
+  .scroll-toggle.active:hover {
+    color: var(--sp-success);
+    background-color: rgba(48, 209, 88, 0.26);
+  }
+}
+
+.scroll-speed {
+  display: flex;
+  align-items: center;
+}
+.scroll-speed .control-button {
+  width: 20px;
+}
+.control-button:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.speed-label {
+  min-width: 16px;
+  text-align: center;
+  color: var(--sp-label-2);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Shown instead of the controls while locked and scrolling */
+.scroll-status {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+  color: var(--sp-success);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.scroll-status svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* Narrow windows: drop the speed stepper (keys and Settings still change it),
+   then the font size stepper */
+@media (max-width: 300px) {
+  .scroll-speed {
+    display: none;
+  }
+}
+@media (max-width: 240px) {
+  .font-size-controls {
+    display: none;
   }
 }

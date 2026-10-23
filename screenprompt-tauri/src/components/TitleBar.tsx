@@ -24,19 +24,27 @@ function TitleBar({ onSettingsClick, checked, updateAvailable, updateVersion, ap
       <div data-tauri-drag-region className="title-left">
         <img src="/icon.png" alt="SP" className="title-icon" />
         <span data-tauri-drag-region className="title">ScreenPrompt</span>
+        {appVersion && <span data-tauri-drag-region className="title-version">{appVersion}</span>}
+        {__LOCAL_BUILD__ && (
+          <span data-tauri-drag-region className="dev-tag" title="Built locally, not an official release">
+            DEV
+          </span>
+        )}
       </div>
       <div className="title-bar-buttons">
         {updateAvailable ? (
           <button
             className="title-bar-button update-badge"
             onClick={onUpdateClick}
-            title={`Update available: v${updateVersion}`}
+            title={`Install v${updateVersion}`}
           >
-            v{updateVersion} available
+            <span className="update-long">New version available</span>
+            <span className="update-short">Update</span>
           </button>
         ) : checked ? (
-          <span className="version-badge" title="Up to date">
-            v{appVersion} <span className="ok-dot" aria-hidden="true">✓</span>
+          <span className="version-badge" title={`v${appVersion} is the latest version`}>
+            <span className="ok-dot" aria-hidden="true">✓</span>
+            <span className="up-to-date-text">Up to date</span>
           </span>
         ) : null}
         <button className="title-bar-button settings" onClick={onSettingsClick} title="Settings" aria-label="Settings">

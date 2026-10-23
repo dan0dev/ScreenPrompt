@@ -12,6 +12,8 @@
 <p align="center">
   <a href="../../releases/latest"><b>Download for Windows</b></a>
   &nbsp;·&nbsp;
+  <a href="../../discussions/51">Share your story</a>
+  &nbsp;·&nbsp;
   <a href="../../issues/new?template=feature_request.md">Request a feature</a>
   &nbsp;·&nbsp;
   <a href="../../issues/new?template=bug_report.md">Report a bug</a>
@@ -57,6 +59,8 @@ added (see [Project scope](CONTRIBUTING.md#project-scope)).
 - **Capture-proof**: excluded from screen shares and recordings
 - **Always on top**: adjustable transparency and click-through lock
 - **Keyboard-first**: every action has a shortcut
+- **Formatted notes**: paste or write Markdown and see headings, **bold** and lists while you present
+- **Auto-scroll**: your notes scroll by themselves at a speed you set, teleprompter style
 - **Make it yours**: font, size, colors, and position presets
 - **Private**: your notes never leave your PC; no telemetry, no data collection. The only network request is an update check against GitHub releases, which you can turn off in Settings
 
@@ -76,6 +80,8 @@ Requires Windows 10 (build 2004+) or Windows 11.
 | `Ctrl+Shift+L` | Lock (click-through) |
 | `Esc` | Unlock (or Ctrl+click the lock icon) |
 | `Ctrl+Shift+E` | Edit text |
+| `Ctrl+Shift+Space` | Start / pause / resume auto-scroll |
+| `F1` | All shortcuts (while ScreenPrompt is focused) |
 | `Ctrl+Shift+F1` | Panic close, works even when locked |
 
 ## Locked mode
@@ -86,6 +92,33 @@ Lock the overlay (`Ctrl+Shift+L` or the lock icon) when you're presenting, and i
 - **To scroll your notes**, hold `Ctrl` and scroll over the overlay.
 - **To unlock**, press `Esc` or `Ctrl`+click the lock icon. The bottom bar shows this while locked.
 - **To edit quickly**, press `Ctrl+Shift+E`: it unlocks until you click away, then locks again.
+
+## Auto-scroll
+
+Press `Ctrl+Shift+Space` (or the ▶ button) and your notes scroll by themselves. Press it again to
+pause, and again to carry on. It works from any app, even while the overlay is locked.
+
+- **Speed**: `Ctrl+Shift+,` slower, `Ctrl+Shift+.` faster while it's scrolling, or the − / +
+  next to the ▶ button, or Settings. Speed is in lines per minute, so it's the same pace at any
+  font size.
+- **It stops** at the end of your notes; start it again to go back to the top.
+- **Typing pauses it**, and scrolling with the wheel (or `Ctrl`+wheel while locked) just moves
+  your place: it carries on from there.
+
+## Formatting
+
+ScreenPrompt formats your notes as you type, using Markdown: `# Heading`, `**bold**`, `*italic*`,
+`~~strikethrough~~`, `- lists`, `1. numbered lists`, `- [ ] tasks`, `> quotes`, `` `code` `` and
+`| tables |`. The
+markers (`**`, `#`...) only show on the line you're typing on, so your notes always read cleanly;
+while the overlay is locked they're hidden everywhere.
+
+- **Bold / italic**: `Ctrl+B` / `Ctrl+I` while typing
+- **Formatting toolbar**: the **T** button in the bottom bar opens buttons for every style
+- **Links**: `Ctrl`+click opens a link in your browser
+- **Tasks**: click a checkbox to tick it
+- **Prompt tags** like `<context>` show as you typed them
+- **Prefer plain text?** Turn off *Format text (Markdown)* in Settings
 
 <details>
 <summary><b>All shortcuts</b></summary>
@@ -106,8 +139,8 @@ don't override the same keys in your other apps:
 | `Ctrl+Shift+Home` | Reset font size |
 | `Ctrl+Shift+S` | Settings |
 | `Ctrl+Shift+C` | Copy all text |
-| `Ctrl+Shift+V` | Paste and replace all |
-| `Ctrl+Shift+Delete` | Clear all text |
+| `Ctrl+Shift+V` | Paste and replace all (undo with `Ctrl+Z` for a few seconds) |
+| `Ctrl+Shift+Delete` | Clear all text (undo with `Ctrl+Z` for a few seconds) |
 | `Ctrl+Shift+Arrows` | Nudge window 20px |
 | `Ctrl+Shift+R` | Reset size and position |
 
@@ -174,6 +207,12 @@ requested by the user or the person installing or operating it, with these excep
 - **WebView2 during installation**: if your PC doesn't have Microsoft Edge WebView2 (Windows 11
   and most Windows 10 PCs already do), the installer downloads it from Microsoft. This is covered
   by the [Microsoft Privacy Statement](https://privacy.microsoft.com/privacystatement).
+
+## Share your story
+
+How do you use ScreenPrompt? Tell us in [this discussion](../../discussions/51): what you use it
+for, how it feels, and what's missing. Many of the stories will appear on the upcoming
+ScreenPrompt website (only if you say it's OK).
 
 ## Code signing policy
 
