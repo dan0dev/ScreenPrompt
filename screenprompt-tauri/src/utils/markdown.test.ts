@@ -186,11 +186,13 @@ describe('renderMarkdown, harder input', () => {
     expect(html).toContain('line one<br>line two');
   });
 
-  it('renders long notes quickly', () => {
+  // A generous budget: this guards against an algorithmic blow-up, not exact speed
+  // (which depends on the machine and what else it's doing); the browser tests time it
+  it('renders long notes without blowing up', () => {
     const big = Array.from({ length: 2000 }, (_, i) => `## Part ${i}\n\nSome **bold** text and a list:\n- a\n- b`).join('\n\n');
     const t = performance.now();
     renderMarkdown(big);
-    expect(performance.now() - t).toBeLessThan(1500);
+    expect(performance.now() - t).toBeLessThan(3000);
   });
 });
 

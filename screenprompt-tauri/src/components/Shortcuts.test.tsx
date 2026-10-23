@@ -51,7 +51,7 @@ describe.each(['en', 'hu'])('the cheat sheet matches the real shortcuts (%s layo
     for (const key of registered) {
       const shown = display(key);
       if (/\+[1-9]$/.test(shown)) {
-        // Position presets are listed by example (7, 5, 3); check the modifier
+        // Position presets are listed as one "1–9" entry; check the modifier
         expect(shown.startsWith(presetModifier + '+')).toBe(true);
         expect(anywhere.some((k) => k.startsWith(presetModifier + '+'))).toBe(true);
       } else {
@@ -66,7 +66,11 @@ describe.each(['en', 'hu'])('the cheat sheet matches the real shortcuts (%s layo
     const shown = [...registered].map(display);
     for (const key of listed(layout, 'Anywhere')) {
       if (key === 'Esc') continue; // Rust keyboard hook while locked, not a registered shortcut
-      expect(shown, `${key} is on the sheet but not registered`).toContain(key);
+      // "Ctrl+Alt+1–9" stands for nine keys
+      const keys = key.endsWith('1–9')
+        ? Array.from({ length: 9 }, (_, i) => key.replace('1–9', String(i + 1)))
+        : [key];
+      for (const k of keys) expect(shown, `${k} is on the sheet but not registered`).toContain(k);
     }
   });
 });

@@ -48,9 +48,9 @@
 
 .key-combo {
   display: inline-flex;
+  flex-wrap: wrap; /* a long combo (Ctrl+Shift+PageDown) wraps in the narrowest window */
   align-items: center;
   gap: 2px;
-  white-space: nowrap;
 }
 
 .shortcut-keys kbd {

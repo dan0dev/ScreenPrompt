@@ -35,7 +35,7 @@ export function shortcutGroups(layout: string): ShortcutGroup[] {
         { keys: ['Ctrl+Shift+Space'], action: 'Start / pause / resume auto-scroll' },
         { keys: ['Ctrl+Shift+,', 'Ctrl+Shift+.'], action: 'Slower / faster (while auto-scrolling)' },
         { keys: ['Ctrl+Shift+O'], action: 'Cycle opacity' },
-        { keys: [`${pos}+7`, `${pos}+5`, `${pos}+3`], action: 'Move to a screen spot: 1–9 like a numpad (7 top left, 5 center, 3 bottom right)' },
+        { keys: [`${pos}+1–9`], action: 'Move to a screen spot, laid out like a numpad (7 top left, 3 bottom right)' },
         { keys: ['Ctrl+Shift+Q'], action: 'Quit' },
         { keys: ['Ctrl+Shift+F1'], action: 'Panic close' },
       ],
