@@ -3,12 +3,18 @@
 /* The reading/content layer: flat and fully opaque. No glass, no shadow here. */
 .text-editor {
   flex: 1;
+  min-height: 0;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-.text-area {
+/* The plain editor and the formatted view share one box, so switching between
+   them doesn't move the text */
+.text-area,
+.markdown-view {
   flex: 1;
+  min-height: 0;
   border: none;
   outline: none;
   resize: none;
@@ -21,23 +27,128 @@
   cursor: text;
 }
 
-.text-area::-webkit-scrollbar {
+.text-area::-webkit-scrollbar,
+.markdown-view::-webkit-scrollbar {
   width: 8px;
 }
-.text-area::-webkit-scrollbar-track {
+.text-area::-webkit-scrollbar-track,
+.markdown-view::-webkit-scrollbar-track {
   background: transparent;
 }
-.text-area::-webkit-scrollbar-thumb {
+.text-area::-webkit-scrollbar-thumb,
+.markdown-view::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.18);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-.text-area::-webkit-scrollbar-thumb:hover {
+.text-area::-webkit-scrollbar-thumb:hover,
+.markdown-view::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
   background-clip: padding-box;
 }
 
 .text-area::placeholder {
   color: var(--sp-label-3);
+}
+
+.text-area[hidden] {
+  display: none;
+}
+
+/* Formatted notes. Sizes are in em, so they follow the font size setting; colors
+   derive from the text color, so they suit any color the user picks.
+   Each top-level block sits in a source-offset wrapper (see renderMarkdown) that
+   shouldn't affect layout. */
+.markdown-view [data-src] {
+  display: contents;
+}
+.markdown-view [data-src] + [data-src] > *,
+.markdown-view li > p + p {
+  margin-top: 0.8em;
+}
+
+.markdown-view h1,
+.markdown-view h2,
+.markdown-view h3,
+.markdown-view h4,
+.markdown-view h5,
+.markdown-view h6 {
+  font-weight: 700;
+  line-height: 1.3;
+}
+.markdown-view h1 { font-size: 1.5em; }
+.markdown-view h2 { font-size: 1.3em; }
+.markdown-view h3 { font-size: 1.15em; }
+.markdown-view h4,
+.markdown-view h5,
+.markdown-view h6 { font-size: 1em; }
+
+.markdown-view strong {
+  font-weight: 700;
+}
+.markdown-view del {
+  opacity: 0.6;
+}
+
+.markdown-view ul,
+.markdown-view ol {
+  padding-left: 1.4em;
+}
+.markdown-view li + li,
+.markdown-view li > ul,
+.markdown-view li > ol {
+  margin-top: 0.2em;
+}
+.markdown-view input[type="checkbox"] {
+  margin-right: 0.4em;
+  vertical-align: -0.1em;
+}
+
+.markdown-view blockquote {
+  padding-left: 0.8em;
+  border-left: 3px solid color-mix(in srgb, currentColor 35%, transparent);
+  opacity: 0.85;
+}
+
+.markdown-view code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.markdown-view pre {
+  padding: 0.6em 0.8em;
+  border-radius: 6px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  overflow-x: auto;
+  white-space: pre;
+}
+.markdown-view pre code {
+  padding: 0;
+  background: none;
+}
+
+.markdown-view a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 50%, transparent);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.markdown-view hr {
+  border: none;
+  border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.markdown-view table {
+  border-collapse: collapse;
+}
+.markdown-view th,
+.markdown-view td {
+  padding: 0.25em 0.6em;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  text-align: left;
 }

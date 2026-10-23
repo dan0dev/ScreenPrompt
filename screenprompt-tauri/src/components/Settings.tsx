@@ -25,6 +25,7 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
   const [fontColor, setFontColor] = useState(config.fontColor);
   const [bgColor, setBgColor] = useState(config.bgColor);
   const [autoCheckUpdates, setAutoCheckUpdates] = useState(config.autoCheckUpdates);
+  const [markdown, setMarkdown] = useState(config.markdown);
   const [keyboardLayout, setKeyboardLayout] = useState(config.keyboardLayout);
 
   const handleOpacityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,6 +67,7 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
       bgColor,
       autoCheckUpdates,
       keyboardLayout,
+      markdown,
     });
     onClose();
   };
@@ -208,6 +210,17 @@ function Settings({ config, setConfig, onClose, appVersion, updateAvailable, upd
         <section className="settings-section">
           <span className="section-title">Behavior</span>
           <div className="section-card">
+            <label className="toggle" htmlFor="markdown">
+              <span className="toggle-text">Format text (Markdown)</span>
+              <input
+                id="markdown"
+                type="checkbox"
+                checked={markdown}
+                onChange={(e) => setMarkdown(e.target.checked)}
+              />
+              <span className="toggle-track" aria-hidden="true" />
+            </label>
+
             <label className="toggle" htmlFor="auto-updates">
               <span className="toggle-text">Check for updates on startup</span>
               <input

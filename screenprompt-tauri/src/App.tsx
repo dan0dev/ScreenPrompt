@@ -55,6 +55,8 @@ function App() {
   const [isVisible, setIsVisible] = useState(true);
   const [opacityIndex, setOpacityIndex] = useState(1); // default 0.85 is index 1
   const quickEditRef = useRef(false);
+  // Bumped to make the editor switch to typing and take focus
+  const [editRequest, setEditRequest] = useState(0);
   const restoredRef = useRef(false);
   const [showLockTip, setShowLockTip] = useState(false);
 
@@ -170,6 +172,7 @@ function App() {
       await applyLock(false);
       quickEditRef.current = true;
       await appWindow.setFocus();
+      setEditRequest((n) => n + 1);
     } catch (error) {
       console.error('Quick edit failed:', error);
     }
@@ -533,7 +536,13 @@ function App() {
             onUpdateClick={handleUpdateClick}
           />
 
-          <TextEditor config={config} text={text} onTextChange={updateText} />
+          <TextEditor
+            config={config}
+            text={text}
+            onTextChange={updateText}
+            isLocked={isLocked}
+            editRequest={editRequest}
+          />
 
           {showLockTip && isLocked && <LockTip />}
 

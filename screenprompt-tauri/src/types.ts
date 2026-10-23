@@ -30,6 +30,11 @@ export interface Config {
 
   // Whether the one-time locked-mode tip (LockTip) has been shown
   lockTipShown: boolean;
+
+  // Show notes formatted as Markdown when not typing (off: always plain text)
+  markdown: boolean;
+  // Whether the formatting toolbar (bold, lists, ...) is open
+  showFormatBar: boolean;
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -49,6 +54,8 @@ export const DEFAULT_CONFIG: Config = {
   keyboardLayout: 'auto',
   lastSeenVersion: '',
   lockTipShown: false,
+  markdown: true,
+  showFormatBar: false,
 };
 
 export const OPACITY_LEVELS = [1.0, 0.85, 0.70, 0.50];

@@ -104,6 +104,18 @@
   flex: 1;
 }
 
+/* Formatting toolbar toggle: accent tint while the toolbar is open */
+.format-toggle.active {
+  color: var(--sp-accent);
+  background-color: var(--sp-accent-soft);
+}
+@media (hover: hover) and (pointer: fine) {
+  .format-toggle.active:hover {
+    color: var(--sp-accent-hover);
+    background-color: rgba(10, 132, 255, 0.26);
+  }
+}
+
 /* Lock is a persistent toggle; its "on" (locked) state is distinct from hover */
 .lock-button.locked {
   color: var(--sp-warning);

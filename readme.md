@@ -44,6 +44,7 @@ added (see [Project scope](CONTRIBUTING.md#project-scope)).
 - **Capture-proof**: excluded from screen shares and recordings
 - **Always on top**: adjustable transparency and click-through lock
 - **Keyboard-first**: every action has a shortcut
+- **Formatted notes**: paste or write Markdown and see headings, **bold** and lists while you present
 - **Make it yours**: font, size, colors, and position presets
 - **Private**: your notes never leave your PC; no telemetry, no data collection. The only network request is an update check against GitHub releases, which you can turn off in Settings
 
@@ -73,6 +74,17 @@ Lock the overlay (`Ctrl+Shift+L` or the lock icon) when you're presenting, and i
 - **To scroll your notes**, hold `Ctrl` and scroll over the overlay.
 - **To unlock**, press `Esc` or `Ctrl`+click the lock icon. The bottom bar shows this while locked.
 - **To edit quickly**, press `Ctrl+Shift+E`: it unlocks until you click away, then locks again.
+
+## Formatting
+
+ScreenPrompt reads your notes as Markdown: `# Heading`, `**bold**`, `*italic*`, `~~strikethrough~~`,
+`- lists`, `1. numbered lists`, `> quotes` and `` `code` ``. While you type you see the plain text;
+click away or lock the overlay and it shows formatted. Click the formatted text to edit that spot.
+
+- **Bold / italic**: `Ctrl+B` / `Ctrl+I` while typing
+- **Formatting toolbar**: the **T** button in the bottom bar opens buttons for every style
+- **Prompt tags** like `<context>` show as you typed them
+- **Prefer plain text?** Turn off *Format text (Markdown)* in Settings
 
 <details>
 <summary><b>All shortcuts</b></summary>

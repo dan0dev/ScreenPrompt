@@ -45,6 +45,12 @@ const ClearIcon = () => (
   </svg>
 );
 
+const FormatIcon = () => (
+  <svg {...ICON}>
+    <path d="M4 7V4h16v3M9 20h6M12 4v16" />
+  </svg>
+);
+
 function BottomBar({ config, setConfig, isLocked, onToggleLock, onClearText }: BottomBarProps) {
   const lockButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -115,6 +121,20 @@ function BottomBar({ config, setConfig, isLocked, onToggleLock, onClearText }: B
           <button className="control-button clear-button" onClick={onClearText} title="Clear all text" aria-label="Clear all text">
             <ClearIcon />
           </button>
+
+          {config.markdown && (
+            <button
+              className={`control-button format-toggle${config.showFormatBar ? ' active' : ''}`}
+              // Don't take focus: the formatting buttons act on the editor's selection
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setConfig({ showFormatBar: !config.showFormatBar })}
+              title={config.showFormatBar ? 'Hide formatting' : 'Show formatting'}
+              aria-label="Formatting toolbar"
+              aria-pressed={config.showFormatBar}
+            >
+              <FormatIcon />
+            </button>
+          )}
         </>
       )}
 
