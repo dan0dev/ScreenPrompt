@@ -27,9 +27,22 @@
 
 ![ScreenPrompt demo](hero-video-main.gif)
 
-| You see | They see |
-|:---:|:---:|
-| ![Your screen](https://i.imgur.com/wAmlwOe.png) | ![Screen share](https://i.imgur.com/G7RpK9e.png) |
+
+<table align="center">
+  <tr>
+    <th align="center">You see</th>
+    <th align="center">They see</th>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://i.imgur.com/wAmlwOe.png" width="400">
+    </td>
+    <td align="center">
+      <img src="https://i.imgur.com/G7RpK9e.png" width="400">
+    </td>
+  </tr>
+</table>
+
 
 ## Why
 
