@@ -93,32 +93,10 @@ Lock the overlay (`Ctrl+Shift+L` or the lock icon) when you're presenting, and i
 - **To unlock**, press `Esc` or `Ctrl`+click the lock icon. The bottom bar shows this while locked.
 - **To edit quickly**, press `Ctrl+Shift+E`: it unlocks until you click away, then locks again.
 
-## Auto-scroll
+## Auto-scroll and formatting
 
-Press `Ctrl+Shift+Space` (or the ▶ button) and your notes scroll by themselves. Press it again to
-pause, and again to carry on. It works from any app, even while the overlay is locked.
-
-- **Speed**: `Ctrl+Shift+,` slower, `Ctrl+Shift+.` faster while it's scrolling, or the − / +
-  next to the ▶ button, or Settings. Speed is in lines per minute, so it's the same pace at any
-  font size.
-- **It stops** at the end of your notes; start it again to go back to the top.
-- **Typing pauses it**, and scrolling with the wheel (or `Ctrl`+wheel while locked) just moves
-  your place: it carries on from there.
-
-## Formatting
-
-ScreenPrompt formats your notes as you type, using Markdown: `# Heading`, `**bold**`, `*italic*`,
-`~~strikethrough~~`, `- lists`, `1. numbered lists`, `- [ ] tasks`, `> quotes`, `` `code` `` and
-`| tables |`. The
-markers (`**`, `#`...) only show on the line you're typing on, so your notes always read cleanly;
-while the overlay is locked they're hidden everywhere.
-
-- **Bold / italic**: `Ctrl+B` / `Ctrl+I` while typing
-- **Formatting toolbar**: the **T** button in the bottom bar opens buttons for every style
-- **Links**: `Ctrl`+click opens a link in your browser
-- **Tasks**: click a checkbox to tick it
-- **Prompt tags** like `<context>` show as you typed them
-- **Prefer plain text?** Turn off *Format text (Markdown)* in Settings
+- **Auto-scroll**: `Ctrl+Shift+Space` (or ▶) starts and pauses it, and `Ctrl+Shift+,` / `.` change the speed.
+- **Formatting**: Markdown formats as you type. Use `Ctrl+B` / `Ctrl+I` or the **T** button, and turn it off in Settings if you prefer plain text.
 
 <details>
 <summary><b>All shortcuts</b></summary>
