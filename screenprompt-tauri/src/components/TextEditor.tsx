@@ -1,14 +1,18 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-shell';
+import { Annotation, Compartment, EditorState, Prec, Transaction } from '@codemirror/state';
+import { EditorView, keymap, placeholder } from '@codemirror/view';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import type { Config } from '../types';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { scrollPixelsPerSecond } from '../utils/autoScroll';
-import { renderMarkdown, sourceOffsetFor } from '../utils/markdown';
-import { toggleBlock, toggleInline, type BlockStyle, type Edit, type InlineStyle } from '../utils/formatting';
-import FormatBar, { type FormatStyle } from './FormatBar';
+import { markdown } from '../editor/markdownLanguage';
+import { livePreview, setConcealAll } from '../editor/livePreview';
+import { formatTransaction, linkAt, type FormatStyle } from '../editor/commands';
+import FormatBar from './FormatBar';
 import '../styles/TextEditor.css';
 
 interface TextEditorProps {
@@ -16,204 +20,173 @@ interface TextEditorProps {
   text: string;
   onTextChange: (text: string) => void;
   isLocked: boolean;
-  // Bumped to switch to editing and focus the text (quick edit)
+  // Bumped to focus the editor (quick edit)
   editRequest: number;
   // Auto-scroll is running; it stops itself at the end, or when typing starts
   autoScroll: boolean;
   onAutoScrollStop: () => void;
 }
 
-// Focus the editor once it's showing: at a caret position, at the first paragraph
-// that was on screen ('visible'), or where it last was (null); then optionally run
-// a follow-up such as a formatting command
-interface FocusRequest {
-  caret: number | 'visible' | null;
-  then?: (el: HTMLTextAreaElement) => void;
-}
-
 const PLACEHOLDER_TEXT = 'Enter your prompt here...';
 const WHEEL_DELTA = 120; // one wheel notch
 const LINES_PER_NOTCH = 3; // Windows default
-const INLINE_STYLES: readonly string[] = ['bold', 'italic', 'strike', 'code'] satisfies InlineStyle[];
 
-// Apply a formatting edit through the browser's editing commands, so Ctrl+Z undoes
-// it like typing. execCommand is deprecated but still the only way to do that in a
-// textarea; if it ever stops working, fall back to a plain (non-undoable) change.
-function applyEdit(el: HTMLTextAreaElement, edit: Edit) {
-  el.focus();
-  el.setSelectionRange(edit.start, edit.end);
-  const done = edit.insert
-    ? document.execCommand('insertText', false, edit.insert)
-    : edit.start === edit.end || document.execCommand('delete');
-  if (!done) {
-    el.setRangeText(edit.insert, edit.start, edit.end);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-  el.setSelectionRange(edit.selStart, edit.selEnd);
+// Marks changes that come from App (Clear, Paste-replace, Undo of those), so they
+// aren't reported back as typing
+const fromProps = Annotation.define<boolean>();
+
+const markdownMode = new Compartment();
+const editable = new Compartment();
+
+const format = (style: FormatStyle) => (view: EditorView) => {
+  view.dispatch(formatTransaction(view.state, style));
+  return true;
+};
+
+// Ctrl+click opens a link in the browser (a plain click places the cursor)
+const linkClicks = EditorView.domEventHandlers({
+  mousedown(event, view) {
+    if (!event.ctrlKey || event.button !== 0) return false;
+    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+    const url = pos === null ? null : linkAt(view.state, pos);
+    if (!url || !/^(https?:|mailto:)/i.test(url)) return false;
+    event.preventDefault();
+    open(url).catch((error: unknown) => console.error('Failed to open link:', error));
+    return true;
+  },
+});
+
+// Markdown on: live preview plus its shortcuts. Off: plain text.
+function markdownExtensions(on: boolean) {
+  if (!on) return [];
+  return [
+    markdown(),
+    livePreview(),
+    linkClicks,
+    // Above the default keymap, which uses Ctrl+I for "select parent syntax"
+    Prec.high(keymap.of([
+      { key: 'Mod-b', run: format('bold') },
+      { key: 'Mod-i', run: format('italic') },
+    ])),
+  ];
 }
 
-function applyStyle(el: HTMLTextAreaElement, style: FormatStyle) {
-  const { value, selectionStart, selectionEnd } = el;
-  applyEdit(
-    el,
-    INLINE_STYLES.includes(style)
-      ? toggleInline(value, selectionStart, selectionEnd, style as InlineStyle)
-      : toggleBlock(value, selectionStart, selectionEnd, style as BlockStyle),
-  );
-}
+function TextEditor({ config, text, onTextChange, isLocked, editRequest, autoScroll, onAutoScrollStop }: TextEditorProps) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
+  // Callbacks the editor's listeners call, kept current without rebuilding it
+  const latest = useRef({ onTextChange, onAutoScrollStop, autoScroll });
+  useEffect(() => {
+    latest.current = { onTextChange, onAutoScrollStop, autoScroll };
+  });
 
-// The text position under a point. caretPositionFromPoint is the standard; older
-// WebView2 runtimes only have caretRangeFromPoint.
-function caretAtPoint(x: number, y: number): { node: Node; offset: number } | null {
-  if (document.caretPositionFromPoint) {
-    const pos = document.caretPositionFromPoint(x, y);
-    return pos && { node: pos.offsetNode, offset: pos.offset };
-  }
-  const range = document.caretRangeFromPoint?.(x, y);
-  return range && { node: range.startContainer, offset: range.startOffset };
-}
-
-// Where in the source a point on the rendered notes is, or null if it missed the text
-function sourceOffsetAtPoint(view: HTMLElement, text: string, x: number, y: number): number | null {
-  const pos = caretAtPoint(x, y);
-  if (!pos) return null;
-  const { node } = pos;
-  const block = (node instanceof Element ? node : node.parentElement)?.closest<HTMLElement>('[data-src]');
-  if (!block || !view.contains(block)) return null;
-
-  const start = Number(block.dataset.src);
-  const next = block.nextElementSibling as HTMLElement | null;
-  const end = next?.dataset.src ? Number(next.dataset.src) : text.length;
-
-  const range = document.createRange();
-  range.setStart(block, 0);
-  range.setEnd(node, pos.offset);
-  const offset = start + sourceOffsetFor(text.slice(start, end), range.toString());
-  // At the very start of a line after a line break the rendered text has no
-  // newline to match (<br> has no text), so step past the source's one
-  return pos.offset === 0 && text[offset] === '\n' ? offset + 1 : offset;
-}
-
-// Source offset of the text at the top edge of the formatted view
-function topVisibleOffset(view: HTMLElement, text: string): number {
-  const rect = view.getBoundingClientRect();
-  const style = getComputedStyle(view);
-  const x = rect.left + (parseFloat(style.paddingLeft) || 0) + 1;
-  const y = rect.top + (parseFloat(style.paddingTop) || 0) + 1;
-  return sourceOffsetAtPoint(view, text, x, y) ?? firstVisibleOffset(view);
-}
-
-// Fallback: the first block at least partly visible. Blocks run top to bottom, so
-// binary search.
-function firstVisibleOffset(view: HTMLElement): number {
-  const blocks = view.querySelectorAll<HTMLElement>('[data-src]');
-  const top = view.getBoundingClientRect().top;
-  let lo = 0;
-  let hi = blocks.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    const bottom = blocks[mid].firstElementChild?.getBoundingClientRect().bottom ?? 0;
-    if (bottom > top) {
-      found = mid;
-      hi = mid - 1;
-    } else {
-      lo = mid + 1;
-    }
-  }
-  return found === -1 ? 0 : Number(blocks[found].dataset.src);
-}
-
-function TextEditor({
-  config,
-  text: rawText,
-  onTextChange,
-  isLocked,
-  editRequest,
-  autoScroll,
-  onAutoScrollStop,
-}: TextEditorProps) {
-  // The textarea turns Windows line endings (from pasted text) into \n, so do the
-  // same here: positions in the formatted view must match positions in the editor
-  const text = rawText.replace(/\r\n?/g, '\n');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const viewRef = useRef<HTMLDivElement>(null);
-  const [editing, setEditing] = useState(false);
-  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
-  const handledFocusRef = useRef<FocusRequest | null>(null);
-  // How far down the notes are scrolled (0-1), carried across the editor/view switch
-  const scrollRatioRef = useRef(0);
-  // Where the formatted view's visible text starts, so opening the editor without
-  // a click (Enter, quick edit) starts there instead of jumping to the top
-  const topVisibleRef = useRef(0);
-
-  // Formatted notes show whenever you aren't typing: while locked, or once the
-  // editor loses focus. The textarea stays mounted (hidden) so it keeps its
-  // selection and undo history.
-  const showRendered = config.markdown && text.trim() !== '' && (isLocked || !editing);
-  const html = useMemo(() => (showRendered ? renderMarkdown(text) : ''), [showRendered, text]);
-
-  const startEditing = (request: FocusRequest) => {
-    setEditing(true);
-    setFocusRequest(request);
-  };
-
-  // Locking always goes back to the formatted view
-  const [wasLocked, setWasLocked] = useState(isLocked);
-  if (isLocked !== wasLocked) {
-    setWasLocked(isLocked);
-    if (isLocked) setEditing(false);
-  }
-
-  const [seenEditRequest, setSeenEditRequest] = useState(editRequest);
-  if (editRequest !== seenEditRequest) {
-    setSeenEditRequest(editRequest);
-    startEditing({ caret: 'visible' });
-  }
-
-  // Keep the same part of the notes in view when switching between the two
-  useLayoutEffect(() => {
-    const el = showRendered ? viewRef.current : textareaRef.current;
-    if (!el) return;
-    el.scrollTop = scrollRatioRef.current * (el.scrollHeight - el.clientHeight);
-    if (showRendered) topVisibleRef.current = topVisibleOffset(el, text);
-    // Only on switching: text changes while the view shows don't move the scroll
+  // Create the editor once; props flow in through the effects below
+  useEffect(() => {
+    const view = new EditorView({
+      parent: hostRef.current!,
+      state: EditorState.create({
+        doc: text,
+        extensions: [
+          history(),
+          keymap.of([...historyKeymap, ...defaultKeymap]),
+          EditorView.lineWrapping,
+          placeholder(PLACEHOLDER_TEXT),
+          EditorView.contentAttributes.of({
+            spellcheck: 'false',
+            autocorrect: 'off',
+            autocapitalize: 'off',
+            'aria-label': 'Notes',
+          }),
+          markdownMode.of(markdownExtensions(config.markdown)),
+          editable.of(EditorView.editable.of(!isLocked)),
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged && !update.transactions.some((tr) => tr.annotation(fromProps))) {
+              latest.current.onTextChange(update.state.doc.toString());
+            }
+            // Typing pauses auto-scroll
+            if (update.focusChanged && update.view.hasFocus && latest.current.autoScroll) {
+              latest.current.onAutoScrollStop();
+            }
+          }),
+        ],
+      }),
+    });
+    viewRef.current = view;
+    return () => {
+      view.destroy();
+      viewRef.current = null;
+    };
+    // Mount only: later changes to these arrive through the effects below
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showRendered]);
+  }, []);
 
-  useLayoutEffect(() => {
-    const el = textareaRef.current;
-    if (!el || !focusRequest || showRendered || handledFocusRef.current === focusRequest) return;
-    handledFocusRef.current = focusRequest;
-    el.focus({ preventScroll: true });
-    // 'visible' only means something if the formatted view was what was showing
-    const caret = focusRequest.caret === 'visible' ? (config.markdown ? topVisibleRef.current : null) : focusRequest.caret;
-    if (caret !== null) el.setSelectionRange(caret, caret);
-    focusRequest.then?.(el);
-  }, [focusRequest, showRendered, config.markdown]);
+  // Text replaced from outside (Clear, Paste-replace, Undo of those). Kept out of
+  // the editor's undo history: App's Undo bar covers these.
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    const next = text.replace(/\r\n?/g, '\n');
+    if (view.state.doc.toString() === next) return;
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: next },
+      annotations: [fromProps.of(true), Transaction.addToHistory.of(false)],
+    });
+  }, [text]);
 
-  // Scrolls whichever is showing: the formatted view, or the plain editor
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: markdownMode.reconfigure(markdownExtensions(config.markdown)) });
+  }, [config.markdown]);
+
+  // Locked: presenting. Read-only, and every marker hidden.
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    view.dispatch({
+      effects: [editable.reconfigure(EditorView.editable.of(!isLocked)), setConcealAll.of(isLocked)],
+    });
+    if (isLocked) view.contentDOM.blur();
+  }, [isLocked]);
+
+  // Quick edit: focus, with the cursor where you're reading rather than wherever
+  // it was last (which may be far off screen)
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || editRequest === 0) return;
+    const box = view.scrollDOM.getBoundingClientRect();
+    const head = view.coordsAtPos(view.state.selection.main.head);
+    const onScreen = head !== null && head.top >= box.top && head.bottom <= box.bottom;
+    if (!onScreen) {
+      const style = getComputedStyle(view.contentDOM);
+      const top = view.posAtCoords({
+        x: box.left + (parseFloat(style.paddingLeft) || 0) + 1,
+        y: box.top + (parseFloat(style.paddingTop) || 0) + 1,
+      });
+      if (top !== null) view.dispatch({ selection: { anchor: top } });
+    }
+    view.focus();
+  }, [editRequest]);
+
+  // Starting auto-scroll means presenting: leave the editor
+  useEffect(() => {
+    if (autoScroll && viewRef.current?.hasFocus) viewRef.current.contentDOM.blur();
+  }, [autoScroll]);
+
   useAutoScroll(
     autoScroll,
-    () => viewRef.current ?? textareaRef.current,
+    () => viewRef.current?.scrollDOM ?? null,
     scrollPixelsPerSecond(config.scrollSpeed, config.fontSize),
     onAutoScrollStop,
   );
-
-  // Starting auto-scroll means presenting: leave the editor (back to formatted)
-  useEffect(() => {
-    if (autoScroll && document.activeElement === textareaRef.current) textareaRef.current?.blur();
-  }, [autoScroll]);
 
   // While locked the window ignores the mouse, so the Rust mouse hook catches
   // Ctrl+wheel over the overlay and sends its delta here (a plain wheel goes to the
   // app behind)
   useEffect(() => {
     const unlisten = listen<number>('locked-scroll', ({ payload: delta }) => {
-      const el = viewRef.current ?? textareaRef.current;
-      if (!el) return;
-      const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || config.fontSize * 1.6;
-      el.scrollBy({ top: (-delta / WHEEL_DELTA) * LINES_PER_NOTCH * lineHeight });
+      const view = viewRef.current;
+      if (!view) return;
+      const lineHeight = view.defaultLineHeight || config.fontSize * 1.6;
+      view.scrollDOM.scrollBy({ top: (-delta / WHEEL_DELTA) * LINES_PER_NOTCH * lineHeight });
     });
 
     return () => {
@@ -221,87 +194,26 @@ function TextEditor({
     };
   }, [config.fontSize]);
 
-  const trackScroll = (e: React.UIEvent<HTMLElement>) => {
-    const el = e.currentTarget;
-    const max = el.scrollHeight - el.clientHeight;
-    scrollRatioRef.current = max > 0 ? el.scrollTop / max : 0;
-    if (el === viewRef.current) topVisibleRef.current = topVisibleOffset(el, text);
-  };
-
-  const handleViewClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const link = (e.target as Element).closest('a');
-    if (link) {
-      // Open links in the browser; navigating would replace the overlay itself
-      e.preventDefault();
-      const href = link.getAttribute('href') ?? '';
-      if (/^(https?:|mailto:)/i.test(href)) {
-        open(href).catch((error: unknown) => console.error('Failed to open link:', error));
-      }
-      return;
-    }
-    // Selecting text (to copy it) shouldn't switch to the editor
-    if (window.getSelection()?.isCollapsed === false) return;
-    startEditing({ caret: sourceOffsetAtPoint(e.currentTarget, text, e.clientX, e.clientY) });
-  };
-
   const handleFormat = (style: FormatStyle) => {
-    const el = textareaRef.current;
-    if (!el) return;
-    if (showRendered) {
-      startEditing({ caret: null, then: (shown) => applyStyle(shown, style) });
-    } else {
-      applyStyle(el, style);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!config.markdown || !e.ctrlKey || e.shiftKey || e.altKey) return;
-    const style = ({ b: 'bold', i: 'italic' } as const)[e.key.toLowerCase()];
-    if (!style) return;
-    e.preventDefault();
-    applyStyle(e.currentTarget, style);
-  };
-
-  const textStyle = {
-    fontFamily: config.fontFamily,
-    fontSize: `${config.fontSize}px`,
-    color: config.fontColor,
-    backgroundColor: config.bgColor,
+    const view = viewRef.current;
+    if (!view) return;
+    view.focus();
+    format(style)(view);
   };
 
   return (
     <div className="text-editor">
-      <textarea
-        ref={textareaRef}
-        className="text-area"
-        style={textStyle}
-        hidden={showRendered}
-        value={text}
-        onChange={(e) => onTextChange(e.target.value)}
-        onFocus={() => {
-          setEditing(true);
-          // Typing pauses auto-scroll
-          if (autoScroll) onAutoScrollStop();
+      <div
+        ref={hostRef}
+        className={`editor-host${config.markdown ? ' live-preview' : ''}`}
+        style={{
+          fontFamily: config.fontFamily,
+          fontSize: `${config.fontSize}px`,
+          color: config.fontColor,
+          backgroundColor: config.bgColor,
+          ['--editor-bg' as string]: config.bgColor,
         }}
-        onBlur={() => setEditing(false)}
-        onKeyDown={handleKeyDown}
-        onScroll={trackScroll}
-        placeholder={PLACEHOLDER_TEXT}
-        spellCheck={false}
       />
-
-      {showRendered && (
-        <div
-          ref={viewRef}
-          className="markdown-view"
-          style={textStyle}
-          tabIndex={0}
-          onClick={handleViewClick}
-          onKeyDown={(e) => e.key === 'Enter' && startEditing({ caret: 'visible' })}
-          onScroll={trackScroll}
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-      )}
 
       {config.markdown && config.showFormatBar && !isLocked && <FormatBar onFormat={handleFormat} />}
     </div>

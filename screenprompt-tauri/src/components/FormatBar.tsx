@@ -1,10 +1,10 @@
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
 import type { ReactNode } from 'react';
-import type { BlockStyle, InlineStyle } from '../utils/formatting';
+import type { FormatStyle } from '../editor/commands';
 import '../styles/FormatBar.css';
 
-export type FormatStyle = InlineStyle | BlockStyle;
+export type { FormatStyle };
 
 interface FormatBarProps {
   onFormat: (style: FormatStyle) => void;

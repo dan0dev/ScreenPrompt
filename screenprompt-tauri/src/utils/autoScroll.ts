@@ -8,9 +8,10 @@ export const MIN_SCROLL_SPEED = 1;
 export const MAX_SCROLL_SPEED = 20;
 const LINES_PER_MINUTE_PER_STEP = 5;
 const LINE_HEIGHT = 1.6; // the notes' line-height (TextEditor.css)
-// A longer gap between frames means the window was hidden or stalled: don't
-// make up for it by jumping ahead
-const MAX_FRAME_GAP_MS = 250;
+// A longer gap between frames means the window was hidden: don't make up for it
+// by jumping ahead. Up to a second is still counted in full, so the speed stays
+// right even if frames get throttled to a few per second.
+const MAX_FRAME_GAP_MS = 1000;
 
 export function clampScrollSpeed(speed: number): number {
   if (Number.isNaN(speed)) return MIN_SCROLL_SPEED;

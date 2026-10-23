@@ -14,8 +14,8 @@ const RELEASE_NOTES: Record<string, string[]> = {
   '1.2.0': [
     'Auto-scroll: press Ctrl+Shift+Space (or ▶ in the bottom bar) and your notes scroll by '
       + 'themselves. Press it again to pause. Ctrl+Shift+, and Ctrl+Shift+. change the speed.',
-    'Formatted notes: write or paste Markdown for headings, bold and lists, or use Ctrl+B, '
-      + 'Ctrl+I and the T button. Thanks <a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> '
+    'Formatted notes: headings, bold, lists and more format as you type (Markdown), or use '
+      + 'Ctrl+B, Ctrl+I and the T button. Thanks <a href="https://github.com/gauravkhuraana">@gauravkhuraana</a> '
       + 'for the idea. Prefer plain text? Turn it off in Settings.',
     'Press F1 to see every keyboard shortcut.',
     'Cleared or replaced your notes by accident? Undo (or Ctrl+Z) brings them back.',

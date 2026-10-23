@@ -51,7 +51,13 @@ describe('nextScrollPosition', () => {
 
   it('caps a long frame gap (window hidden) instead of jumping ahead', () => {
     const step = nextScrollPosition(0, 0, 100000, 100, 60_000);
-    expect(step.pos).toBeLessThanOrEqual(25);
+    expect(step.pos).toBeLessThanOrEqual(100); // at most one second's worth
+  });
+
+  it('keeps the right speed at a throttled 3 frames per second', () => {
+    let pos = 0;
+    for (let i = 0; i < 3; i++) pos = nextScrollPosition(pos, Math.round(pos), 1000, 30, 333.3).pos;
+    expect(pos).toBeCloseTo(30, 0);
   });
 
   it('stops exactly at the end', () => {

@@ -92,12 +92,15 @@ pause, and again to carry on. It works from any app, even while the overlay is l
 
 ## Formatting
 
-ScreenPrompt reads your notes as Markdown: `# Heading`, `**bold**`, `*italic*`, `~~strikethrough~~`,
-`- lists`, `1. numbered lists`, `> quotes` and `` `code` ``. While you type you see the plain text;
-click away or lock the overlay and it shows formatted. Click the formatted text to edit that spot.
+ScreenPrompt formats your notes as you type, using Markdown: `# Heading`, `**bold**`, `*italic*`,
+`~~strikethrough~~`, `- lists`, `1. numbered lists`, `- [ ] tasks`, `> quotes` and `` `code` ``. The
+markers (`**`, `#`...) only show on the line you're typing on, so your notes always read cleanly;
+while the overlay is locked they're hidden everywhere.
 
 - **Bold / italic**: `Ctrl+B` / `Ctrl+I` while typing
 - **Formatting toolbar**: the **T** button in the bottom bar opens buttons for every style
+- **Links**: `Ctrl`+click opens a link in your browser
+- **Tasks**: click a checkbox to tick it
 - **Prompt tags** like `<context>` show as you typed them
 - **Prefer plain text?** Turn off *Format text (Markdown)* in Settings
 

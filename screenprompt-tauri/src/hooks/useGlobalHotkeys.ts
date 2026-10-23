@@ -143,6 +143,8 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string, autoS
 
   // Overlay-only shortcuts: these combos mean something in most other apps, so
   // they only act while the overlay has focus instead of being taken system-wide.
+  // Handled in the capture phase and stopped there, so the editor never also acts
+  // on them (CodeMirror binds some, e.g. Ctrl+Shift+Home selects to the top).
   useEffect(() => {
     const h = () => handlersRef.current;
     const actions: Record<string, () => void> = {
@@ -164,6 +166,7 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string, autoS
       // F1 on its own: the shortcut list (the usual help key)
       if (e.code === 'F1' && !e.ctrlKey && !e.shiftKey && !e.altKey) {
         e.preventDefault();
+        e.stopPropagation();
         h().toggleShortcuts();
         return;
       }
@@ -171,10 +174,11 @@ export function useGlobalHotkeys(handlers: HotkeyHandlers, layout: string, autoS
       const action = actions[e.code];
       if (!action) return;
       e.preventDefault();
+      e.stopPropagation();
       action();
     };
 
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, []);
 }

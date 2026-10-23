@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // MIT License - Copyright (c) 2026 ScreenPrompt Contributors
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Config } from '../types';
@@ -62,8 +62,9 @@ function scrollBox(el: HTMLElement, scrollHeight: number, clientHeight = 200) {
 }
 
 const SAMPLE = '# Script\n\n' + Array.from({ length: 40 }, (_, i) => `Line ${i + 1}`).join('\n');
-const view = () => document.querySelector('.markdown-view') as HTMLElement;
-const textarea = () => document.querySelector('textarea') as HTMLTextAreaElement;
+// The element that scrolls: CodeMirror's scroller, formatted or plain
+const view = () => document.querySelector('.cm-scroller') as HTMLElement;
+const editorContent = () => document.querySelector('.cm-content') as HTMLElement;
 
 interface HarnessProps {
   initial?: boolean;
@@ -76,6 +77,11 @@ interface HarnessProps {
 // TextEditor with auto-scroll state held the way App holds it, plus a toggle
 function Harness({ initial = false, markdown = true, scrollSpeed = 4, height = 1200, onStop }: HarnessProps) {
   const [on, setOn] = useState(initial);
+  // After the editor's own effects have created its scroller (parents' effects run last)
+  useEffect(() => {
+    const scroller = document.querySelector<HTMLElement>('.cm-scroller');
+    if (scroller) scrollBox(scroller, height);
+  });
   return (
     <>
       <button onClick={() => setOn((v) => !v)}>toggle</button>
@@ -92,7 +98,6 @@ function Harness({ initial = false, markdown = true, scrollSpeed = 4, height = 1
           onStop?.();
         }}
       />
-      <div ref={(el) => { if (el) scrollBox((document.querySelector('.markdown-view') ?? document.querySelector('textarea'))!, height); }} />
     </>
   );
 }
@@ -102,6 +107,9 @@ const toggle = () => fireEvent.click(screen.getByText('toggle'));
 const pxPerSecond = scrollPixelsPerSecond(4, DEFAULT_CONFIG.fontSize);
 
 beforeEach(() => {
+  const empty = { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, toJSON: () => ({}) };
+  Range.prototype.getBoundingClientRect = () => empty as DOMRect;
+  Range.prototype.getClientRects = () => Object.assign([], { item: () => null }) as unknown as DOMRectList;
   frames = [];
   clock = 0;
   window.requestAnimationFrame = (cb) => frames.push(cb);
@@ -182,20 +190,24 @@ describe('auto-scroll in the editor', () => {
     expect(view().scrollTop - slow).toBeGreaterThan(slow * 10);
   });
 
-  it('pauses when you start typing', () => {
+  it('pauses when you start typing', async () => {
     render(<Harness />);
     toggle();
     frame(0);
-    fireEvent.keyDown(view(), { key: 'Enter' }); // open the editor
+    // Click in to type; CodeMirror reports the focus a moment after the event
+    await act(async () => {
+      editorContent().focus();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
     expect(state()).toBe('off');
   });
 
   it('leaves the editor when started while typing', () => {
     render(<Harness markdown={false} />);
-    textarea().focus();
-    expect(document.activeElement).toBe(textarea());
+    act(() => editorContent().focus());
+    expect(document.activeElement).toBe(editorContent());
     toggle();
-    expect(document.activeElement).not.toBe(textarea());
+    expect(document.activeElement).not.toBe(editorContent());
   });
 
   it('scrolls the plain editor when Markdown is off', () => {
@@ -203,7 +215,7 @@ describe('auto-scroll in the editor', () => {
     toggle();
     frame(0);
     for (let i = 0; i < 60; i++) frame(1000 / 60);
-    expect(textarea().scrollTop).toBe(Math.round(pxPerSecond));
+    expect(view().scrollTop).toBe(Math.round(pxPerSecond));
   });
 });
 

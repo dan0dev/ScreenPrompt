@@ -76,8 +76,9 @@ export function shortcutGroups(layout: string, dev: boolean = import.meta.env.DE
     {
       title: 'Mouse',
       items: [
-        { keys: ['Click'], action: 'Click the formatted notes to edit that spot' },
+        { keys: ['Ctrl+Click'], action: 'On a link: open it in your browser' },
         { keys: ['Ctrl+Click'], action: 'On the lock icon: unlock (while locked)' },
+        { keys: ['Click'], action: 'On a task checkbox: tick or untick it' },
         { keys: ['Ctrl+Wheel'], action: 'Scroll your notes while locked' },
       ],
     },
